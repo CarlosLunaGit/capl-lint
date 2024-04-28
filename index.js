@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cors = require('cors');
+const lintCode = require('./core/lintCode');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -17,17 +18,6 @@ app.post('/lint', (req, res) => {
     res.json({ errors });
 });
 
-function lintCode(code) {
-    // Simple implementation: Check if all lines end with a semicolon
-    const lines = code.split('\n');
-    const errors = [];
-    lines.forEach((line, index) => {
-        if (!line.trim().endsWith(';')) {
-            errors.push({ line: index + 1, error: 'Line does not end with a semicolon.' });
-        }
-    });
-    return errors;
-}
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
