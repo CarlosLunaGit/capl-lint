@@ -1,0 +1,25 @@
+# Dependency directories
+node_modules/
+
+# Environment configuration files
+.env
+
+# Logs
+*.log
+logs
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional directories created by popular Node.js tools
+dist/
+tmp/
+out/
+build/
+
+# System Files
+.DS_Store
+Thumbs.db
