@@ -1,20 +1,22 @@
-const { Request, Response } = require('jest-express');
-const { lintCode } =  require('../../src/core/lintCode');
+const request = require('supertest');
+const app = require('../../src/index');  // Adjust the path to where your Express app is exported
 
-let req, res;
 
-beforeEach(() => {
-  req = new Request();
-  res = new Response();
-});
+describe('POST /lint', () => {
+    it('should validate code and return errors for missing semicolons', async () => {
+        console.log(app);
+        const response = await request(app)
+            .post('/lint')
+            .send({ code: 'int x = 10\nint y = 20' })  // Send code without semicolons as expected by your linting logic
+            .expect('Content-Type', /json/)
+            .expect(200);
 
-afterEach(() => {
-  req.resetMocked();
-  res.resetMocked();
-});
-
-test('POST /lint should validate code', () => {
-  req.setBody({ code: 'int x = 10;' });
-  lintCode(req, res);
-  expect(res.json).toHaveBeenCalledWith({ errors: [] });
+        // Check the response body to have errors corresponding to each line
+        expect(response.body).toEqual({
+            errors: [
+                { line: 1, error: 'Line does not end with a semicolon.' },
+                { line: 2, error: 'Line does not end with a semicolon.' }
+            ]
+        });
+    });
 });
