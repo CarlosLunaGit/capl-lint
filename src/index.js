@@ -16,10 +16,10 @@ app.post('/lint', (req, res) => {
     const code = req.body.code;
     const errors = lintCode(code);
     res.json({ errors });
+    next();
 });
 
-// Change here: Export app directly without listening
-module.exports = app;
+
 
 // Only start listening when not in test environment
 if (process.env.NODE_ENV !== 'test') {
@@ -28,3 +28,6 @@ if (process.env.NODE_ENV !== 'test') {
         console.log(`Server is running on port ${port}`);
     });
 }
+console.log('Exporting app:', app);
+// Change here: Export app directly without listening
+module.exports = app;
