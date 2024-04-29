@@ -82,3 +82,40 @@ test('lintCode detects not allowed statements within VARIABLES Block', async () 
     console.log(evaluatedErrors);
     expect(evaluatedErrors).toEqual(expectedErrors);
 })
+
+test('lindCode detects declaration of local variables not at the beginning portion of the function.', async () => {
+    const inputCode =
+    `/*@!Encoding:1252*/
+    includes
+    {
+
+    }
+
+    variables
+    {
+
+
+    }
+
+    void MainTest ()
+    {
+        int x = 10;
+        int y = 20;
+        int z;
+        z = x + y;
+        // some comments
+        if (1){
+          write("%d",z);
+      		int w = 10;
+      		write("%d",w);
+	      }
+
+    }`;
+    const expectedErrors = [
+        { line: 22, error: 'Variable declaration should happen at the start of a function block. Statement: - int w = 10;' }
+    ];
+    console.log(expectedErrors);
+    let evaluatedErrors = await lintCode(inputCode);
+    console.log(evaluatedErrors);
+    expect(evaluatedErrors).toEqual(expectedErrors);
+})
