@@ -83,7 +83,7 @@ test('lintCode detects not allowed statements within VARIABLES Block', async () 
     expect(evaluatedErrors).toEqual(expectedErrors);
 })
 
-test('lindCode detects declaration of local variables not at the beginning portion of the function.', async () => {
+test('lindCode detects declaration of local variables not at the beginning portion of the FUNCTION.', async () => {
     const inputCode =
     `/*@!Encoding:1252*/
     includes
@@ -113,6 +113,51 @@ test('lindCode detects declaration of local variables not at the beginning porti
     }`;
     const expectedErrors = [
         { line: 22, error: 'Variable declaration should happen at the start of a function block. Statement: - int w = 10;' }
+    ];
+    console.log(expectedErrors);
+    let evaluatedErrors = await lintCode(inputCode);
+    console.log(evaluatedErrors);
+    expect(evaluatedErrors).toEqual(expectedErrors);
+})
+
+
+
+test('lindCode detects declaration of local variables not at the beginning portion of the TESTCASE.', async () => {
+    const inputCode =
+    `/*@!Encoding:65001*/
+/**
+ * @file testCase01BlockSizeValueHandlingCANGroup.cin
+ */
+includes
+{
+
+
+}
+
+variables
+{
+
+
+}
+
+testcase testCase01BlockSizeValueHandlingCANGroup(byte session_ind, enum ADDRESSING_MODE mode, enum BT_BusTypes busType, struct TEST_CASE_DATA data, int index)
+{
+    byte payload[8];
+    byte validation[8];
+    int dataLength;
+    char out[100];
+    char textDeviceUnderTest[50];
+
+    dutData.FC_WAIT_DELAY = data.FC_WAIT_DELAY;
+    dutData.FC_DELAY = data.FC_DELAY;
+    dutData.BS = data.BS;
+    dutData.STmin = data.STmin;
+    int x;
+    strncpy(textDeviceUnderTest, "Device under test: ", 20);
+
+}`;
+    const expectedErrors = [
+        { line: 29, error: 'Variable declaration should happen at the start of a function block. Statement: - int x;' }
     ];
     console.log(expectedErrors);
     let evaluatedErrors = await lintCode(inputCode);

@@ -28,7 +28,7 @@ function blocksSegregation(lines) {
     let blockStack = [];  // Stack to track nested blocks and their types
 
     // Define regular expression for detecting function declarations
-    const functionPattern = /^\s*(?:void|int|long|float|double|char|byte|word|dword|int64|gword)\s+\w+\s*\([^)]*\)\s*$/;
+    const functionPattern = /^\s*(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s+\w+\s*\([^)]*\)\s*$/;
 
     lines.forEach((line, index) => {
         const trimmedLine = line.statement.trim();
@@ -132,6 +132,7 @@ function cleanUpBlocks(blocks) {
             // Set parentBlock to null if the condition is met
             block.parentBlock = null;
         }
+
     });
 
     return blocks;
