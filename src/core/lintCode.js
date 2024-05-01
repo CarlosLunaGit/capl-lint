@@ -113,7 +113,7 @@ async function checkDeclarationBlockOrder(block, blocks) {
                     // If non-declaration statements were seen before this declaration
                     errors.push({ line: line.index, error: `Variable declaration should happen at the start of a function block. Statement: - ${trimmedLine}`});
                 }
-            } else {
+            } else if (firstWord !== ''){
                 // Any statement that's not a declaration sets this flag
                 nonDeclarationSeen = true;
             }
