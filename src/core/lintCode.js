@@ -123,6 +123,42 @@ async function checkDeclarationBlockOrder(block, blocks) {
     return { errors, amount: errors.length };
 }
 
+async function checkFunctionParameters(line, trimmedLine) {
+    let errors = [];
+
+    // Regular expression to capture potential function declarations
+    // This regex looks for typical C-style function headers, potentially useful for your specific codebase syntax
+    const functionRegex = /^\s*(?:testcase|void|int|char|float|double|byte|struct\s+\w+)\s+(\w+)\s*\(([^)]*)\)/;
+    const match = trimmedLine.match(functionRegex);
+
+    // Check if the current line matches a function declaration
+    if (match) {
+        const functionName = match[1];
+        const parameters = match[2];
+
+        // Split parameters on commas
+        const params = parameters.split(',');
+
+        // Check for missing commas by inspecting each parameter split
+        // If a split contains more than one type without intervening commas, it's likely an error
+        params.forEach((param, index) => {
+            const paramTrim = param.trim();
+            // Count the number of basic types or struct declarations, if more than 1 and no commas, it's likely an error
+            const typeCount = (paramTrim.match(/\b(byte|int|char|float|double|struct|enum)\b/g) || []).length;
+            if (typeCount > 1) {
+                errors.push({
+                    line: line.index,
+                    error: `Missing comma to separate parameters in function declaration. Statement: - ${functionName}(${parameters})`
+                });
+            }
+        });
+    }
+
+    return { errors, amount: errors.length };
+}
+
+
+
 function cleanUpBlocks(blocks) {
     // Iterate over each block in the array
     blocks.forEach(block => {
@@ -169,6 +205,11 @@ async function lintCode(sourceCode) {
                 lintErrors = lintErrors.concat(orderCheck.errors);
             }
             checkedFunctionBlocks.add(block.parentBlock);
+        }
+
+        let functionParametersCheck = await checkFunctionParameters(block, trimmedLine);
+        if (functionParametersCheck.errors.length > 0) {
+            lintErrors = lintErrors.concat(functionParametersCheck.errors);
         }
     }
 
