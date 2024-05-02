@@ -65,22 +65,63 @@ function blocksSegregation(lines) {
     return blocks;
 }
 
-async function checkVariableDeclaration(line, trimmedLine){
+// async function checkVariableDeclaration(line, trimmedLine){
 
+//     let errors = [];
+
+//     let firstWord = trimmedLine.split(/\s+/)[0];
+
+//     if (firstWord === 'const') {
+//         firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
+//     }
+
+//     if (dataTypes.includes(firstWord) && !trimmedLine.endsWith(';')) {
+//         errors.push({ line: line.index, error: `Variable declaration should end with a semicolon. Statement: - ${trimmedLine}`});
+//     }
+
+//     return { errors , amount : errors.length};
+// }
+
+
+async function checkVariableDeclaration(line, trimmedLine, context) {
     let errors = [];
-
     let firstWord = trimmedLine.split(/\s+/)[0];
+    let declarationEnd = trimmedLine.endsWith(';');
 
+    // Handling 'const' and other multi-word data types
     if (firstWord === 'const') {
         firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
     }
 
-    if (dataTypes.includes(firstWord) && !trimmedLine.endsWith(';')) {
-        errors.push({ line: line.index, error: `Variable declaration should end with a semicolon. Statement: - ${trimmedLine}`});
+    // Check if we are in a declaration block (like struct)
+    if (context.isInDeclarationBlock || dataTypes.includes(firstWord)) {
+        // Check if the declaration starts a block with '{'
+        if (trimmedLine.includes('{')) {
+            context.isInDeclarationBlock = true;
+        }
+
+        // Check if the current block (if any) ends
+        if (trimmedLine.includes('}')) {
+            // Assume the declaration should end with ';'
+            if (!declarationEnd) {
+                errors.push({
+                    line: line.index,
+                    error: `Variable Declaration BLOCK should end with a semicolon. Statement: - ${trimmedLine}`
+                });
+            }
+            context.isInDeclarationBlock = false;
+        } else if (!context.isInDeclarationBlock && !declarationEnd) {
+            // Single line declaration must end with semicolon
+            errors.push({
+                line: line.index,
+                error: `Variable declaration should end with a semicolon. Statement: - ${trimmedLine}`
+            });
+        }
     }
 
-    return { errors , amount : errors.length};
+    return { errors, context };
 }
+
 
 async function checkBlockImplementation(line, trimmedLine) {
 
@@ -193,6 +234,7 @@ async function lintCode(sourceCode) {
     const cleanedBlocks = blocksSegregation(serializedLines);
     const blocks = cleanUpBlocks(cleanedBlocks);
     let lintErrors = [];
+    let context = { isInDeclarationBlock: false };
 
     // Use a set to track which function blocks have been checked
     let checkedFunctionBlocks = new Set();
@@ -200,7 +242,14 @@ async function lintCode(sourceCode) {
     for (let block of blocks) {
         let trimmedLine = block.statement.trim();
 
-        let variableCheck = await checkVariableDeclaration(block, trimmedLine);
+        // let variableCheck = await checkVariableDeclaration(block, trimmedLine);
+        // if (variableCheck.errors.length > 0) {
+        //     lintErrors = lintErrors.concat(variableCheck.errors);
+        // }
+
+        // Update the context based on checks
+        let variableCheck = await checkVariableDeclaration(block, trimmedLine, context);
+        context = variableCheck.context;
         if (variableCheck.errors.length > 0) {
             lintErrors = lintErrors.concat(variableCheck.errors);
         }
@@ -227,9 +276,6 @@ async function lintCode(sourceCode) {
 
     return lintErrors;
 }
-
-
-
 
 
 module.exports = {
