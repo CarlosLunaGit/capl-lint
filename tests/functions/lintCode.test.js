@@ -83,6 +83,35 @@ test('lintCode detects not allowed statements within VARIABLES Block', async () 
     expect(evaluatedErrors).toEqual(expectedErrors);
 })
 
+test('lintCode detects not allowed statements within VARIABLES Block (const prefix case)', async () => {
+    const inputCode =
+    `/*@!Encoding:65001*/
+    includes
+    {
+
+    }
+
+    variables
+    {
+
+        const int totalECUs=105
+        char ECUName[5];
+        byte fcDIDCAN[3];
+        byte fcDIDCANFD1st[3];
+        byte fcDIDCANFD2nd[3];
+        #include "..\\TestLibraries\\utils.cin"
+
+    }`;
+    const expectedErrors = [
+        { line: 10, error: 'VARIABLES Block can only host lines of type = [\"//\", \"*\", \"*/\", \"variables\"...]. Statement: - const int totalECUs=105' },
+        { line: 15, error: 'VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - #include "..\\TestLibraries\\utils.cin"' }
+    ];
+    console.log(expectedErrors);
+    let evaluatedErrors = await lintCode(inputCode);
+    console.log(evaluatedErrors);
+    expect(evaluatedErrors).toEqual(expectedErrors);
+})
+
 test('lindCode detects declaration of local variables not at the beginning portion of the FUNCTION.', async () => {
     const inputCode =
     `/*@!Encoding:1252*/
