@@ -4,13 +4,13 @@ test('lintCode detects missing semicolons for Variables declaration', async () =
     const inputCode =
     `variables
     {
-        byte EDA0_RESPONSE[3]={0x62,0xED,0xA0};
-        byte EE01_RESPONSE[3]={0x62,0xEE,0x01}
+        byte variable1[3]={0x01,0x02,0x03};
+        byte variable2[3]={0x04,0x05,0x06}
         int x = 10;
         int y = 20
     }`;
     const expectedErrors = [
-        { line: 4, error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - byte EE01_RESPONSE[3]={0x62,0xEE,0x01}' },
+        { line: 4, error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - byte variable2[3]={0x04,0x05,0x06}' },
         { line: 6, error: 'Variable declaration should end with a semicolon. Statement: - int y = 20' }
     ];
     console.log(expectedErrors);
@@ -42,6 +42,33 @@ test('lintCode detects missing semicolons for Variables declaration (with Commen
     expect(evaluatedErrors).toEqual(expectedErrors);
 });
 
+test('lintCode detects missing semicolons for Variables declaration (Multi-line case)', async () => {
+    const inputCode =
+    `variables
+    {
+        byte EDA0_RESPONSE[3]={0x62,0xED,0xA0};
+        byte EE01_RESPONSE[3]={0x62,0xEE,0x01}
+        int x = 10;
+        int y = 20
+
+        struct fcDIDLookupTableStr {
+            char ECUName[5];
+            byte fcDIDCAN[3];
+            byte fcDIDCANFD1st[3];
+            byte fcDIDCANFD2nd[3];
+          } fcDIDLookupTable[200]
+    }`;
+    const expectedErrors = [
+        { line: 4, error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - byte EE01_RESPONSE[3]={0x62,0xEE,0x01}' },
+        { line: 6, error: 'Variable declaration should end with a semicolon. Statement: - int y = 20' },
+        { line: 13, error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - } fcDIDLookupTable[200]' }
+    ];
+    console.log(expectedErrors);
+    let evaluatedErrors = await lintCode(inputCode);
+    console.log(evaluatedErrors);
+    expect(evaluatedErrors).toEqual(expectedErrors);
+});
+
 test('lintCode detects not allowed statements within INCLUDES Block', async () => {
     const inputCode =
     `includes
@@ -49,11 +76,10 @@ test('lintCode detects not allowed statements within INCLUDES Block', async () =
         // Comment
         #include "..\\TestLibraries\\responses.cin"
         #include "..\\TestLibraries\\utils.cin"
-        byte EDA0_RESPONSE[3]={0x62,0xED,0xA0};
-
+        byte variable1[3]={0x01,0x02,0x03};
     }`;
     const expectedErrors = [
-        { line: 6, error: 'INCLUDES Block can only host lines of type = ["//", "*", "*/", "#include"...]. Statement: - byte EDA0_RESPONSE[3]={0x62,0xED,0xA0};' }
+        { line: 6, error: 'INCLUDES Block can only host lines of type = ["//", "*", "*/", "#include"...]. Statement: - byte variable1[3]={0x01,0x02,0x03};' }
     ];
     console.log(expectedErrors);
     let evaluatedErrors = await lintCode(inputCode);
@@ -65,17 +91,17 @@ test('lintCode detects not allowed statements within VARIABLES Block', async () 
     const inputCode =
     `variables
     {
-        byte EDA0_RESPONSE[3]={0x62,0xED,0xA0};
+        byte variable1[3]={0x01,0x02,0x03};
         // Comment
-        byte EE01_RESPONSE[3]={0x62,0xEE,0x01}
+        byte variable2[3]={0x04,0x05,0x06}
         int x = 10;
         int y = 20
-        #include "..\\TestLibraries\\utils.cin"
+        #include "..\\myLibraries\\utils.cin"
     }`;
     const expectedErrors = [
-        { line: 5, error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - byte EE01_RESPONSE[3]={0x62,0xEE,0x01}' },
+        { line: 5, error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - byte variable2[3]={0x04,0x05,0x06}' },
         { line: 7, error: 'Variable declaration should end with a semicolon. Statement: - int y = 20' },
-        { line: 8, error: 'VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - #include "..\\TestLibraries\\utils.cin"' }
+        { line: 8, error: 'VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - #include "..\\myLibraries\\utils.cin"' }
     ];
     console.log(expectedErrors);
     let evaluatedErrors = await lintCode(inputCode);
@@ -274,32 +300,7 @@ testcase testCase01BlockSizeValueHandlingCANGroup(byte session_ind enum ADDRESSI
     expect(evaluatedErrors).toEqual(expectedErrors);
 })
 
-test('lintCode detects missing semicolons for Variables declaration (Multi-line case)', async () => {
-    const inputCode =
-    `variables
-    {
-        byte EDA0_RESPONSE[3]={0x62,0xED,0xA0};
-        byte EE01_RESPONSE[3]={0x62,0xEE,0x01}
-        int x = 10;
-        int y = 20
 
-        struct fcDIDLookupTableStr {
-            char ECUName[5];
-            byte fcDIDCAN[3];
-            byte fcDIDCANFD1st[3];
-            byte fcDIDCANFD2nd[3];
-          } fcDIDLookupTable[200]
-    }`;
-    const expectedErrors = [
-        { line: 4, error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - byte EE01_RESPONSE[3]={0x62,0xEE,0x01}' },
-        { line: 6, error: 'Variable declaration should end with a semicolon. Statement: - int y = 20' },
-        { line: 13, error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - } fcDIDLookupTable[200]' }
-    ];
-    console.log(expectedErrors);
-    let evaluatedErrors = await lintCode(inputCode);
-    console.log(evaluatedErrors);
-    expect(evaluatedErrors).toEqual(expectedErrors);
-});
 
 test('lindCode detects wrong FUNCTION declaration (function type array).', async () => {
     const inputCode =
