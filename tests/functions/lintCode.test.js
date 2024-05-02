@@ -300,3 +300,41 @@ test('lintCode detects missing semicolons for Variables declaration (Multi-line 
     console.log(evaluatedErrors);
     expect(evaluatedErrors).toEqual(expectedErrors);
 });
+
+test('lindCode detects wrong FUNCTION declaration (function type array).', async () => {
+    const inputCode =
+    `/*@!Encoding:1252*/
+    includes
+    {
+
+    }
+
+    variables
+    {
+
+
+    }
+
+    byte[] myFunctionOfTypeArray()
+    {
+
+        int x = 10;
+        int y = 20;
+        int z;
+        z = x + y;
+        // some comments
+        if (1){
+          write("%d",z);
+      		int w = 10;
+      		write("%d",w);
+	      }
+        return [];
+    }`;
+    const expectedErrors = [
+        { line: 13, error: 'Function declaration CANNOT be of type ARRAY, use Referenced variables to return array types. Statement: - byte[] myFunctionOfTypeArray()' }
+    ];
+    console.log(expectedErrors);
+    let evaluatedErrors = await lintCode(inputCode);
+    console.log(evaluatedErrors);
+    expect(evaluatedErrors).toEqual(expectedErrors);
+})

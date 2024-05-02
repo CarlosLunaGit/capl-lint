@@ -210,6 +210,31 @@ async function checkFunctionParameters(line, trimmedLine) {
     return { errors, amount: errors.length };
 }
 
+async function checkFunctionTypes(line, trimmedLine) {
+    let errors = [];
+
+    // Regular expression to capture potential function declarations
+    // This regex looks for typical C-style function headers, potentially useful for your specific codebase syntax
+    const errorTypeArray = /^\s*(?:testcase|void|int|char|float|double|byte|struct\s+\w+)(..)\s+(\w+)\s*\(([^)]*)\)/;
+    const match = trimmedLine.match(errorTypeArray);
+
+    // Check if the current line matches a function declaration
+    if (match) {
+        const functionName = match[0];
+        const errorType = match[1];
+
+                if (errorType.includes('[]')) {
+                    errors.push({
+                        line: line.index,
+                        error: `Function declaration CANNOT be of type ARRAY, use Referenced variables to return array types. Statement: - ${functionName}`
+                    });
+                }
+
+
+    }
+
+    return { errors, amount: errors.length };
+}
 
 
 function cleanUpBlocks(blocks) {
@@ -272,6 +297,13 @@ async function lintCode(sourceCode) {
         if (functionParametersCheck.errors.length > 0) {
             lintErrors = lintErrors.concat(functionParametersCheck.errors);
         }
+
+        let functionTypesCheck = await checkFunctionTypes(block, trimmedLine);
+        if (functionTypesCheck.errors.length > 0) {
+            lintErrors = lintErrors.concat(functionTypesCheck.errors);
+        }
+
+
     }
 
     return lintErrors;
