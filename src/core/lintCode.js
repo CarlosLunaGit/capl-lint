@@ -69,7 +69,11 @@ async function checkVariableDeclaration(line, trimmedLine){
 
     let errors = [];
 
-    const firstWord = trimmedLine.split(/\s+/)[0];
+    let firstWord = trimmedLine.split(/\s+/)[0];
+
+    if (firstWord === 'const') {
+        firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
+    }
 
     if (dataTypes.includes(firstWord) && !trimmedLine.endsWith(';')) {
         errors.push({ line: line.index, error: `Variable declaration should end with a semicolon. Statement: - ${trimmedLine}`});
@@ -82,7 +86,11 @@ async function checkBlockImplementation(line, trimmedLine) {
 
     let errors = [];
 
-    const firstWord = trimmedLine.split(/\s+/)[0];
+    let firstWord = trimmedLine.split(/\s+/)[0];
+
+    if (firstWord === 'const') {
+        firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
+    }
 
     if (!includesBlock.includes(firstWord) && line.parentBlock == 'includes') {
         errors.push({ line: line.index, error: `INCLUDES Block can only host lines of type = ["//", "*", "*/", "#include"...]. Statement: - ${trimmedLine}`});
@@ -105,7 +113,11 @@ async function checkDeclarationBlockOrder(block, blocks) {
 
         for (let line of functionBlockLines) {
             const trimmedLine = line.statement.trim();
-            const firstWord = trimmedLine.split(/\s+/)[0];
+            let firstWord = trimmedLine.split(/\s+/)[0];
+
+            if (firstWord === 'const') {
+                firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
+            }
 
             // Check if the line is a data type declaration
             if (dataTypes.includes(firstWord)) {

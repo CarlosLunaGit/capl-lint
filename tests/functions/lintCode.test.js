@@ -103,7 +103,7 @@ test('lintCode detects not allowed statements within VARIABLES Block (const pref
 
     }`;
     const expectedErrors = [
-        { line: 10, error: 'VARIABLES Block can only host lines of type = [\"//\", \"*\", \"*/\", \"variables\"...]. Statement: - const int totalECUs=105' },
+        { line: 10, error: 'Variable declaration should end with a semicolon. Statement: - const int totalECUs=105' },
         { line: 15, error: 'VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - #include "..\\TestLibraries\\utils.cin"' }
     ];
     console.log(expectedErrors);
