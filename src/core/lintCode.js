@@ -1,14 +1,16 @@
-const { dataTypes, blockTypes, includesBlock, variablesBlock, functionBlocks } = require('../types/types');
+const { dataTypes,
+    blockTypes,
+    includesBlock,
+    standaloneKeyWords,
+    variablesBlock,
+    functionBlocks,
+    commentsKeyWords } = require('../types/types');
 let functionStart = false;
 
 function preprocessCode(input) {
-    // Normalize newlines and decode escape sequences
-    // let normalized = input.replace(/\\r\\n/g, '\n').replace(/\\"/g, '"');
+
     let normalized = input.replace(/\\r\\n/g, '\n');
-    // Remove block comments
-    // normalized = normalized.replace(/\/\*[\s\S]*?\*\//g, '');
-    // Remove single-line comments
-    // return normalized.replace(/\/\/.*$/gm, '');
+
     return normalized;
 }
 
@@ -23,64 +25,100 @@ function serializeLines(lines){
     return serialized;
 }
 
+/**
+ * Segregates blocks in the provided lines of code.
+ * @param {Array<{ statement: string, index: number }>} lines - Array of lines of code.
+ * @returns {Array<{ statement: string, index: number, parentBlock: string | 'notApplicable', declarationSeen: boolean }>} - Segregated blocks.
+ */
 function blocksSegregation(lines) {
-    let blocks = [];
-    let blockStack = [];  // Stack to track nested blocks and their types
+    const blocks = [];
+    const blockStack = []; // Stack to track nested blocks and their types
 
-    // Define regular expression for detecting function declarations
-    const functionPattern = /^\s*(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s+\w+\s*\([^)]*\)\s*$/;
+    /**
+     * Regular expression for detecting function declarations and block headers.
+     * This regex is updated to match block headers and function declarations.
+     */
+    const blockPattern = /(?:(\/\*.*|includes|variables) ?(?:({))?|(testcase|void|int|long|float|double|char|byte|word|dword|int64|gword).* (?:(\w+)) ?(\([^)]*\)) ?(?:({))?|(for|while|do|if|else) ?(\([^)]*\))? ?(?:({))?)/;
 
     lines.forEach((line, index) => {
         const trimmedLine = line.statement.trim();
-        let currentBlockType = blockStack.length > 0 ? blockStack[blockStack.length - 1].type : null;
+        let currentBlockType = blockStack.length > 0 ? blockStack[blockStack.length - 1].type : 'notApplicable';
 
-        // Check for block identifiers and function declarations
-        if (blockTypes.includes(trimmedLine.split(/\s+/)[0]) && !trimmedLine.includes('{')) {
-            blockStack.push({ type: trimmedLine.split(/\s+/)[0], declarationSeen: false });
-        } else if (functionPattern.test(trimmedLine) && !trimmedLine.includes('{')) {
-            blockStack.push({ type: 'function', declarationSeen: false }); // Handle function declarations
-        } else if (trimmedLine === '{') {
-            if (blockStack.length === 0 || blockStack[blockStack.length - 1].open === undefined) {
-                blockStack[blockStack.length - 1] = { ...blockStack[blockStack.length - 1], open: true };
-            } else {
-                blockStack.push({ type: currentBlockType, open: true });
+        // Check for block headers and function declarations
+        const match = trimmedLine.match(blockPattern);
+        if (match) {
+            const [_,
+                blockType,
+                hasOpeningBracketBlockType,
+                functionDeclarationType,
+                functionDeclarationName,
+                functionParameters,
+                hasOpeningBracketFunctionType,
+                controlStructureType,
+                controlStructureParameters,
+                hasOpeningBracketControlStructureType] = match;
+
+            const isOpeningBracketInline = (
+                hasOpeningBracketBlockType === '{' ||
+                hasOpeningBracketFunctionType === '{' ||
+                hasOpeningBracketControlStructureType === '{');
+
+            const isFunctionDeclaration = !!functionDeclarationType;
+            const isControlStructure = !!controlStructureType;
+            const blockName = isFunctionDeclaration ? 'function' : isControlStructure ? controlStructureType : blockType;
+
+            // Determine the parent block based on nesting level
+            let parentBlock = currentBlockType;
+
+            if (blockStack.length == 0 ) {
+                parentBlock = blockName;
             }
+
+            if (blockStack.length > 0 && isOpeningBracketInline) {
+                parentBlock = currentBlockType ? `${currentBlockType}_withOpening` : 'notApplicable';
+            }
+
+            // Handle nested blocks
+            if (blockStack.length > 0 && !isOpeningBracketInline) {
+                let nestedLevel = 1;
+                while (nestedLevel < blockStack.length && blockStack[blockStack.length - nestedLevel].type === blockName) {
+                    nestedLevel++;
+                }
+                parentBlock = `${blockName}_${nestedLevel}`;
+            }
+            if (_.match(/\/\*.*/)) {
+
+                blocks.push({ ...line, parentBlock: 'notApplicable', declarationSeen: !isOpeningBracketInline });
+            }else{
+
+                blockStack.push({ type: blockName, declarationSeen: !isOpeningBracketInline });
+                blocks.push({ ...line, parentBlock, declarationSeen: !isOpeningBracketInline });
+            }
+
         } else if (trimmedLine === '}') {
             blockStack.pop();
-        }
+            blocks.push({ ...line, parentBlock: 'notApplicable', declarationSeen: false });
+        } else {
+            // Assign the current line to the block type on top of the stack
 
-        // Assign the current line to the block type on top of the stack
-        blocks.push({
-            ...line,
-            parentBlock: currentBlockType,
-            declarationSeen: blockStack.length > 0 ? blockStack[blockStack.length - 1].declarationSeen : false
-        });
+            if (blockStack.length) {
+                let nestedLevel = 1;
+                while (nestedLevel < blockStack.length && blockStack[blockStack.length - nestedLevel].type === currentBlockType) {
+                    nestedLevel++;
+                }
+                currentBlockType = `${currentBlockType}_${nestedLevel}`;
+            }
 
-        // Update currentBlockType if the blockStack was modified
-        if (blockStack.length > 0) {
-            currentBlockType = blockStack[blockStack.length - 1]. type;
+            blocks.push({
+                ...line,
+                parentBlock: currentBlockType,
+                declarationSeen: blockStack.length > 0 ? blockStack[blockStack.length - 1].declarationSeen : false,
+            });
         }
     });
 
     return blocks;
 }
-
-// async function checkVariableDeclaration(line, trimmedLine){
-
-//     let errors = [];
-
-//     let firstWord = trimmedLine.split(/\s+/)[0];
-
-//     if (firstWord === 'const') {
-//         firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
-//     }
-
-//     if (dataTypes.includes(firstWord) && !trimmedLine.endsWith(';')) {
-//         errors.push({ line: line.index, error: `Variable declaration should end with a semicolon. Statement: - ${trimmedLine}`});
-//     }
-
-//     return { errors , amount : errors.length};
-// }
 
 
 async function checkVariableDeclaration(line, trimmedLine, context) {
@@ -93,39 +131,46 @@ async function checkVariableDeclaration(line, trimmedLine, context) {
         firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
     }
 
-    // Check if we are in a declaration block (like struct)
-    if (context.isInDeclarationBlock || dataTypes.includes(firstWord)) {
-        // Check if the declaration starts a block with '{'
-        if (trimmedLine.includes('{')) {
-            context.isInDeclarationBlock = true;
-        }
+    try {
+        // Check if we are in a declaration block (like struct)
+        if ((context.isInDeclarationBlock || (dataTypes.includes(firstWord) || (firstWord==='}' && line.parentBlock !== 'notApplicable'))) && !trimmedLine.includes('(')) {
+            // Check if the declaration starts a block with '{'
+            if (trimmedLine.includes('{')) {
+                context.isInDeclarationBlock = true;
+            }
 
-        // Check if the current block (if any) ends
-        if (trimmedLine.includes('}')) {
-            // Assume the declaration should end with ';'
-            if (!declarationEnd) {
+            // Check if the current block (if any) ends
+            if (trimmedLine.includes('}') && trimmedLine !== '}') {
+                // Assume the declaration should end with ';'
+                if (!declarationEnd) {
+                    errors.push({
+                        line: line.index,
+                        error: `Variable Declaration BLOCK should end with a semicolon. Statement: - ${trimmedLine}`,
+                        type: 'Critical Rule',
+                        priority: 1});
+                }
+                context.isInDeclarationBlock = false;
+            } else if (!context.isInDeclarationBlock && !declarationEnd) {
+                // Single line declaration must end with semicolon
                 errors.push({
                     line: line.index,
-                    error: `Variable Declaration BLOCK should end with a semicolon. Statement: - ${trimmedLine}`
-                });
+                    error: `Variable declaration should end with a semicolon. Statement: - ${trimmedLine}`,
+                    type: 'Critical Rule',
+                    priority: 1});
             }
-            context.isInDeclarationBlock = false;
-        } else if (!context.isInDeclarationBlock && !declarationEnd) {
-            // Single line declaration must end with semicolon
-            errors.push({
-                line: line.index,
-                error: `Variable declaration should end with a semicolon. Statement: - ${trimmedLine}`
-            });
         }
+    } catch (error) {
+        console.log(error);
     }
 
-    return { errors, context };
+
+    return { errors: [...errors], context };
 }
 
 
 async function checkBlockImplementation(line, trimmedLine) {
 
-    let errors = [];
+    let error = [];
 
     let firstWord = trimmedLine.split(/\s+/)[0];
 
@@ -133,51 +178,114 @@ async function checkBlockImplementation(line, trimmedLine) {
         firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
     }
 
-    if (!includesBlock.includes(firstWord) && line.parentBlock == 'includes') {
-        errors.push({ line: line.index, error: `INCLUDES Block can only host lines of type = ["//", "*", "*/", "#include"...]. Statement: - ${trimmedLine}`});
-    };
+    try {
 
-    if (!variablesBlock.includes(firstWord) && line.parentBlock == 'variables') {
-        errors.push({ line: line.index, error: `VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - ${trimmedLine}`});
-    };
+        if (!includesBlock.includes(firstWord) && line.parentBlock.includes('includes')) {
+            error.push({
+                line: line.index,
+                error: `INCLUDES Block can only host lines of type = ["//", "*", "*/", "#include"...]. Statement: - ${trimmedLine}`,
+                type: 'Critical Rule',
+                priority: 1});
+        };
 
-    return { errors , amount : errors.length};
-}
+        if (!variablesBlock.includes(firstWord) && line.parentBlock.includes('variables')) {
+            error.push({
+                line: line.index,
+                error: `VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - ${trimmedLine}`,
+                type: 'Critical Rule',
+                priority: 1});
+        };
 
-async function checkDeclarationBlockOrder(block, blocks) {
-    let errors = [];
-    let nonDeclarationSeen = false;  // To track if any non-declaration statement was seen
-
-    // Filter to get all lines in the current function block if the block is a function type
-    if (functionBlocks.includes(block.parentBlock)) {
-        const functionBlockLines = blocks.filter(b => b.parentBlock === block.parentBlock);
-
-        for (let line of functionBlockLines) {
-            const trimmedLine = line.statement.trim();
-            let firstWord = trimmedLine.split(/\s+/)[0];
-
-            if (firstWord === 'const') {
-                firstWord = firstWord.concat(' ', trimmedLine.split(/\s+/)[1]);
-            }
-
-            // Check if the line is a data type declaration
-            if (dataTypes.includes(firstWord)) {
-                if (nonDeclarationSeen) {
-                    // If non-declaration statements were seen before this declaration
-                    errors.push({ line: line.index, error: `Variable declaration should happen at the start of a function block. Statement: - ${trimmedLine}`});
-                }
-            } else if (firstWord !== ''){
-                // Any statement that's not a declaration sets this flag
-                nonDeclarationSeen = true;
-            }
-        }
+    } catch (error) {
+        console.log(error);
     }
 
-    return { errors, amount: errors.length };
+
+
+    return [...error];
 }
 
-async function checkFunctionParameters(line, trimmedLine) {
+async function checkSemicolonUsage(line, trimmedLine){
+    let error = [];
+
+    let firstWord = trimmedLine.split(/\s+/)[0];
+
+    if (!line.statement.endsWith(';') && !line.statement.endsWith('}') &&
+        !trimmedLine.startsWith('//') && trimmedLine !== '' &&
+        !standaloneKeyWords.includes(firstWord) && !dataTypes.includes(firstWord) &&
+        !blockTypes.includes(firstWord) && !commentsKeyWords.includes(firstWord) &&
+        !line.statement.includes('/*') && !line.parentBlock.includes('function')) {
+        error.push({
+            line: line.index,
+            error: `Line statement should end with a semicolon. Statement: - ${trimmedLine}`,
+            type: 'Critical Rule',
+            priority: 1
+        });
+    }
+
+    return [...error];
+}
+
+async function checkInlineCurlyBrackets(line, trimmedLine){
+
+    let error = [];
+
+    let firstWord = trimmedLine.split(/\s+/)[0];
+
+    if (firstWord.match(/\b(for|while|do|if|else|variables)/) && !line.statement.includes('{')) {
+        error.push({
+            line: line.index,
+            error: `Opening curly bracket must be on the same line as the keyword for control structures. Statement: - ${trimmedLine}`,
+            type: 'Format Rules (Clang)',
+            priority: 2
+        });
+    }
+
+    return [...error];
+}
+
+
+
+async function checkDeclarationBlockOrder(line, trimmedLine, context) {
     let errors = [];
+    let firstWord = trimmedLine.split(/\s+/)[0];
+
+    // Check if the current line is within a function block
+    if (trimmedLine.includes('{')) {
+        // If a function block is encountered, reset the context
+        context.isInDeclarationBlock = true;
+    }
+
+    if (trimmedLine.includes('}')) {
+        // If a function block is encountered, reset the context
+        context.isInDeclarationBlock = false;
+    }
+
+
+    // Check if the line contains a variable declaration
+    if (functionBlocks.filter((e) => {return line.parentBlock.includes(e);}).length > 0  &&
+    dataTypes.includes(firstWord) && line.parentBlock !== 'function' && line.parentBlock !== 'notApplicable' ) {
+        // If a variable declaration is encountered and it's not the first line in the block
+        if (!context.isInDeclarationBlock) {
+            errors.push({
+                line: line.index,
+                error: `Variable declarations must be the first lines within curly brackets of a block. Statement: - ${trimmedLine}`,
+                type: 'Critical Rule',
+                priority: 1
+            });
+        }
+        context.isInDeclarationBlock = true;
+    } else if (!trimmedLine.includes('{') && trimmedLine !== ('')){
+        // If the line is not a variable declaration, update the context
+        context.isInDeclarationBlock = false;
+    }
+
+    return { errors: [...errors], context };
+}
+
+
+async function checkFunctionParameters(line, trimmedLine) {
+    let error = [];
 
     // Regular expression to capture potential function declarations
     // This regex looks for typical C-style function headers, potentially useful for your specific codebase syntax
@@ -199,19 +307,21 @@ async function checkFunctionParameters(line, trimmedLine) {
             // Count the number of basic types or struct declarations, if more than 1 and no commas, it's likely an error
             const typeCount = (paramTrim.match(/\b(byte|int|char|float|double|struct|enum)\b/g) || []).length;
             if (typeCount > 1) {
-                errors.push({
+                error.push({
                     line: line.index,
-                    error: `Missing comma to separate parameters in function declaration. Statement: - ${functionName}(${parameters})`
+                    error: `Missing comma to separate parameters in function declaration. Statement: - ${functionName}(${parameters})`,
+                    type: 'Critical Rule',
+                    priority: 1
                 });
             }
         });
     }
 
-    return { errors, amount: errors.length };
+    return [...error];
 }
 
 async function checkFunctionTypes(line, trimmedLine) {
-    let errors = [];
+    let error = [];
 
     // Regular expression to capture potential function declarations
     // This regex looks for typical C-style function headers, potentially useful for your specific codebase syntax
@@ -224,16 +334,18 @@ async function checkFunctionTypes(line, trimmedLine) {
         const errorType = match[1];
 
                 if (errorType.includes('[]')) {
-                    errors.push({
+                    error.push({
                         line: line.index,
-                        error: `Function declaration CANNOT be of type ARRAY, use Referenced variables to return array types. Statement: - ${functionName}`
+                        error: `Function declaration CANNOT be of type ARRAY, use Referenced variables to return array types. Statement: - ${functionName}`,
+                        type: 'Critical Rule',
+                        priority: 1
                     });
                 }
 
 
     }
 
-    return { errors, amount: errors.length };
+    return [...error];
 }
 
 
@@ -243,8 +355,8 @@ function cleanUpBlocks(blocks) {
         // Trim whitespace and check if the statement is just '{' or '}'
         const trimmedStatement = block.statement.trim();
         if (trimmedStatement === '{' || trimmedStatement === '}') {
-            // Set parentBlock to null if the condition is met
-            block.parentBlock = null;
+            // Set parentBlock to 'notApplicable' if the condition is met
+            block.parentBlock = 'notApplicable';
         }
 
     });
@@ -252,61 +364,133 @@ function cleanUpBlocks(blocks) {
     return blocks;
 }
 
+// Critical Compliance Rules
+async function checkCriticalRules(blocks) {
+    let errors = [];
+    let trimmedLine;
+    let results;
+    let context = { isInDeclarationBlock: false };
+
+    for (let index = 0; index < blocks.length; index++) {
+        let line = blocks[index];
+        trimmedLine = line.statement.trim();
+
+        results = await checkBlockImplementation(line, trimmedLine);
+
+        if (results.length > 0) {
+            errors.push( results[0] );
+        }
+
+        results = await checkSemicolonUsage(line, trimmedLine);
+
+        if (results.length > 0) {
+            errors.push( results[0] );
+        }
+
+        results = await checkVariableDeclaration(line, trimmedLine, context);
+
+        if (results.errors.length > 0) {
+            context = results.context;
+            errors.push( results.errors[0] );
+        }
+
+        results = await checkDeclarationBlockOrder(line, trimmedLine, context);
+
+        if (results.errors.length > 0) {
+            context = results.context;
+            errors.push( results.errors[0] );
+        }
+
+        results = await checkFunctionParameters(line, trimmedLine);
+
+        if (results.length > 0) {
+            errors.push( results[0] );
+        }
+
+        results = await checkFunctionTypes(line, trimmedLine);
+
+        if (results.length > 0) {
+            errors.push( results[0] );
+        }
+
+
+
+
+    }
+
+    return [...errors];
+}
+
+// Clang Format and Other Middle-priority Rules
+async function checkClangFormatRules(blocks) {
+    let errors = [];
+    let trimmedLine;
+    let results;
+
+    for (let index = 0; index < blocks.length; index++) {
+        let line = blocks[index];
+        trimmedLine = line.statement.trim();
+
+        results = await checkInlineCurlyBrackets(line, trimmedLine);
+
+        if (results.length > 0) {
+            errors.push( results[0] );
+        }
+    }
+
+    return [...errors];
+}
+
+// Style Rules
+async function checkStyleRules(blocks) {
+    let errors = [];
+    let trimmedLine;
+    let results;
+
+
+    // for (let index = 0; index < blocks.length; index++) {
+    //     let line = blocks[index];
+    //     trimmedLine = line.statement.trim();
+
+    //     results = await checkInlineCurlyBrackets(line, trimmedLine);
+
+    //     if (results.length > 0) {
+    //         errors.push( results[0] );
+    //     }
+    // }
+
+    return [...errors];
+}
+
+
 async function lintCode(sourceCode) {
     const preprocessedCode = preprocessCode(sourceCode);
     const lines = preprocessedCode.split('\n');
     const serializedLines = serializeLines(lines);
     const cleanedBlocks = blocksSegregation(serializedLines);
     const blocks = cleanUpBlocks(cleanedBlocks);
-    let lintErrors = [];
-    let context = { isInDeclarationBlock: false };
+    // let lintErrors = [];
+    // let context = { isInDeclarationBlock: false };
+    let criticalErrors;
+    let clangErrors;
+    let styleErrors
 
-    // Use a set to track which function blocks have been checked
-    let checkedFunctionBlocks = new Set();
-
-    for (let block of blocks) {
-        let trimmedLine = block.statement.trim();
-
-        // let variableCheck = await checkVariableDeclaration(block, trimmedLine);
-        // if (variableCheck.errors.length > 0) {
-        //     lintErrors = lintErrors.concat(variableCheck.errors);
-        // }
-
-        // Update the context based on checks
-        let variableCheck = await checkVariableDeclaration(block, trimmedLine, context);
-        context = variableCheck.context;
-        if (variableCheck.errors.length > 0) {
-            lintErrors = lintErrors.concat(variableCheck.errors);
+        criticalErrors = await checkCriticalRules(blocks);
+        // Stop further checks if critical C11 compliance errors are found
+        if (criticalErrors.length > 0) {
+            return criticalErrors;  // Optionally return here to focus on critical issues
         }
 
-        let blockCheck = await checkBlockImplementation(block, trimmedLine);
-        if (blockCheck.errors.length > 0) {
-            lintErrors = lintErrors.concat(blockCheck.errors);
+        clangErrors = await checkClangFormatRules(blocks);
+        // Could also decide to stop after formatting errors, if they are considered severe enough
+        // if (clangErrors.length > 0 && config.stopOnFormattingErrors) {
+        if (clangErrors.length > 0) {
+            return [...criticalErrors, ...clangErrors];
         }
 
-        // Check declaration block order only once per function block
-        if (functionBlocks.includes(block.parentBlock) && !checkedFunctionBlocks.has(block.parentBlock)) {
-            let orderCheck = await checkDeclarationBlockOrder(block, blocks);
-            if (orderCheck.errors.length > 0) {
-                lintErrors = lintErrors.concat(orderCheck.errors);
-            }
-            checkedFunctionBlocks.add(block.parentBlock);
-        }
+        styleErrors = await checkStyleRules(blocks);
 
-        let functionParametersCheck = await checkFunctionParameters(block, trimmedLine);
-        if (functionParametersCheck.errors.length > 0) {
-            lintErrors = lintErrors.concat(functionParametersCheck.errors);
-        }
-
-        let functionTypesCheck = await checkFunctionTypes(block, trimmedLine);
-        if (functionTypesCheck.errors.length > 0) {
-            lintErrors = lintErrors.concat(functionTypesCheck.errors);
-        }
-
-
-    }
-
-    return lintErrors;
+    return [...criticalErrors, ...clangErrors, ...styleErrors];
 }
 
 
