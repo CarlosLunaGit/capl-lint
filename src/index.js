@@ -3,7 +3,7 @@ const express = require('express');
 // const bodyParser = require('body-parser');
 const morgan = require('morgan');
 // const cors = require('cors');
-const {lintCode} = require('./core/lintCode.js');
+const {lintCode} = require('./core/lintCode.js').default;
 
 console.log(process.env.NODE_ENV);
 

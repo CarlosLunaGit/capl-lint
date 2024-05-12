@@ -1,11 +1,8 @@
-const { dataTypes,
-    blockTypes,
-    includesBlock,
-    standaloneKeyWords,
-    variablesBlock,
-    functionBlocks,
-    commentsKeyWords } = require('../types/types');
-let functionStart = false;
+import { dataTypes, blockTypes, includesBlock, standaloneKeyWords, variablesBlock, functionBlocks, commentsKeyWords } from '../types/types';
+
+import * as stringOps from '../utils/strings';
+import * as identifier from '../utils/identifier';
+
 
 function preprocessCode(input) {
 
@@ -38,7 +35,7 @@ function blocksSegregation(lines) {
      * Regular expression for detecting function declarations and block headers.
      * This regex is updated to match block headers and function declarations.
      */
-    const blockPattern = /(?:(\/\*.*|includes|variables) ?(?:({))?|(testcase|void|int|long|float|double|char|byte|word|dword|int64|gword).* (?:(\w+)) ?(\([^)]*\)) ?(?:({))?|(for|while|do|if|else) ?(\([^)]*\))? ?(?:({))?)/;
+    const blockPattern = /(?:(\/\*.*|includes|variables) ?(?:({))?|(testcase|void|int|long|float|double|char|byte|word|dword|int64|gword).* (?:(\w+)) ?(\([^)]*\)) ?(?:({))?|(for|while|do|if|else) ?(\([^)]*\))? ?(?:({))?|(?:(\w+)) ?(\([^)]*\)))/;
 
     lines.forEach((line, index) => {
         const trimmedLine = line.statement.trim();
@@ -56,7 +53,9 @@ function blocksSegregation(lines) {
                 hasOpeningBracketFunctionType,
                 controlStructureType,
                 controlStructureParameters,
-                hasOpeningBracketControlStructureType] = match;
+                hasOpeningBracketControlStructureType,
+                functionCallType,
+                functionCallParameters] = match;
 
             const isOpeningBracketInline = (
                 hasOpeningBracketBlockType === '{' ||
@@ -65,7 +64,8 @@ function blocksSegregation(lines) {
 
             const isFunctionDeclaration = !!functionDeclarationType;
             const isControlStructure = !!controlStructureType;
-            const blockName = isFunctionDeclaration ? 'function' : isControlStructure ? controlStructureType : blockType;
+            const isFunctionCall = !!functionCallType;
+            const blockName = isFunctionDeclaration ? 'function' : isControlStructure ? controlStructureType : isFunctionCall ? 'functionCall' : blockType;
 
             // Determine the parent block based on nesting level
             let parentBlock = currentBlockType;
@@ -373,7 +373,9 @@ async function checkCriticalRules(blocks) {
 
     for (let index = 0; index < blocks.length; index++) {
         let line = blocks[index];
+
         trimmedLine = line.statement.trim();
+        trimmedLine = stringOps.removeInlineComments(trimmedLine);
 
         results = await checkBlockImplementation(line, trimmedLine);
 
@@ -462,6 +464,27 @@ async function checkStyleRules(blocks) {
     return [...errors];
 }
 
+async function testTypesIdentifier(blocks) {
+    let errors = [];
+    let trimmedLine;
+    let results;
+
+
+    for (let index = 0; index < blocks.length; index++) {
+        let line = blocks[index];
+        trimmedLine = line.trim();
+
+        results = await identifier.identifyCAPLStatementType(trimmedLine);
+
+
+        errors.push( results[0] );
+
+    }
+
+    return [...errors];
+}
+
+
 
 async function lintCode(sourceCode) {
     const preprocessedCode = preprocessCode(sourceCode);
@@ -490,10 +513,20 @@ async function lintCode(sourceCode) {
 
         styleErrors = await checkStyleRules(blocks);
 
+
     return [...criticalErrors, ...clangErrors, ...styleErrors];
 }
 
+async function identicationTypesTest(sourceCode) {
 
-module.exports = {
-    lintCode
+    let lines = sourceCode.split('\n');
+    let testTypes = await testTypesIdentifier(lines);
+
+    return [...testTypes];
+}
+
+
+export default {
+    lintCode,
+    identicationTypesTest
 }

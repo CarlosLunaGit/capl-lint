@@ -1,21 +1,11 @@
-const dataTypes = ['void', 'byte', 'word', 'dword', 'int', 'long', 'int64', 'gword','char','float','double','struct','enum',
+export const dataTypes = ['void', 'byte', 'word', 'dword', 'int', 'long', 'int64', 'gword','char','float','double','struct','enum',
 'const byte', 'const word', 'const dword', 'const int', 'const long', 'const int64', 'const gword','const char','const float','const double','const struct','const enum'];
-const blockTypes = ['testcase', 'includes','variables','/*','/**', 'for', 'while', 'do', 'if', 'else'];
-const standaloneKeyWords = ['includes','variables','#include','{', '}'];
-const commentsKeyWords = ['/*','/**', '//', '*', '*/'];
-const includesBlock = ['{', '}', 'includes', '//', '*', '*/', '#include', ''];
-const variablesBlock = ['{', '}', 'variables', '//', '*', '*/', '', 'byte', 'word', 'dword', 'int', 'long', 'int64', 'gword','char','float','double','struct','enum',
+export const blockTypes = ['testcase', 'includes','variables','/*','/**', 'for', 'while', 'do', 'if', 'else'];
+export const standaloneKeyWords = ['includes','variables','#include','{', '}'];
+export const commentsKeyWords = ['/*','/**', '//', '*', '*/'];
+export const includesBlock = ['{', '}', 'includes', '//', '*', '*/', '#include', ''];
+export const variablesBlock = ['{', '}', 'variables', '//', '*', '*/', '', 'byte', 'word', 'dword', 'int', 'long', 'int64', 'gword','char','float','double','struct','enum',
 'const byte', 'const word', 'const dword', 'const int', 'const long', 'const int64', 'const gword','const char','const float','const double','const struct','const enum'];
-const functionBlocks = ['function','if'];
-const noSemicolonNeeded = ['testcase', 'includes','variables','/*','/**', 'for', 'while', 'do', 'if', 'else', '//', '*', '*/', '#include', '','{', '}'];
-
-module.exports = {
-    dataTypes,
-    blockTypes,
-    standaloneKeyWords,
-    includesBlock,
-    variablesBlock,
-    functionBlocks,
-    commentsKeyWords,
-    noSemicolonNeeded
-}
+export const functionBlocks = ['function','if'];
+export const noSemicolonNeeded = ['testcase', 'includes','variables','/*','/**', 'for', 'while', 'do', 'if', 'else', '//', '*', '*/', '#include', '','{', '}'];
+export const kinds = ['VariableDeclaration'];
