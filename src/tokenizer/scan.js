@@ -1,5 +1,5 @@
 import * as errorHandler from '../parser/errors.js';
-import { includesSpec, variablesSpec } from './specs.js';
+import { includesSpec, variablesSpec, functionsSpec } from './specs.js';
 import { createToken } from '../types/tokens.js';
 
 
@@ -16,18 +16,10 @@ export function eatValue(val, parser, token) {
 }
 
 export function see(parser, token, tokenizer, specType){
-
-    // let updateCursor = tokenizer._cursor + token.tokenValue.length
-    // tokenizer._cursor = updateCursor;
-
+    let errandToken = {};
     token = scanNextToken(parser, token, tokenizer, specType)
     parser._lookahead = token;
 
-    // if (tokenizer.isEOB()) {
-    //     return token
-    // } else {
-    //     return token
-    // }
     return token
 
 }
@@ -37,17 +29,18 @@ export function scanNextToken(parser, token, tokenizer, specType){
     if (!tokenizer.hasMoreTokens()) {
         return null;
     }
-
+    let save;
     let specsArray =
     specType == "IncludesBody" ? includesSpec :
-    specType == "VariblesBody" ? variablesSpec : [];
+    specType == "VariblesBody" ? variablesSpec :
+    specType == "FunctionsBody" ? functionsSpec : [];
 
     const string = tokenizer._string.slice(tokenizer._cursor);
 
     for (const [tokenType, regexp] of specsArray) {
         const tokenResult = tokenizer._match(regexp, string);
 
-        // save = tokenResult;
+        save = tokenResult;
         if (tokenResult == null) {
             continue;
         }
@@ -65,7 +58,7 @@ export function scanNextToken(parser, token, tokenizer, specType){
             tokenResult.tokenValue,
             tokenResult.tokenMatch);
     }
-
-    throw new SyntaxError(`Unexpected token: "${string[0]}"`);
+    errorHandler._unexpected(`"${string[0]}"`, '', parser);
+    // throw new SyntaxError(`Unexpected token: "${string[0]}"`);
 
 }

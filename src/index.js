@@ -1,24 +1,32 @@
-require('dotenv').config();
-const express = require('express');
+import dotenv from 'dotenv';
+dotenv.config();
+import express, { json, urlencoded } from 'express';
 // const bodyParser = require('body-parser');
-const morgan = require('morgan');
+import morgan from 'morgan';
 // const cors = require('cors');
-const {lintCode} = require('./core/lintCode.js').default;
+import {Parser} from './parser/parser.js';
 
 console.log(process.env.NODE_ENV);
 
 const app = express();
-app.use(express.json())
-app.use(express.urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
+app.use(json())
+app.use(urlencoded({ extended: true })) // for parsing application/x-www-form-urlencoded
 
 // app.use(cors());
 app.use(morgan('dev'));
 // app.use(bodyParser.json());
 
 app.post('/lint', async (req, res, next) => {
+    const parser = new Parser();
     console.log(req.body);
     const code = req.body.code;
-    const errors = await lintCode(code);
+    // const errors = await lintCode(code);
+    // let normalized = code.replace(/\\r\\n/g, '\n');
+    const parserHandler = parser.parse(code);
+    parserHandler.mainLoop();
+    console.log(parserHandler.errors);
+    console.log(parserHandler.sysErrors);
+    const errors = parserHandler.errors;
     res.json({ errors });
     next;
 });
@@ -34,4 +42,4 @@ if (process.env.NODE_ENV !== 'test') {
 }
 // console.log('Exporting app:', app);
 // Change here: Export app directly without listening
-module.exports = app;
+export default app;

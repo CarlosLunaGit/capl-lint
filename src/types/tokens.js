@@ -18,7 +18,7 @@ export function tokenToString(token) {
     let sKind = token.kind
     while (sKind.length < 18) { sKind = " " + sKind }
 
-    const sValue = token.value
+    const sValue = token.tokenValue
 
     return (sRow + ":" + sCol + sKind + " " + sValue)
 }
@@ -29,8 +29,8 @@ function Token(row, col, kind, value, matches) {
     this.row = row
     this.col = col
     this.kind  = kind
-    this.value = value
-    this.matches = matches
+    this.tokenValue = value
+    this.tokenMatch = matches
     // during declaration:
     this.isImport = false
     this.isConstant = false

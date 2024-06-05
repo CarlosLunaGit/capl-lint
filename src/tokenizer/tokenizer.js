@@ -1,10 +1,11 @@
 import { createToken, tokenToString } from '../types/tokens.js';
 import { blocksSpec } from './specs.js';
 import * as register from '../parser/register.js';
-import * as functions from './functions.js'
+import * as functions from './functionsMaster.js'
 import * as branchController from './branches.js'
 import * as scan from './scan.js'
 import { Parser } from '../parser/parser.js';
+import * as errorHandler from '../parser/errors.js';
 
 /**
  * Tokenizer class.
@@ -31,13 +32,16 @@ export class Tokenizer {
      *
      */
     _match(regexp, string){
+
         const matched = regexp.exec(string);
 
         if (matched == null){
             return null;
         }
-        // this._currentRow = this.getLineWithCursor();
-        // this._currentCol = this.getColumnWithCursor(String(matched[0].split('\n')[0]).length)
+
+        console.log( "Match for : " + regexp )
+        console.log( matched[0] )
+
         this._cursor += matched[0].length;
         return { tokenValue: matched[0], tokenMatch: matched.groups, currentRow: this._currentRow, currentCol:this._currentCol }
     }
@@ -81,7 +85,7 @@ export class Tokenizer {
         return this._cursor < this._string.length;
     }
 
-    getLineWithCursor() {
+    getLineWithCursor(offset = 0) {
         // Split the source code into lines
         const lines = this._rows;
 
@@ -98,7 +102,7 @@ export class Tokenizer {
             cumulativeChars += lineLength + 1; // Add 1 for the newline character
 
             // Check if the cursor position falls within this line
-            if (cumulativeChars >= this._cursor) {
+            if (cumulativeChars >= this._cursor - offset) {
                 // If the cursor position is within this line, return the line number and the line itself
                 return lineNumber + 1;
             }
@@ -112,11 +116,11 @@ export class Tokenizer {
         return lineNumber;
     }
 
-    getColumnWithCursor(offset) {
+    getColumnWithCursor(offset = 0, keyword = "") {
         // Initialize variables to track cumulative character count and current line number
         let cumulativeChars = 0;
         let columnNumber = 0;
-        offset = offset -1;
+
 
         // Iterate through each line
         for (let i = 0; i < this._rows.length; i++) {
@@ -127,12 +131,26 @@ export class Tokenizer {
             cumulativeChars += lineLength + 1; // Add 1 for the newline character
 
             // Check if the cursor position falls within this line
-            if (cumulativeChars >= this._cursor) {
-                // Calculate the column number by subtracting the cumulative character count from the cursor position
-                columnNumber = this._cursor - (cumulativeChars - lineLength);
-                // Return the column number
-                return columnNumber - offset;
+            if (keyword != "" ) {
+
+
+                if (cumulativeChars >= (this._cursor - offset) && line.includes(keyword)) {
+                    // Calculate the column number by subtracting the cumulative character count from the cursor position
+                    columnNumber = this._cursor - (cumulativeChars - lineLength - 1);
+                    // Return the column number
+                    return line.indexOf(keyword);
+                    // return columnNumber - offset;
+                }
+
+            } else {
+                if (cumulativeChars >= this._cursor) {
+                    // Calculate the column number by subtracting the cumulative character count from the cursor position
+                    columnNumber = this._cursor - (cumulativeChars - lineLength - 1);
+                    // Return the column number
+                    return columnNumber - offset;
+                }
             }
+
         }
 
         // If the cursor position is beyond the end of the source code, return the last column
@@ -166,9 +184,11 @@ export class Tokenizer {
 
             if (tokenType == 'INCLUDESBLOCK' ||
                 tokenType == 'VARIABLESBLOCK' ||
-                tokenType == 'FUNCTIONSBLOCK') {
-                this._currentRow = this.getLineWithCursor();
-                this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue.split('\n')[0]).length)
+                tokenType == 'FUNCTIONSBLOCK'||
+                tokenType == 'IF'||
+                tokenType == 'ELSE') {
+                this._currentRow = this.getLineWithCursor(String(tokenResult.tokenValue).length);
+                this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length, String(tokenResult.tokenValue).split('\n')[0])
                 return this.getBlockBody(tokenResult, tokenType, this._parentParser);
             }
 
@@ -181,8 +201,8 @@ export class Tokenizer {
                 tokenResult.tokenValue,
                 tokenResult.tokenMatch);
         }
-
-        throw new SyntaxError(`Unexpected token: "${string[0]}"`);
+        errorHandler._unexpected(`"${string[0]}"`, '', this._parentParser);
+        // throw new SyntaxError(`Unexpected token: "${string[0]}"`);
 
     }
 
@@ -209,6 +229,20 @@ export class Tokenizer {
                 break;
 
             case 'FUNCTIONSBLOCK':
+                this.branchController.openBranch();
+                parser.tokens.push(parser.FunctionsBlock(token, this._parentParser) );
+                functions.eatGlobalFunction(branchController, parser, token, this)
+                break;
+
+            case 'IF':
+                this.branchController.openBranch();
+                parser.tokens.push(parser.ifCall(token, this._parentParser) );
+                functions.eatGlobalFunction(branchController, parser, token, this)
+                break;
+
+            case 'ELSE':
+                this.branchController.openBranch();
+                parser.tokens.push(parser.elseCall(token, this._parentParser) );
                 functions.eatGlobalFunction(branchController, parser, token, this)
                 break;
 
@@ -221,15 +255,19 @@ export class Tokenizer {
     eatOpenBlock(val, token) {
         this._blocks.push(val)
 
-        // token.currentRow = this.getLineWithCursor();
-        // token.currentCol = this.getColumnWithCursor(String(token.tokenValue.split('\n')[0]).length)
-        scan.eatValue("{", this._parentParser, token)
+        let buildToken = scan.eatValue("{", this._parentParser, token)
+        if (buildToken.tokenMatch.closeCurly == "}") {
+            return false
+        } else {
+            return true
+        }
+
     }
 
     eatCloseBlock(token, parser) {
 
         this.addToken(token, parser)
-        // branchController.closeBranch()
+
         this._lastClosedBlock = this._blocks.pop()
         if (this._lastClosedBlock == "try") { forceEatCatch() }
     }
@@ -255,14 +293,37 @@ export class Tokenizer {
                     parser.pushToken(parser.StringLiteral)
 
                     break;
+
+                case 'VARIABLEDECLARATION':
+                    parser._lookBehind = parser._lookahead;
+                    parser.pushToken(parser.VariableDeclaration)
+
+                    break;
+
+                case 'INITIALIZATIONSTATEMENT':
+                    parser._lookBehind = parser._lookahead;
+                    parser.pushToken(parser.InitializationStatement)
+
+                    break;
+
+                case 'IF':
+                    parser._lookBehind = parser._lookahead;
+                    parser.pushToken(parser.ifCall)
+
+                case 'ELSE':
+                    parser._lookBehind = parser._lookahead;
+                    parser.pushToken(parser.elseCall)
+
+                    break;
                 case 'CLOSINGBLOCK':
                     parser._lookBehind = parser._lookahead;
                     parser.pushToken(parser.ClosingBlockLiteral)
-                    // parser.tokens.push(parser.ClosingBlockLiteral(token, parser));
+
                     break;
 
                 default:
-                    throw new SyntaxError(`Literal: unexpected literal production`);
+                    errorHandler._unexpected(token, '', parser)
+                    // throw new SyntaxError(`Literal: unexpected literal production`);
 
             }
         } while (this.isEOB() === false);

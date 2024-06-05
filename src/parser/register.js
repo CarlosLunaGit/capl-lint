@@ -17,27 +17,27 @@ export function registerPublicVariable(token, isConstant, parser) {
 
 export function registerPrivateVariable(token, isConstant) {
     if (isConstant) { token.isConstant = isConstant }
-    const name = token.value
+    const name = token.tokenValue
     register(name, token)
 }
 
 // functions //////////////////////////////////////////////////////////////////
 
 export function registerPublicFunction(token) {
-    const name = token.value
+    const name = token.tokenValue
     register(name, token)
     currentFunction = name
     rat.exports[name] = token
 }
 
 export function registerPrivateFunction(token) {
-    const name = token.value
+    const name = token.tokenValue
     register(name, token)
     currentFunction = name
 }
 
 export function registerInnerFunction(token) {
-    const fullname = branchedName(token.value)
+    const fullname = branchedName(token.tokenValue)
     register(fullname, token)
 }
 
@@ -48,13 +48,13 @@ export function registerAnonymousFunction() {
 // parameters and local variables /////////////////////////////////////////////
 
 export function registerParameter(token) {
-    const fullname = branchedName(token.value)
+    const fullname = branchedName(token.tokenValue)
     register(fullname, token)
 }
 
 export function registerLocalVariable(token, isConstant) {
     if (isConstant) { token.isConstant = isConstant }
-    const fullname = branchedName(token.value)
+    const fullname = branchedName(token.tokenValue)
     register(fullname, token)
 }
 
@@ -80,7 +80,7 @@ function register(statement, token, parser) {
 ///////////////////////////////////////////////////////////////////////////////
 
 export function markUsed(token) { // not really marking the token
-    const name = token.value
+    const name = token.tokenValue
     if (builtins.indexOf(name) != -1) { return }
     //
     const fullname = branchedName(name)

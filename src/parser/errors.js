@@ -19,6 +19,13 @@ export function unexpected(token, msg = '', parser) {
     error(token.row, token.col, msg, parser)
 }
 
+export function _unexpected(token, msg = '', parser) {
+
+    parser.sysErrors.push({
+        error: JSON.stringify(token),
+        msg: msg});
+}
+
 export function unexpectedScope(token, parser) {
     const msg = makeUnexpectedScopeMessage(token)
     error(token.row, token.col, msg, parser)
@@ -47,14 +54,14 @@ export function error(row, col, msg, parser) {
 // private helper functions ///////////////////////////////////////////////////
 
 function makeUnexpectedMessage(token) {
-    let msg = `On statement "${token.statement || token.value}"`
+    let msg = `On statement "${token.statement || token.tokenValue}"`
     if (token.kind == "end-of-line") { msg = "unexpected end of line" }
     if (token.kind == "end-of-file") { msg = "unexpected end of file" }
     return msg
 }
 
 function makeUnexpectedScopeMessage(token) {
-    let msg = `Unexpected token out of any block scope (Includes, Variables or Function scope ) ${token.statement || token.value}`
+    let msg = `Unexpected token out of any block scope (Includes, Variables or Function scope ) ${token.statement || token.tokenValue}`
     if (token.kind == "end-of-line") { msg = "unexpected end of line" }
     if (token.kind == "end-of-file") { msg = "unexpected end of file" }
     return msg

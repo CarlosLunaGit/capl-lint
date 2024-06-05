@@ -15,7 +15,14 @@ export const blocksSpec = [
 
     // FunctionBlock:
 
-    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s*(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()?\s*(?<arguments>.*?)?\s*(?<closeParen>\))?\s*(?<openCurly>\{)/],
+    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()\s*(?<arguments>.*?)?\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
+
+    // ---------------------------------------
+    // IF block:
+
+    ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
+    ['ELSE', /^(?<elsekey>else)\s*(?<openCurly>\{)/],
+    ['ELSEIF', /^(?<elsekey>else if)\s*(?<opencurlyblock>\{)/],
 
 
     // ---------------------------------------
@@ -51,24 +58,29 @@ export const blocksSpec = [
     // ---------------------------------------
     // #Includes:
 
-    ['INCLUDE', /^(?<openKey>#)(?<keyword>include)\s*(?<dir>".*")/],
+    [null, /^(?<openKey>#)(?<keyword>include)\s*(?<dir>".*")/],
 
 
     // ---------------------------------------
     // Variable Declaration:
 
-    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
+    [null, /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
 
     // ---------------------------------------
     // Function Call:
 
-    ['FUNCTIONCALL', /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
+    [null, /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
+
+
+    // ---------------------------------------
+    // Return Statement:
+
+    ['RETURN', /^(?<returnStatement>return)\s*(?<semicolon>;?)/],
 
     // ---------------------------------------
     // Closing block:
 
     ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
-
 
 ]
 
@@ -172,11 +184,91 @@ export const variablesSpec = [
     ['STRING', /^"[^"]*"/],
     ['STRING', /^'[^']*'/],
 
+
+
+    // ---------------------------------------
+    // #Includes:
+
+    ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")\s*(?<semicolon>;)?/],
+
+
+    // ---------------------------------------
+    // Initialization Statement:
+
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
+
+    // ---------------------------------------
+    // Variable Declaration:
+
+    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
+
+    ['VARIABLEDECLARATION', /^(?<structKeyword>struct) +(?<type>\w+) +(?<name>\w+)(?<semicolon>;)/],
+
+
+    // ---------------------------------------
+    // Function Call:
+
+    ['FUNCTIONCALL', /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
+
+    // ---------------------------------------
+    // Closing block:
+
+    ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
+
+            // ---------------------------------------
+    // Blocks
+    // FunctionBlock:
+
+    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s*(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()?\s*(?<arguments>.*?)?\s*(?<closeParen>\))?\s*(?<openCurly>\{)/],
+
+]
+
+export const functionsSpec = [
+
+
+
+    // ---------------------------------------
+    // Whitespace:
+
+    [null, /^\s+/,],
+
+    // ---------------------------------------
+    // Comments:
+
+    // Skip single-line comments:
+    [null, /^\/\/.*/],
+
+    // Skip multi-line comments:
+    [null, /^\/\*[\s\S]*?\*\//],
+
+    // ---------------------------------------
+    // Semicolon:
+
+    ['SEMICOLON', /^;+/],
+
+    // ---------------------------------------
+    // Numbers:
+
+    ['NUMBER', /^\d+/],
+
+    // ---------------------------------------
+    // Strings:
+
+    ['STRING', /^"[^"]*"/],
+    ['STRING', /^'[^']*'/],
+
         // ---------------------------------------
     // Blocks
     // FunctionBlock:
 
     ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s*(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()?\s*(?<arguments>.*?)?\s*(?<closeParen>\))?\s*(?<openCurly>\{)/],
+
+    // ---------------------------------------
+    // IF block:
+
+    ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
+    ['ELSE', /^(?<elsekey>else)\s*(?<opencurlyblock>\{)/],
+    ['ELSEIF', /^(?<elsekey>else if)\s*(?<opencurlyblock>\{)/],
 
 
     // ---------------------------------------
@@ -191,14 +283,25 @@ export const variablesSpec = [
     ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
 
     // ---------------------------------------
+    // Initialization Statement:
+
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
+
+    // ---------------------------------------
     // Function Call:
 
-    ['FUNCTIONCALL', /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
+    ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
 
     // ---------------------------------------
     // Closing block:
 
     ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
+
+    // ---------------------------------------
+    // Return Statement:
+
+    ['RETURN', /^(?<returnStatement>return)\s*(?<semicolon>;?)/],
+
 
 
 

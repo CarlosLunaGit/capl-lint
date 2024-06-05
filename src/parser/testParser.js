@@ -50,6 +50,15 @@ const program = `
 
             }
 
+        void MainTest ()
+            {
+            int ret,i;
+            int nr_of_ecus=0;
+            long returnval;
+
+            Init(nr_of_ecus, 1);
+            write("nr_of_ecus is %d",nr_of_ecus)
+            }
 
     `;
 
@@ -64,44 +73,4 @@ console.log(parserHandler.tokenizer.branchController.closedBranches);
 parserHandler.mainLoop();
 
 console.log(parserHandler.errors);
-
-
-
-
-//         byte[] myFunctionOfTypeArray)
-//         {
-
-//             int x = 10;
-//             int y = 20;
-//             int z;
-//             z = x + y;
-//             // some comments
-//             if (1){
-//             write("%d",z);
-//                 write("%d",w);
-//             }
-//             return [];
-
-//             // Function Call
-//             exampleFunction(arg1, arg2);
-
-//             exampleFunction2(arg1, arg2)
-
-//             /**
-//              * Documentation comment
-//              */
-//              22
-//             "hello"
-//             // Number:
-//             42
-//             'Carlos'
-//         }
-
-//         /**
-//          * Documentation comment
-//          */
-//          22
-//         "hello"
-//         // Number:
-//         42
-//         'Carlos'
+console.log(parserHandler.sysErrors);

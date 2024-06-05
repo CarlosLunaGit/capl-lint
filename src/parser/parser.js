@@ -14,9 +14,11 @@ export class Parser {
      */
     constructor() {
         this.sourceFile = '';
+        this.normalizedSourceFile = '';
         this.tokenizer = new Tokenizer();
         this.tokens = [];
         this.errors = [];
+        this.sysErrors = [];
         this._lookBehind;
         //
         this.imports = { } // fullpath: importObj
@@ -32,7 +34,9 @@ export class Parser {
      */
     parse(string) {
         this.sourceFile = string;
-        this.tokenizer.Init(string, this);
+        this.normalizedSourceFile = string.replace(/\\r\\n/g, '\n').replace(/\\\"/g, '"');
+        this.tokenizer.Init(this.normalizedSourceFile, this);
+
 
         // Prime the tokenizer to obtain the first
         // token which is our lookahead. The lookahead is
@@ -83,7 +87,11 @@ export class Parser {
      *  : VariableDeclaration
      */
     Literal() {
+        console.log(this._lookahead)
 
+        if (this._lookahead == undefined) {
+            return this.tokens
+        }
         do {
             switch (this._lookahead.kind) {
                 case 'SEMICOLON':
@@ -131,7 +139,8 @@ export class Parser {
                     break;
 
                 default:
-                    throw new SyntaxError(`Literal: unexpected literal production`);
+                    errorHandler._unexpected(this._lookahead, '', this)
+                    // throw new SyntaxError(`Literal: unexpected literal production`);
 
             }
         } while (this.tokenizer.isEOF(this.tokens) === false);
@@ -152,7 +161,7 @@ export class Parser {
 
         return {
             kind: 'StringLiteral',
-            statement: token.value.slice(1, -1),
+            statement: token.tokenValue.slice(1, -1),
             row: token.row,
             col: token.col,
             path: parser.tokenizer.branchController.getCurrentBranch()
@@ -172,7 +181,7 @@ export class Parser {
 
         return {
             kind: 'SemicolonLiteral',
-            statement: token.value.slice(1, -1),
+            statement: token.tokenValue.slice(1, -1),
             row: token.row,
             col: token.col,
             path: parser.tokenizer.branchController.getCurrentBranch()
@@ -192,7 +201,28 @@ export class Parser {
 
         return {
             kind: 'NumericLiteral',
-            statement: Number(token.value),
+            statement: Number(token.tokenValue),
+            row: token.row,
+            col: token.col,
+            path: parser.tokenizer.branchController.getCurrentBranch()
+        };
+    }
+
+    /**
+     * ReturnLiteral
+     *  : RETURN
+     *  ;
+     */
+    ReturnLiteral(token = false, parser) {
+        if (token == false) {
+            token = parser.read('RETURN');
+        }
+
+
+        return {
+            kind: 'ReturnLiteral',
+            statement: token.tokenValue,
+            semicolon: token.tokenMatch.semicolon || null,
             row: token.row,
             col: token.col,
             path: parser.tokenizer.branchController.getCurrentBranch()
@@ -212,16 +242,40 @@ export class Parser {
 
         return {
             kind: 'VariableDeclaration',
-            statement: token.value,
+            statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
-            modifier: token.matches.modifier || null,
-            dataType: token.matches.dataType || null,
-            name: token.matches.name || null,
-            arraySize: token.matches.arraySize || null,
-            assigment: token.matches.assigment || null,
-            value: token.matches.value || null,
-            semicolon: token.matches.semicolon || null,
+            modifier: token.tokenMatch.modifier || null,
+            dataType: token.tokenMatch.dataType || null,
+            name: token.tokenMatch.name || null,
+            arraySize: token.tokenMatch.arraySize || null,
+            assigment: token.tokenMatch.assigment || null,
+            value: token.tokenMatch.value || null,
+            semicolon: token.tokenMatch.semicolon || null,
+            path: parser.tokenizer.branchController.getCurrentBranch()
+        };
+    }
+
+    /**
+     * InitializationStatement
+     *  : INITIALIZATIONSTATEMENT
+     *  ;
+     */
+    InitializationStatement(token = false, parser) {
+        if (token == false) {
+            token = parser.read('INITIALIZATIONSTATEMENT');
+        }
+
+
+        return {
+            kind: 'InitializationStatement',
+            statement: token.tokenValue,
+            row: this.tokenizer._currentRow,
+            col: this.tokenizer._currentCol,
+            variable: token.tokenMatch.variable || null,
+            equals: token.tokenMatch.equals || null,
+            value: token.tokenMatch.value || null,
+            semicolon: token.tokenMatch.semicolon || null,
             path: parser.tokenizer.branchController.getCurrentBranch()
         };
     }
@@ -239,15 +293,70 @@ export class Parser {
 
         return {
             kind: 'FunctionCall',
-            statement: token.value,
+            statement: token.tokenValue,
             row: token.row,
             col: token.col,
-            name: token.matches.name || null,
-            openParen: token.matches.openParen || null,
-            arguments: token.matches.arguments || null,
-            closeParen: token.matches.closeParen || null,
-            semicolon: token.matches.semicolon || null,
+            name: token.tokenMatch.name || null,
+            openParen: token.tokenMatch.openParen || null,
+            arguments: token.tokenMatch.arguments || null,
+            closeParen: token.tokenMatch.closeParen || null,
+            semicolon: token.tokenMatch.semicolon || null,
             path: parser.tokenizer.branchController.getCurrentBranch()
+
+        };
+    }
+
+    /**
+     * ifCall
+     *  : IF
+     *  ;
+     */
+    ifCall(token = false, parser) {
+        if (token == false) {
+            token = parser.read('IF');
+        }
+
+
+        return {
+            kind: 'ifCall',
+            statement: token.tokenValue,
+            row: token.row,
+            col: token.col,
+            ifkey: token.tokenMatch.ifkey || null,
+            openParen: token.tokenMatch.openParen || null,
+            conditional: token.tokenMatch.conditional || null,
+            closeParen: token.tokenMatch.closeParen || null,
+            openCurly: token.tokenMatch.openCurly || null,
+            body: '',
+            closeCurly: null,
+            path: parser.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null
+
+        };
+    }
+
+    /**
+     * elseCall
+     *  : ELSE
+     *  ;
+     */
+    elseCall(token = false, parser) {
+        if (token == false) {
+            token = parser.read('ELSE');
+        }
+
+
+        return {
+            kind: 'elseCall',
+            statement: token.tokenValue,
+            row: token.row,
+            col: token.col,
+            elsekey: token.tokenMatch.elsekey || null,
+            openCurly: token.tokenMatch.openCurly || null,
+            body: '',
+            closeCurly: null,
+            path: parser.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null
 
         };
     }
@@ -271,7 +380,8 @@ export class Parser {
             openCurly: token.tokenMatch.openCurly || null,
             body: token.tokenMatch.body || '',
             closeCurly: token.tokenMatch.closeCurly || null,
-            path: parser.tokenizer.branchController.getCurrentBranch()
+            path: parser.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null
 
         };
     }
@@ -289,13 +399,13 @@ export class Parser {
 
         return {
             kind: 'IncludeStatement',
-            statement: token.value,
+            statement: token.tokenValue,
             row: token.row,
             col: token.col,
-            openKey: token.matches.openKey || null,
-            keyword: token.matches.keyword || null,
-            dir: token.matches.dir || null,
-            semicolon: token.matches.semicolon || null,
+            openKey: token.tokenMatch.openKey || null,
+            keyword: token.tokenMatch.keyword || null,
+            dir: token.tokenMatch.dir || null,
+            semicolon: token.tokenMatch.semicolon || null,
             path: parser.tokenizer.branchController.getCurrentBranch()
 
         };
@@ -321,7 +431,8 @@ export class Parser {
             openCurly: token.tokenMatch.openCurly || null,
             body: token.tokenMatch.body || '',
             closeCurly: token.tokenMatch.closeCurly || null,
-            path: parser.tokenizer.branchController.getCurrentBranch()
+            path: parser.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null
 
         };
     }
@@ -339,15 +450,41 @@ export class Parser {
 
         return {
             kind: 'FunctionsBlock',
-            statement: token.value,
-            row: token.row,
-            col: token.col,
-            dataType: token.matches.dataType || null,
-            name: token.matches.name || null,
-            openParen: token.matches.openParen || null,
-            arguments: token.matches.arguments || null,
-            closeParen: token.matches.closeParen || null,
-            openCurly: token.matches.openCurly || null,
+            statement: token.tokenValue,
+            row: this.tokenizer._currentRow,
+            col: this.tokenizer._currentCol,
+            dataType: token.tokenMatch.dataType || null,
+            name: token.tokenMatch.name || null,
+            openParen: token.tokenMatch.openParen || null,
+            arguments: token.tokenMatch.arguments || null,
+            closeParen: token.tokenMatch.closeParen || null,
+            body: token.tokenMatch.body || '',
+            openCurly: token.tokenMatch.openCurly || null,
+            closeCurly: token.tokenMatch.closeCurly || null,
+            path: parser.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null
+
+        };
+    }
+
+    /**
+     * ReturnStatement
+     *  : RETURN
+     *  ;
+     */
+    ReturnStatement(token = false, parser) {
+        if (token == false) {
+            token = parser.read('RETURN');
+        }
+
+
+        return {
+            kind: 'ReturnStatement',
+            statement: token.tokenValue,
+            row: this.tokenizer._currentRow,
+            col: this.tokenizer._currentCol,
+            returnStatement: token.tokenMatch.returnStatement || null,
+            semicolon: token.tokenMatch.semicolon || null,
             path: parser.tokenizer.branchController.getCurrentBranch()
 
         };
@@ -355,22 +492,33 @@ export class Parser {
 
     /**
      * ClosingBlockLiteral
-     *  : STRING
+     *  : CLOSINGBLOCK
      *  ;
      */
     ClosingBlockLiteral(token = false, parser) {
         let parentBlock
         if (token == false) {
             token = parser.read('CLOSINGBLOCK');
+
         }
 
         if (parser.tokenizer.branchController.getCurrentBranch() != '') {
             parentBlock = parser.tokens.filter(function (element) { return element.path == parser.tokenizer.branchController.getCurrentBranch()
-                && (element.kind.includes('IncludesBlock')||element.kind.includes('VariablesBlock')); });
+                && (element.kind.includes('IncludesBlock')
+                ||element.kind.includes('VariablesBlock')
+                ||element.kind.includes('FunctionsBlock')
+                ||element.kind.includes('ifCall')
+                ||element.kind.includes('elseCall')); });
 
-            if (parentBlock != null) {
-                parentBlock[0].closeCurly = token.value
+            for (let index = parentBlock.length - 1; index >= 0; index--) {
+                const isClosed = parentBlock[index].closedBlock != null;
+
+                if (isClosed == false) {
+                    parentBlock[index].closeCurly = token.tokenValue
+                    break;
+                }
             }
+
         }
 
         let localBranch = parser.tokenizer.branchController.getCurrentBranch();
@@ -378,7 +526,7 @@ export class Parser {
 
         return {
             kind: 'ClosingBlockLiteral',
-            statement: token.value,
+            statement: token.tokenValue,
             row: token.row,
             col: token.col,
             path: localBranch
@@ -394,17 +542,13 @@ export class Parser {
 
         return {
             kind: 'endOfFile',
-            statement: token.value,
+            statement: token.tokenValue,
             row: token.row,
             col: token.col,
             path: 'endOfFile'
 
         };
     }
-
-
-    // case 'FUNCTIONCALL':
-    //                 this.tokens.push(this.FunctionCall());
 
     read(tokenType) {
         const token = this._lookahead;
@@ -417,7 +561,7 @@ export class Parser {
 
         if (token.kind !== tokenType) {
             throw new SyntaxError(
-                `Unexpected token: "${token.value}", expected: "${tokenType}"`,
+                `Unexpected token: "${token.tokenValue}", expected: "${tokenType}"`,
             );
         }
 
@@ -442,6 +586,7 @@ export class Parser {
             if (token.kind == "IncludesBlock")  { this.eatIncludesBlock(token, this); continue }
             if (token.kind == "IncludeStatement")  { this.eatIncludeStatement(token, this); continue }
             if (token.kind == "VariablesBlock")  { this.eatVariablesBlock(token, this); continue }
+            if (token.kind == "FunctionsBlock")  { this.eatFunctionsBlock(token, this); continue }
 
 
             //TODO
@@ -452,9 +597,8 @@ export class Parser {
 
             if (token.kind == "FunctionCall")    { this.eatFunctionCall(token, false, false, this); continue }
             //TODO
+
             if (token.kind == "ClosingBlockLiteral")  { this.eatClossingLiteral(token, this); continue }
-
-
             if (token.kind == "endOfFile") { return }
             errorHandler.unexpected(token, '', this)
         }
@@ -485,7 +629,7 @@ export class Parser {
         // token = this.eat()
         // if (token.kind == "endOfFile") { return }
 
-        // if (token.value != "=") { errorHandler.unexpected(token '', parser) }
+        // if (token.tokenValue != "=") { errorHandler.unexpected(token '', parser) }
         // eatLiteralExpression()
 
     }
@@ -527,6 +671,18 @@ export class Parser {
     }
 
     eatVariablesBlock(token, parser) {
+
+        let openCurly = token.openCurly === null;
+        let closeCurly = token.closeCurly === null;
+        let semicolon = token.semicolon === ';';
+
+        if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
+        if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
+        if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
+
+    }
+
+    eatFunctionsBlock(token, parser) {
 
         let openCurly = token.openCurly === null;
         let closeCurly = token.closeCurly === null;
