@@ -1,8 +1,10 @@
 /**
  * Tokenizer spec.
  */
+/**
+ * Tokenizer spec.
+ */
 export const blocksSpec = [
-
     // ---------------------------------------
     // Blocks
     // IncludesBlock:
@@ -17,18 +19,16 @@ export const blocksSpec = [
 
     ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()\s*(?<arguments>.*?)?\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
 
-    // ---------------------------------------
     // IF block:
 
     ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
     ['ELSE', /^(?<elsekey>else)\s*(?<openCurly>\{)/],
     ['ELSEIF', /^(?<elsekey>else if)\s*(?<opencurlyblock>\{)/],
 
-
     // ---------------------------------------
     // Whitespace:
 
-    [null, /^\s+/,],
+    [null, /^\s+/],
 
     // ---------------------------------------
     // Comments:
@@ -55,34 +55,33 @@ export const blocksSpec = [
     ['STRING', /^"[^"]*"/],
     ['STRING', /^'[^']*'/],
 
-    // ---------------------------------------
     // #Includes:
 
-    [null, /^(?<openKey>#)(?<keyword>include)\s*(?<dir>".*")/],
+    ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")(?<semicolon>;)?/],
 
-
-    // ---------------------------------------
     // Variable Declaration:
 
-    [null, /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
+    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
+    ['VARIABLEDECLARATION', /^(?<structKeyword>struct) +(?<type>\w+) +(?<name>\w+)(?<semicolon>;)/],
 
-    // ---------------------------------------
+    // Initialization Statement:
+
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
+
     // Function Call:
 
-    [null, /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
+    ['FUNCTIONCALL', /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
+    ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
 
-
-    // ---------------------------------------
     // Return Statement:
 
     ['RETURN', /^(?<returnStatement>return)\s*(?<semicolon>;?)/],
 
-    // ---------------------------------------
     // Closing block:
 
     ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
+];
 
-]
 
 export const includesSpec = [
 

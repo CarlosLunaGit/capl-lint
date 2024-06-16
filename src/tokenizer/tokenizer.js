@@ -13,6 +13,7 @@ import * as errorHandler from '../parser/errors.js';
  * Lazily pulls a token from a stream.
  */
 export class Tokenizer {
+
     /**
      * Initializes the string
      */
@@ -26,6 +27,7 @@ export class Tokenizer {
         this._blocks = [];
         this._lastClosedBlock = "";
         this.branchController = branchController;
+        this._context = null;
     }
 
     /**
@@ -162,8 +164,7 @@ export class Tokenizer {
     /**
      * Obtains next token.
      */
-    getNextToken(){
-
+    getNextToken(context = null) {
         if (!this.hasMoreTokens()) {
             return null;
         }
@@ -172,38 +173,38 @@ export class Tokenizer {
 
         for (const [tokenType, regexp] of blocksSpec) {
             const tokenResult = this._match(regexp, string);
-
             save = tokenResult;
             if (tokenResult == null) {
                 continue;
             }
 
             if (tokenType == null) {
-                return this.getNextToken();
+                return this.getNextToken(context);
+            }
+
+            if (context) {
+                // Apply context-specific rules
+                if (context === 'INCLUDESBLOCK' && tokenType === 'CLOSINGBLOCK') {
+                    this._context = null;
+                    return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
+                }
+                // Additional context-specific logic here...
             }
 
             if (tokenType == 'INCLUDESBLOCK' ||
                 tokenType == 'VARIABLESBLOCK' ||
-                tokenType == 'FUNCTIONSBLOCK'||
-                tokenType == 'IF'||
-                tokenType == 'ELSE') {
+                tokenType == 'FUNCTIONSBLOCK') {
                 this._currentRow = this.getLineWithCursor(String(tokenResult.tokenValue).length);
-                this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length, String(tokenResult.tokenValue).split('\n')[0])
-                return this.getBlockBody(tokenResult, tokenType, this._parentParser);
+                this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length, String(tokenResult.tokenValue).split('\n')[0]);
+                this._context = tokenType;  // Set the context for nested tokens
+                return this.getNextToken(this._context);
             }
 
             this._currentRow = this.getLineWithCursor();
-            this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length)
-            return createToken(
-                this._currentRow,
-                this._currentCol,
-                tokenType,
-                tokenResult.tokenValue,
-                tokenResult.tokenMatch);
+            this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length);
+            return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
         }
         errorHandler._unexpected(`"${string[0]}"`, '', this._parentParser);
-        // throw new SyntaxError(`Unexpected token: "${string[0]}"`);
-
     }
 
     getBlockBody(token, tokenType, parser){

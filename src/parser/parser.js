@@ -91,35 +91,42 @@ export class Parser {
      *  : VariableDeclaration
      */
     Literal() {
-        console.log(this._lookahead)
+        console.log(this._lookahead);
 
         if (this._lookahead == undefined) {
-            return this.tokens
+            return this.tokens;
         }
         do {
+            this._lookahead = this.tokenizer.getNextToken(this._lookahead.kind);
+
+            if (!this._lookahead) {
+                break;
+            }
+
             switch (this._lookahead.kind) {
                 case 'SEMICOLON':
                     this._lookBehind = this._lookahead;
-                    this.pushToken(this.SemicolonLiteral)
-
+                    this.pushToken(this.SemicolonLiteral);
                     break;
 
                 case 'NUMBER':
                     this._lookBehind = this._lookahead;
-                    this.pushToken(this.NumericLiteral)
-
+                    this.pushToken(this.NumericLiteral);
                     break;
 
                 case 'STRING':
                     this._lookBehind = this._lookahead;
-                    this.pushToken(this.StringLiteral)
-
+                    this.pushToken(this.StringLiteral);
                     break;
 
                 case 'INCLUDESBLOCK':
                     this._lookBehind = this._lookahead;
-                    this.pushToken(this.IncludesBlock)
+                    this.pushToken(this.IncludesBlock);
+                    break;
 
+                case 'INCLUDE':
+                    this._lookBehind = this._lookahead;
+                    this.pushToken(this.IncludeStatement);
                     break;
 
                 case 'VARIABLESBLOCK':
@@ -132,30 +139,17 @@ export class Parser {
                     this.pushToken(this.FunctionsBlock);
                     break;
 
-                case 'VARIABLEDECLARATION':
-                    this._lookBehind = this._lookahead;
-                    this.pushToken(this.VariableDeclaration);
-                    break;
-
-                case 'FUNCTIONCALL':
-                    this._lookBehind = this._lookahead;
-                    this.pushToken(this.FunctionCall);
-                    break;
-
                 case 'CLOSINGBLOCK':
                     this._lookBehind = this._lookahead;
-                    this.pushToken(this.ClosingBlockLiteral)
-
+                    this.pushToken(this.ClosingBlockLiteral);
                     break;
 
                 default:
-                    errorHandler._unexpected(this._lookahead, '', this)
-                    // throw new SyntaxError(`Literal: unexpected literal production`);
-
+                    errorHandler._unexpected(this._lookahead, '', this);
             }
-        } while (this.tokenizer.isEOF(this.tokens) === false);
+        } while (!this.tokenizer.isEOF(this.tokens));
 
-        return this.tokens
+        return this.tokens;
     }
 
     /**
