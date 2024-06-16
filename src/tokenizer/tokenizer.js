@@ -237,7 +237,7 @@ export class Tokenizer {
             case 'IF':
                 this.branchController.openBranch();
                 parser.tokens.push(parser.ifCall(token, this._parentParser) );
-                functions.eatGlobalFunction(branchController, parser, token, this)
+                functions.eatGlobalNestedBlock(branchController, parser, token, this)
                 break;
 
             case 'ELSE':
@@ -326,7 +326,7 @@ export class Tokenizer {
                     // throw new SyntaxError(`Literal: unexpected literal production`);
 
             }
-        } while (this.isEOB() === false);
+        } while (this.isEOB() === false && token.kind != 'CLOSINGBLOCK');
     }
 
 }

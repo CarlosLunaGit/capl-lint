@@ -5,8 +5,8 @@
 import { Tokenizer } from '../tokenizer/tokenizer.js';
 import * as errorHandler from './errors.js';
 import * as register from './register.js';
-import * as typesModule from '../types/types.js'
-
+import * as typesModule from '../types/types.js';
+import * as scan from '../tokenizer/scan.js';
 
 export class Parser {
     /**
@@ -42,7 +42,11 @@ export class Parser {
         // token which is our lookahead. The lookahead is
         // used for predictive parsing.
 
-        this._lookahead = this.tokenizer.getNextToken();
+        // do {
+            this._lookahead = this.tokenizer.getNextToken();
+        // } while (this.tokenizer.hasMoreTokens());
+
+
 
 
         // Parse recursively starting from the main
@@ -72,11 +76,11 @@ export class Parser {
         this.tokens.push(token);
         this.tokenizer._cursor += String(token.statement).length;
 
-        callback(false, this)
+        // callback(false, this)
 
-        if (this.tokens.includes(this._lookBehind)) {
-            this.tokens.push(this._lookahead);
-        }
+        // if (this.tokens.includes(this._lookBehind)) {
+        //     this.tokens.push(this._lookahead);
+        // }
 
     }
 
@@ -135,7 +139,13 @@ export class Parser {
 
                 case 'FUNCTIONCALL':
                     this._lookBehind = this._lookahead;
-                    this.tokens.push(this.FunctionCall());
+                    this.pushToken(this.FunctionCall);
+                    break;
+
+                case 'CLOSINGBLOCK':
+                    this._lookBehind = this._lookahead;
+                    this.pushToken(this.ClosingBlockLiteral)
+
                     break;
 
                 default:
@@ -571,9 +581,9 @@ export class Parser {
         return token;
     }
 
-    see() {  // does not modify tokens
-        return this.tokens[0]
-    }
+    // see() {  // does not modify tokens
+    //     return this.tokens[0]
+    // }
 
     eatImports() {
         while (see().value == "import") { eatImport() }

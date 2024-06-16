@@ -1,5 +1,5 @@
 import * as errorHandler from '../parser/errors.js';
-import { includesSpec, variablesSpec, functionsSpec } from './specs.js';
+import { blocksSpec, includesSpec, variablesSpec, functionsSpec, NestedBlockSpec } from './specs.js';
 import { createToken } from '../types/tokens.js';
 
 
@@ -33,7 +33,9 @@ export function scanNextToken(parser, token, tokenizer, specType){
     let specsArray =
     specType == "IncludesBody" ? includesSpec :
     specType == "VariblesBody" ? variablesSpec :
-    specType == "FunctionsBody" ? functionsSpec : [];
+    specType == "FunctionsBody" ? functionsSpec :
+    specType == "NestedBlockBody" ? NestedBlockSpec :
+    specType == "default" ? blocksSpec : [];
 
     const string = tokenizer._string.slice(tokenizer._cursor);
 
