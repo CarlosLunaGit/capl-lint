@@ -197,7 +197,11 @@ export class Tokenizer {
                 this._currentRow = this.getLineWithCursor(String(tokenResult.tokenValue).length);
                 this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length, String(tokenResult.tokenValue).split('\n')[0]);
                 this._context = tokenType;  // Set the context for nested tokens
-                return this.getNextToken(this._context);
+                return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
+
+                // const blockToken = createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
+                // this._parentParser.tokens.push(blockToken);
+                // return this.getNextToken(this._context);
             }
 
             this._currentRow = this.getLineWithCursor();

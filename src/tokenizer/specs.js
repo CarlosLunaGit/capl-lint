@@ -61,8 +61,8 @@ export const blocksSpec = [
 
     // Variable Declaration:
 
-    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
-    ['VARIABLEDECLARATION', /^(?<structKeyword>struct) +(?<type>\w+) +(?<name>\w+)(?<semicolon>;)/],
+    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+)(?<arraySize>(?:\[\d+\])*)? *(?<assigment>=)? *(?<value>(?:\{[^}]*\}|[^;\s]+))?(?<semicolon>;)?/],
+    ['VARIABLEDECLARATION_STRUCT', /^(?<structKeyword>struct) +(?<dataType>\w+) +(?<name>\w+) *(?<arrayStart>\[)?(?<arraySize>\d+)?(?<arrayEnd>\])?(?<semicolon>;)?/],
 
     // Initialization Statement:
 
@@ -70,7 +70,6 @@ export const blocksSpec = [
 
     // Function Call:
 
-    ['FUNCTIONCALL', /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
     ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
 
     // Return Statement:

@@ -55,38 +55,38 @@ function eatFunctionBody(tokenizer, parser, token) {
         else if (kind == "NUMBER") {
             token = parser.NumericLiteral(token, parser)
             parser.tokens.push(token);
-            addBodyToFunctionBlock(parser, token)
+            addToBlockProperty(parser, token, 'body')
 
         }
         else if (kind == "STRING") {
             token = parser.StringLiteral(token, parser)
             parser.tokens.push(token);
-            addBodyToFunctionBlock(parser, token)
+            addToBlockProperty(parser, token, 'body')
 
         }
         else if (kind == "VARIABLEDECLARATION") {
             token = parser.VariableDeclaration(token, parser)
             parser.tokens.push(token);
-            addBodyToFunctionBlock(parser, token)
+            addToBlockProperty(parser, token, 'body')
 
         }
         else if (kind == "FUNCTIONCALL") {
             token = parser.FunctionCall(token, parser)
             parser.tokens.push(token);
-            addBodyToFunctionBlock(parser, token)
+            addToBlockProperty(parser, token, 'body')
 
         }
         else if (kind == "IF") {
             parser.tokenizer.branchController.openBranch();
             token = parser.ifCall(token, parser)
             parser.tokens.push(token);
-            addBodyToFunctionBlock(parser, token)
-            // addBodyToIFBlock(parser, token)
+            addToBlockProperty(parser, token, 'body')
+
         }
         else if (kind == "ELSE") {
             token = parser.elseCall(token, parser)
             parser.tokens.push(token);
-            addBodyToFunctionBlock(parser, token)
+            addToBlockProperty(parser, token, 'body')
         }
         else if (value == "while") {
             eatWhile()
@@ -103,9 +103,8 @@ function eatFunctionBody(tokenizer, parser, token) {
         else if (kind == "RETURN") {
             token = parser.ReturnLiteral(token, parser)
             parser.tokens.push(token);
-            addBodyToFunctionBlock(parser, token)
-            // addBodyToIFBlock(parser, token)
-            // eatReturn()
+            addToBlockProperty(parser, token, 'body')
+
         }
         else if (value == "const") {
             eatConstOrLetStatement(true)
@@ -151,23 +150,40 @@ function eatFunctionBody(tokenizer, parser, token) {
     }
 }
 
-function addBodyToFunctionBlock(parser, token){
+/**
+ * @brief Adds a token to a specified property of a parent block.
+ *
+ * @param {Object} parser - The parser object.
+ * @param {Object} token - The token to be added.
+ * @param {string} property - The property of the parent block to which the token should be added.
+ *
+ * @return None.
+ */
+export function addToBlockProperty(parser, token, property){
     let parentBlock
-// TODO add if, else and other bodies
+
     if (parser.tokenizer.branchController.getCurrentBranch() != '') {
-        parentBlock = parser.tokens.filter(function (element) { return element.path == parser.tokenizer.branchController.getCurrentBranch()
-            && (element.kind.includes('FunctionsBlock')
-            ||element.kind.includes('ifCall')
-            ||element.kind.includes('elseCall')); });
+        parentBlock = parser.tokens.filter(function (element) {
+            return element.path == parser.tokenizer.branchController.getCurrentBranch()
+                && (element.kind.includes('IncludesBlock')
+                || element.kind.includes('VariablesBlock')
+                || element.kind.includes('FunctionsBlock')
+                || element.kind.includes('ifCall')
+                || element.kind.includes('elseCall'));
+        });
 
         for (let index = parentBlock.length - 1; index >= 0; index--) {
-
-                parentBlock[index].body = parentBlock[index].body + JSON.stringify(token)
+            if (!parentBlock[index].closedBlock) {
+                if (property === 'body') {
+                    parentBlock[index][property] = parentBlock[index][property] + JSON.stringify(token);
+                } else if (property === 'closeCurly') {
+                    parentBlock[index].body = parentBlock[index].body + JSON.stringify(token);
+                    parentBlock[index][property] = token.tokenValue;
+                    parentBlock[index].closedBlock = true;
+                }
                 break;
-
+            }
         }
-
     }
-
 }
 
