@@ -23,7 +23,7 @@ export const blocksSpec = [
 
     ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
     ['ELSE', /^(?<elsekey>else)\s*(?<openCurly>\{)/],
-    ['ELSEIF', /^(?<elsekey>else if)\s*(?<opencurlyblock>\{)/],
+    ['ELSEIF', /^(?<elseifkey>else if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
 
     // ---------------------------------------
     // Whitespace:

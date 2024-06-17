@@ -169,6 +169,18 @@ export class Parser {
                     this.pushToken(this.ifCall(this._lookBehind));
                     break;
 
+                case 'ELSE':
+                    this._lookBehind = this._lookahead;
+                    this.tokenizer.branchController.openBranch();
+                    this.pushToken(this.elseCall(this._lookBehind));
+                    break;
+
+                case 'ELSEIF':
+                    this._lookBehind = this._lookahead;
+                    this.tokenizer.branchController.openBranch();
+                    this.pushToken(this.elseIfCall(this._lookBehind));
+                    break;
+
                 case 'RETURN':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body')
@@ -387,6 +399,31 @@ export class Parser {
             row: token.row,
             col: token.col,
             elsekey: token.tokenMatch.elsekey || null,
+            openCurly: token.tokenMatch.openCurly || null,
+            body: '',
+            closeCurly: null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null
+
+        };
+    }
+
+    /**
+     * elseIfCall
+     *  : ELSEIF
+     *  ;
+     */
+    elseIfCall(token) {
+
+        return {
+            kind: 'elseIfCall',
+            statement: token.tokenValue,
+            row: token.row,
+            col: token.col,
+            elseifkey: token.tokenMatch.elseifkey || null,
+            openParen: token.tokenMatch.openParen || null,
+            conditional: token.tokenMatch.conditional || null,
+            closeParen: token.tokenMatch.closeParen || null,
             openCurly: token.tokenMatch.openCurly || null,
             body: '',
             closeCurly: null,
