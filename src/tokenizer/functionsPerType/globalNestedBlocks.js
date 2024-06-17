@@ -96,7 +96,7 @@ function eatNestedBlockBody(tokenizer, parser, token) {
             eatFor()
         }
         else if (kind == "RETURN") {
-            token = parser.ReturnLiteral(token, parser)
+            token = parser.ReturnStatement(token, parser)
             parser.tokens.push(token);
             addBodyToNestedBlock(parser, token)
             // addBodyToIFBlock(parser, token)

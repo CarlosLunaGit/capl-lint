@@ -9,6 +9,7 @@ import * as typesModule from '../types/types.js';
 import * as scan from '../tokenizer/scan.js';
 import { addToBlockProperty } from '../tokenizer/functionsPerType/globalFunctions.js';
 
+
 export class Parser {
     /**
      * Initializes the parser.
@@ -184,13 +185,17 @@ export class Parser {
                 case 'RETURN':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body')
-                    this.pushToken(this.ReturnLiteral(this._lookBehind));
+                    this.pushToken(this.ReturnStatement(this._lookBehind));
                     break;
 
                 case 'CLOSINGBLOCK':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'closeCurly');
                     this.pushToken(this.ClosingBlockLiteral(this._lookBehind));
+                    break;
+
+                case 'UNMATCHED':
+                    console.error(`Unmatched token encountered: ${this._lookahead.tokenValue}`);
                     break;
 
                 default:
@@ -256,22 +261,7 @@ export class Parser {
         };
     }
 
-    /**
-     * ReturnLiteral
-     *  : RETURN
-     *  ;
-     */
-    ReturnLiteral(token) {
 
-        return {
-            kind: 'ReturnLiteral',
-            statement: token.tokenValue,
-            semicolon: token.tokenMatch.semicolon || null,
-            row: token.row,
-            col: token.col,
-            path: this.tokenizer.branchController.getCurrentBranch()
-        };
-    }
 
     /**
      * VariableDeclaration
@@ -515,8 +505,8 @@ export class Parser {
             openParen: token.tokenMatch.openParen || null,
             arguments: token.tokenMatch.arguments || null,
             closeParen: token.tokenMatch.closeParen || null,
-            body: token.tokenMatch.body || '',
             openCurly: token.tokenMatch.openCurly || null,
+            body: token.tokenMatch.body || '',
             closeCurly: token.tokenMatch.closeCurly || null,
             path: this.tokenizer.branchController.getCurrentBranch(),
             closedBlock: null
@@ -616,6 +606,7 @@ export class Parser {
             if (token.kind == "IncludeStatement")  { this.eatIncludeStatement(token, this); continue }
             if (token.kind == "VariablesBlock")  { this.eatVariablesBlock(token, this); continue }
             if (token.kind == "FunctionsBlock")  { this.eatFunctionsBlock(token, this); continue }
+            if (token.kind == "ifCall")  { this.eatIfCallBlock(token, this); continue }
 
 
             //TODO
@@ -626,7 +617,7 @@ export class Parser {
 
             if (token.kind == "FunctionCall")    { this.eatFunctionCall(token, false, false, this); continue }
             //TODO
-
+            if (token.kind == "ReturnStatement")  { this.eatReturnStatement(token, this); continue }
             if (token.kind == "ClosingBlockLiteral")  { this.eatClossingLiteral(token, this); continue }
             if (token.kind == "endOfFile") { return }
             errorHandler.unexpected(token, '', this)
@@ -637,29 +628,12 @@ export class Parser {
         return this.tokens.shift()
     }
 
-    // eatName() {
-    //     const token = this.tokens.shift()
-    //     if (token.kind != "name") { errorHandler.expecting(token, "name") } // linter exits
-    //     return token
-    // }
-
     eatGlobal(token, isExporting, isConstant, parser) {
-        // token = this.eatName()
-        // if (isExporting) {
+
             register.registerPublicVariable(token, isConstant, this)
 
             let missingSemicolon = token.semicolon === null;
             if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
-        // }
-        // else {
-        //     register.registerPrivateVariable(token, isConstant)
-        // }
-
-        // token = this.eat()
-        // if (token.kind == "endOfFile") { return }
-
-        // if (token.tokenValue != "=") { errorHandler.unexpected(token '', parser) }
-        // eatLiteralExpression()
 
     }
 
@@ -713,15 +687,58 @@ export class Parser {
 
     eatFunctionsBlock(token, parser) {
 
+        let dataType = token.dataType === null;
+        let name = token.name === null;
+        let openParen = token.openParen === null;
+        let argumentsMissing = token.arguments === null;
+        let closeParen = token.closeParen === null;
         let openCurly = token.openCurly === null;
+        let body = token.body === '';
+        let closeCurly = token.closeCurly === null;
+        // let semicolon = token.semicolon === ';';
+
+        if ( dataType === true) { errorHandler.expecting(token, 'data type', parser) }
+        if ( name === true) { errorHandler.expecting(token, 'function name', parser) }
+        if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
+        if ( argumentsMissing === true) { errorHandler.expecting(token, 'Arguments missing', parser) }
+        if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
+        if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
+        if ( body === true) { errorHandler.unexpected(token, 'Empty/Unused Function block', parser) }
+        if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
+        // if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
+
+    }
+
+    eatIfCallBlock(token, parser) {
+
+        let openParen = token.openParen === null;
+        let conditional = token.conditional === null;
+        let closeParen = token.closeParen === null;
+        let openCurly = token.openCurly === null;
+        let body = token.body === '';
         let closeCurly = token.closeCurly === null;
         let semicolon = token.semicolon === ';';
 
+        if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
+        if ( conditional === true) { errorHandler.expecting(token, '"(condition)"', parser) }
+        if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
         if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
+        if ( body === true) { errorHandler.unexpected(token, 'Empty/Unused IF block', parser) }
         if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
-        if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
+        // if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
+        // TODO: Do we need a semicolon check for CAPL here?
 
     }
+
+    eatReturnStatement(token, parser) {
+
+            let returnStatement = token.returnStatement === null;
+            let semicolon = token.semicolon === null;
+
+            if ( returnStatement === true) { errorHandler.expecting(token, 'return statement', parser) }
+            if ( semicolon === true) { errorHandler.expecting(token, ';', parser) }
+
+        }
 
 
     eatClossingLiteral(token, parser) {
@@ -734,11 +751,17 @@ export class Parser {
 
     eatFunctionCall(token, isExporting, isConstant, parser) {
 
-            // register.registerPublicVariable(token, isConstant, this)
+        let name = token.name === null;
+        let openParen = token.openParen === null;
+        let argumentsMissing = token.arguments === null;
+        let closeParen = token.closeParen === null;
+        let semicolon = token.semicolon === null;
 
-            let missingSemicolon = token.semicolon === null;
-            if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
-
+        if ( name === true) { errorHandler.expecting(token, 'function name', parser) }
+        if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
+        if ( argumentsMissing === true) { errorHandler.expecting(token, 'Arguments missing', parser) }
+        if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
+        if ( semicolon === true) { errorHandler.expecting(token, ';', parser) }
 
     }
 

@@ -9,11 +9,11 @@ export const blocksSpec = [
     // Blocks
     // IncludesBlock:
 
-    ['INCLUDESBLOCK', /^(?<name>includes)(?:\s*)?(?<openCurly>\{)?(?:\s*)?(?<body>.*?)(?:\s*)?(?<closeCurly>\})?/],
+    ['INCLUDESBLOCK', /^(?<name>includes)(?:\s*)?(?<openCurly>\{)?(?:\s*)?(?<body>.*?)(?:\s*)?/],
 
     // VariablesBlock:
 
-    ['VARIABLESBLOCK', /^(?<name>variables)(?:\s*)?(?<openCurly>\{)?(?:\s*)?(?<body>.*?)(?:\s*)?(?<closeCurly>\})?/],
+    ['VARIABLESBLOCK', /^(?<name>variables)(?:\s*)?(?<openCurly>\{)?(?:\s*)?(?<body>.*?)(?:\s*)?/],
 
     // FunctionBlock:
 
@@ -64,13 +64,13 @@ export const blocksSpec = [
     ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+)(?<arraySize>(?:\[\d+\])*)? *(?<assigment>=)? *(?<value>(?:\{[^}]*\}|[^;\s]+))?(?<semicolon>;)?/],
     ['VARIABLEDECLARATION_STRUCT', /^(?<structKeyword>struct) +(?<dataType>\w+) +(?<name>\w+) *(?<arrayStart>\[)?(?<arraySize>\d+)?(?<arrayEnd>\])?(?<semicolon>;)?/],
 
-    // Initialization Statement:
-
-    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
-
     // Function Call:
 
     ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
+
+    // Initialization Statement:
+
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
 
     // Return Statement:
 

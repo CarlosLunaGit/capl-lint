@@ -19,11 +19,9 @@ export function unexpected(token, msg = '', parser) {
     error(token.row, token.col, msg, parser)
 }
 
-export function _unexpected(token, msg = '', parser) {
+export function _unexpected(token, parser) {
 
-    parser.sysErrors.push({
-        error: JSON.stringify(token),
-        msg: msg});
+    parser.sysErrors.push(token);
 }
 
 export function unexpectedScope(token, parser) {

@@ -199,63 +199,21 @@ export class Tokenizer {
                 this._context = tokenType;  // Set the context for nested tokens
                 return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
 
-                // const blockToken = createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
-                // this._parentParser.tokens.push(blockToken);
-                // return this.getNextToken(this._context);
             }
 
             this._currentRow = this.getLineWithCursor();
             this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length);
             return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
         }
-        errorHandler._unexpected(`"${string[0]}"`, '', this._parentParser);
+
+        // Handle unmatched token
+        const unmatchedToken = string.split('\n')[0]; // Get the current line
+        this._cursor += unmatchedToken.length; // Move the cursor to the end of the unmatched line
+        let unmatchedTokenObj = createToken(this._currentRow, this._currentCol, 'UNMATCHED', unmatchedToken, null);
+        errorHandler._unexpected(unmatchedTokenObj, this._parentParser);
+        return unmatchedTokenObj;
     }
 
-    getBlockBody(token, tokenType, parser){
-
-        // if (isExporting) {
-            // register.registerPublicFunction(eatName())// TODO
-        // }
-        // else {
-        //     registerPrivateFunction(eatName())
-        // }
-
-        switch (tokenType) {
-            case 'INCLUDESBLOCK':
-                this.branchController.openBranch();
-                parser.tokens.push(parser.IncludesBlock(token, this._parentParser) );
-                functions.eatGlobalIncludes(branchController, parser, token, this)
-                break;
-
-            case 'VARIABLESBLOCK':
-                this.branchController.openBranch();
-                parser.tokens.push(parser.VariablesBlock(token, this._parentParser) );
-                functions.eatGlobalVariables(branchController, parser, token, this)
-                break;
-
-            case 'FUNCTIONSBLOCK':
-                this.branchController.openBranch();
-                parser.tokens.push(parser.FunctionsBlock(token, this._parentParser) );
-                functions.eatGlobalFunction(branchController, parser, token, this)
-                break;
-
-            case 'IF':
-                this.branchController.openBranch();
-                parser.tokens.push(parser.ifCall(token, this._parentParser) );
-                functions.eatGlobalNestedBlock(branchController, parser, token, this)
-                break;
-
-            case 'ELSE':
-                this.branchController.openBranch();
-                parser.tokens.push(parser.elseCall(token, this._parentParser) );
-                functions.eatGlobalFunction(branchController, parser, token, this)
-                break;
-
-            default:
-                break;
-        }
-
-    }
 
     eatOpenBlock(val, token) {
         this._blocks.push(val)

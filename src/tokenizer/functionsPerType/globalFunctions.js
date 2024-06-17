@@ -101,7 +101,7 @@ function eatFunctionBody(tokenizer, parser, token) {
             eatFor()
         }
         else if (kind == "RETURN") {
-            token = parser.ReturnLiteral(token, parser)
+            token = parser.ReturnStatement(token, parser)
             parser.tokens.push(token);
             addToBlockProperty(parser, token, 'body')
 
