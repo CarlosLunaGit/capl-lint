@@ -1,390 +1,99 @@
 /**
  * Tokenizer spec.
  */
-/**
- * Tokenizer spec.
- */
 export const blocksSpec = [
     // ---------------------------------------
     // Blocks
     // IncludesBlock:
 
-    ['INCLUDESBLOCK', /^(?<name>includes)(?:\s*)?(?<openCurly>\{)?(?:\s*)?(?<body>.*?)(?:\s*)?/],
+    ['INCLUDESBLOCK', /^(?<name>includes)(?:\s*)?(?<openCurly>\{)?(?:\s*)?(?<body>.*?)(?:\s*)?/, 'IncludesBlock'],
 
     // VariablesBlock:
 
-    ['VARIABLESBLOCK', /^(?<name>variables)(?:\s*)?(?<openCurly>\{)?(?:\s*)?(?<body>.*?)(?:\s*)?/],
+    ['VARIABLESBLOCK', /^(?<name>variables)(?:\s*)?(?<openCurly>\{)?(?:\s*)?(?<body>.*?)(?:\s*)?/, 'VariablesBlock'],
 
     // FunctionBlock:
 
-    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()\s*(?<arguments>.*?)?\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
+    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()\s*(?<arguments>.*?)?\s*(?<closeParen>\))\s*(?<openCurly>\{)/, 'FunctionsBlock'],
+
+    // MessageDefinitionBlock:
+
+    ['MESSAGEDEFINITIONBLOCK', /^(?<dataType>message)\s*(?<name>\w+)\s*(?<openCurly>\{)/, 'MessageDefinitionBlock'],
+
+    // MessageEventBlock:
+
+    ['MESSAGEEVENTBLOCK', /^(?<dataType>on message)\s*(?<name>\w+)\s*(?<openCurly>\{)/, 'MessageEventBlock'],
+
+    // StartEventBlock:
+
+    ['STARTEVENTBLOCK', /^(?<dataType>on start)\s*(?<openCurly>\{)/, 'StartEventBlock'],
+
+    // TimerEventBlock:
+
+    ['TIMEREVENTBLOCK', /^(?<dataType>on timer)\s*(?<name>\w+)\s*(?<openCurly>\{)/, 'TimerEventBlock'],
 
     // IF block:
 
-    ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
-    ['ELSE', /^(?<elsekey>else)\s*(?<openCurly>\{)/],
-    ['ELSEIF', /^(?<elseifkey>else if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
+    ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]|\((?:[^()]|\([^()]*\))*\))*?)\s*(?<closeParen>\))\s*(?<openCurly>\{)/, 'ifCall'],
+    ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]|\((?:[^()]|\([^()]*\))*\))*?)\s*(?<closeParen>\))\s*(?<openCurly>\{)?/, 'ifCallNoBrackets'], // if without brackets
+    ['ELSE', /^(?<elsekey>else)\s*(?<openCurly>\{)/, 'elseCall'],
+    ['ELSEIF', /^(?<elseifkey>else if)\s*(?<openParen>\()(?<conditional>(?:[^()]|\((?:[^()]|\([^()]*\))*\))*?)\s*(?<closeParen>\))\s*(?<openCurly>\{)/, 'elseIfCall'],
 
-    // ---------------------------------------
+    // For loop:
+
+    ['FORLOOP', /^(?<forkey>for)\s*(?<openParen>\()(?<initializer>.*?;.*?;.*?)\s*(?<closeParen>\))\s*(?<openCurly>\{)/, 'forLoop'],
+
     // Whitespace:
 
-    [null, /^\s+/],
+    [null, /^(?<spaces>\s+)/, 'Whitespace'],
 
-    // ---------------------------------------
     // Comments:
-
     // Skip single-line comments:
-    [null, /^\/\/.*/],
+    [null, /^(?<identifier>\/\/)(?<text>.*)/, 'Comment'],
 
     // Skip multi-line comments:
-    [null, /^\/\*[\s\S]*?\*\//],
+    [null, /^\/\*[\s\S]*?\*\//, 'CommentMultiline'],
 
-    // ---------------------------------------
     // Semicolon:
 
-    ['SEMICOLON', /^;+/],
+    ['SEMICOLON', /^;+/, 'Semicolon'],
 
-    // ---------------------------------------
     // Numbers:
 
-    ['NUMBER', /^\d+/],
+    ['NUMBER', /^\d+/, 'Number'],
 
-    // ---------------------------------------
     // Strings:
 
-    ['STRING', /^"[^"]*"/],
-    ['STRING', /^'[^']*'/],
+    ['STRING', /^"[^"]*"/, 'StringDoubleQuote'],
+    ['STRING', /^'[^']*'/, 'StringSingleQuote'],
 
     // #Includes:
 
-    ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")(?<semicolon>;)?/],
+    ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")(?<semicolon>;)?/, 'IncludeStatement'],
 
     // Variable Declaration:
 
-    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+)(?<arraySize>(?:\[\d+\])*)? *(?<assigment>=)? *(?<value>(?:\{[^}]*\}|[^;\s]+))?(?<semicolon>;)?/],
-    ['VARIABLEDECLARATION_STRUCT', /^(?<structKeyword>struct) +(?<dataType>\w+) +(?<name>\w+) *(?<arrayStart>\[)?(?<arraySize>\d+)?(?<arrayEnd>\])?(?<semicolon>;)?/],
+    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+)(?<arraySize>(?:\[\d+\])*)? *(?<assigment>=)? *(?<value>(?:\{[^}]*\}|[^;\s]+))?(?<semicolon>;)?/, 'VariableDeclaration'],
+    ['VARIABLEDECLARATION_STRUCT', /^(?<structKeyword>struct) +(?<dataType>\w+) +(?<name>\w+) *(?<arrayStart>\[)?(?<arraySize>\d+)?(?<arrayEnd>\])?(?<semicolon>;)?/, 'VariableDeclarationStruct'],
+
+    // System Variable declaration:
+
+    ['SYSVARINITIALIZATION', /^(?<prefix>@)?(?<sysvarKey>sysvar|sysvarInt|sysvarLongLong|sysvarFloat|sysvarString|sysvarIntArray|sysvarFloatArray|sysvarData)\s*::\s*(?<namespace>\w+)\s*::\s*(?<name>\w+)\s*(?<assignment>=)\s*(?<value>[^;]+)?(?<semicolon>;)?/, 'SysvarInitialization'],
+    ['SYSVARDECLARATION', /^(?<prefix>@)?(?<sysvarKey>sysvar|sysvarInt|sysvarLongLong|sysvarFloat|sysvarString|sysvarIntArray|sysvarFloatArray|sysvarData)\s*::\s*(?<namespace>\w+)\s*::\s*(?<name>\w+)\s*(?<semicolon>;)?/, 'SysvarDeclaration'],
 
     // Function Call:
 
-    ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
-
+    // ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
+    ['FUNCTIONCALL', /^(?<name>(?:(?!\bif\b|\belse\b)\b\w+\b))\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/, 'FunctionCall'],
     // Initialization Statement:
 
-    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/, 'InitializationStatement'],
 
     // Return Statement:
 
-    ['RETURN', /^(?<returnStatement>return)\s*(?<semicolon>;?)/],
+    ['RETURN', /^(?<returnStatement>return)\s*(?<semicolon>;?)/, 'ReturnStatement'],
 
     // Closing block:
 
-    ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
+    ['CLOSINGBLOCK', /^(?<closeCurly>\})\s*(?<semicolon>;)?/, 'ClosingBlock'],
 ];
-
-
-export const includesSpec = [
-
-
-
-    // ---------------------------------------
-    // Whitespace:
-
-    [null, /^\s+/,],
-
-    // ---------------------------------------
-    // Comments:
-
-    // Skip single-line comments:
-    [null, /^\/\/.*/],
-
-    // Skip multi-line comments:
-    [null, /^\/\*[\s\S]*?\*\//],
-
-    // ---------------------------------------
-    // Semicolon:
-
-    ['SEMICOLON', /^;+/],
-
-    // ---------------------------------------
-    // Numbers:
-
-    ['NUMBER', /^\d+/],
-
-    // ---------------------------------------
-    // Strings:
-
-    ['STRING', /^"[^"]*"/],
-    ['STRING', /^'[^']*'/],
-
-        // ---------------------------------------
-    // Blocks
-    // FunctionBlock:
-
-    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s*(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()?\s*(?<arguments>.*?)?\s*(?<closeParen>\))?\s*(?<openCurly>\{)/],
-
-
-    // ---------------------------------------
-    // #Includes:
-
-    ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")(?<semicolon>;)?/],
-
-
-    // ---------------------------------------
-    // Variable Declaration:
-
-    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
-
-    // ---------------------------------------
-    // Function Call:
-
-    ['FUNCTIONCALL', /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
-
-    // ---------------------------------------
-    // Closing block:
-
-    ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
-
-
-
-]
-
-export const variablesSpec = [
-
-
-
-    // ---------------------------------------
-    // Whitespace:
-
-    [null, /^\s+/,],
-
-    // ---------------------------------------
-    // Comments:
-
-    // Skip single-line comments:
-    [null, /^\/\/.*/],
-
-    // Skip multi-line comments:
-    [null, /^\/\*[\s\S]*?\*\//],
-
-    // ---------------------------------------
-    // Semicolon:
-
-    ['SEMICOLON', /^;+/],
-
-    // ---------------------------------------
-    // Numbers:
-
-    ['NUMBER', /^\d+/],
-
-    // ---------------------------------------
-    // Strings:
-
-    ['STRING', /^"[^"]*"/],
-    ['STRING', /^'[^']*'/],
-
-
-
-    // ---------------------------------------
-    // #Includes:
-
-    ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")\s*(?<semicolon>;)?/],
-
-
-    // ---------------------------------------
-    // Initialization Statement:
-
-    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
-
-    // ---------------------------------------
-    // Variable Declaration:
-
-    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
-
-    ['VARIABLEDECLARATION', /^(?<structKeyword>struct) +(?<type>\w+) +(?<name>\w+)(?<semicolon>;)/],
-
-
-    // ---------------------------------------
-    // Function Call:
-
-    ['FUNCTIONCALL', /^(?<name>\w+) ?(?<openParen>\()\s*(?<arguments>.*?)\s*(?<closeParen>\))(?<semicolon>;)?/],
-
-    // ---------------------------------------
-    // Closing block:
-
-    ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
-
-            // ---------------------------------------
-    // Blocks
-    // FunctionBlock:
-
-    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s*(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()?\s*(?<arguments>.*?)?\s*(?<closeParen>\))?\s*(?<openCurly>\{)/],
-
-]
-
-export const functionsSpec = [
-
-
-
-    // ---------------------------------------
-    // Whitespace:
-
-    [null, /^\s+/,],
-
-    // ---------------------------------------
-    // Comments:
-
-    // Skip single-line comments:
-    [null, /^\/\/.*/],
-
-    // Skip multi-line comments:
-    [null, /^\/\*[\s\S]*?\*\//],
-
-    // ---------------------------------------
-    // Semicolon:
-
-    ['SEMICOLON', /^;+/],
-
-    // ---------------------------------------
-    // Numbers:
-
-    ['NUMBER', /^\d+/],
-
-    // ---------------------------------------
-    // Strings:
-
-    ['STRING', /^"[^"]*"/],
-    ['STRING', /^'[^']*'/],
-
-        // ---------------------------------------
-    // Blocks
-    // FunctionBlock:
-
-    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s*(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()?\s*(?<arguments>.*?)?\s*(?<closeParen>\))?\s*(?<openCurly>\{)/],
-
-    // ---------------------------------------
-    // IF block:
-
-    ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
-    ['ELSE', /^(?<elsekey>else)\s*(?<opencurlyblock>\{)/],
-    ['ELSEIF', /^(?<elsekey>else if)\s*(?<opencurlyblock>\{)/],
-
-
-    // ---------------------------------------
-    // #Includes:
-
-    ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")\s*(?<semicolon>;)?/],
-
-
-    // ---------------------------------------
-    // Variable Declaration:
-
-    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
-
-    // ---------------------------------------
-    // Initialization Statement:
-
-    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
-
-    // ---------------------------------------
-    // Function Call:
-
-    ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
-
-    // ---------------------------------------
-    // Closing block:
-
-    ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
-
-    // ---------------------------------------
-    // Return Statement:
-
-    ['RETURN', /^(?<returnStatement>return)\s*(?<semicolon>;?)/],
-
-
-
-
-]
-
-export const NestedBlockSpec = [
-
-
-
-    // ---------------------------------------
-    // Whitespace:
-
-    [null, /^\s+/,],
-
-    // ---------------------------------------
-    // Comments:
-
-    // Skip single-line comments:
-    [null, /^\/\/.*/],
-
-    // Skip multi-line comments:
-    [null, /^\/\*[\s\S]*?\*\//],
-
-    // ---------------------------------------
-    // Semicolon:
-
-    ['SEMICOLON', /^;+/],
-
-    // ---------------------------------------
-    // Numbers:
-
-    ['NUMBER', /^\d+/],
-
-    // ---------------------------------------
-    // Strings:
-
-    ['STRING', /^"[^"]*"/],
-    ['STRING', /^'[^']*'/],
-
-        // ---------------------------------------
-    // Blocks
-    // FunctionBlock:
-
-    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)\s*(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()?\s*(?<arguments>.*?)?\s*(?<closeParen>\))?\s*(?<openCurly>\{)/],
-
-    // ---------------------------------------
-    // IF block:
-
-    ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))\s*(?<openCurly>\{)/],
-    ['ELSE', /^(?<elsekey>else)\s*(?<opencurlyblock>\{)/],
-    ['ELSEIF', /^(?<elsekey>else if)\s*(?<opencurlyblock>\{)/],
-
-
-    // ---------------------------------------
-    // #Includes:
-
-    ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")\s*(?<semicolon>;)?/],
-
-
-    // ---------------------------------------
-    // Variable Declaration:
-
-    ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+) ?(?<arraySize>\[.*\])? *(?<assigment>=)? *(?<value>[^;\s]+)?(?<semicolon>;)?/],
-
-    // ---------------------------------------
-    // Initialization Statement:
-
-    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/],
-
-    // ---------------------------------------
-    // Function Call:
-
-    ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
-
-    // ---------------------------------------
-    // Closing block:
-
-    ['CLOSINGBLOCK', /^(?<closeCurly>\})/],
-
-    // ---------------------------------------
-    // Return Statement:
-
-    ['RETURN', /^(?<returnStatement>return)\s*(?<semicolon>;?)/],
-
-
-
-
-]

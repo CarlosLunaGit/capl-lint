@@ -3,6 +3,13 @@ export var closedBranches = [ ] // MUST BE RESET at start of new GLOBAL function
 export var latestBranch = 1;
 
 
+export function restartBranches() {
+    currentBranch = ""
+    closedBranches = [ ]
+    latestBranch = 1;
+
+}
+
 export function getCurrentBranch() {  // exports to register.js
     return currentBranch
 }

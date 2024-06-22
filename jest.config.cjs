@@ -1,4 +1,4 @@
-module.exports = {
+const config = {
   // Automatically clear mock calls, instances and results before every test
   clearMocks: true,
 
@@ -31,3 +31,6 @@ module.exports = {
     '^.+\\.js$': 'babel-jest'
   }
 };
+
+
+module.exports = config;

@@ -38,6 +38,14 @@ function Token(row, col, kind, value, matches) {
     this.wasUsed = false
     this.wasAssigned = false
     this.wasExported = false
+    // defined in Specs:
+    this.definedInSpec = "MATCHED"
+    // defined in Literals:
+    this.definedInLiterals = "HANDLED"
+
+    // contoller for parent block indentation
+    this.parentBlockIndentation = 0
+
 }
 
 //

@@ -415,9 +415,6 @@ async function checkCriticalRules(blocks) {
             errors.push( results[0] );
         }
 
-
-
-
     }
 
     return [...errors];
@@ -474,9 +471,9 @@ async function testTypesIdentifier(blocks) {
         let line = blocks[index];
         trimmedLine = line.trim();
 
-        results = await identifier.identifyCAPLStatementType(trimmedLine);
+        results = await identifier.identifyCAPLStatementTypes(trimmedLine);
 
-
+        // results === undefined ? [] : results[0];
         errors.push( results[0] );
 
     }
@@ -512,7 +509,6 @@ async function lintCode(sourceCode) {
         }
 
         styleErrors = await checkStyleRules(blocks);
-
 
     return [...criticalErrors, ...clangErrors, ...styleErrors];
 }

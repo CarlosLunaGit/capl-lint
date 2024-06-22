@@ -1,5 +1,5 @@
 import * as errorHandler from '../parser/errors.js';
-import { blocksSpec, includesSpec, variablesSpec, functionsSpec, NestedBlockSpec } from './specs.js';
+import { blocksSpec} from './specs.js';
 import { createToken } from '../types/tokens.js';
 
 

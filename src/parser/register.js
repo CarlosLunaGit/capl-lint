@@ -6,6 +6,18 @@ export function registerImport(pathToken, nameTokens) {
     // some code here
 }
 
+// Includes BLOCKS ////////////////////////////////////////////////////////////
+
+export function registerIncludesBlock(token, parser) {
+
+    if ( (token.kind === 'IncludeStatement') || (token.kind === 'IncludesBlock') ) { token.inContext = true }
+
+    const statement = token.statement;
+    registerIncludes(statement, token, parser);
+    // parser.exports[statement] = token;
+
+}
+
 // global variables ///////////////////////////////////////////////////////////
 
 export function registerPublicVariable(token, isConstant, parser) {
@@ -73,6 +85,15 @@ function register(statement, token, parser) {
     if (first == undefined) { parser.declareds[statement] = token; return }
     //
     const msg = "Variable already declared at row " + first.row
+    errorHandler.err(token, msg, parser)
+    return
+}
+
+function registerIncludes(statement, token, parser) {
+    const first = parser.includes[statement]
+    if (first == undefined) { parser.includes[statement] = token; return }
+    //
+    const msg = "Include already declared at row " + first.row
     errorHandler.err(token, msg, parser)
     return
 }

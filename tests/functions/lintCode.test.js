@@ -1,4 +1,5 @@
 const { lintCode, identicationTypesTest } = require('../../src/core/lintCode').default;
+import { Parser } from '../../src/parser/parser.js';
 
 // describe('Critical Rules Suite', () => {
 
@@ -441,8 +442,48 @@ const { lintCode, identicationTypesTest } = require('../../src/core/lintCode').d
 
 //   })
 
+describe('Critical Rules Suite', () => {
 
-describe('Statement identifier Test', () => {
+    test('lintCode detects missing "#" on Include statements', async () => {
+
+        const inputCode =
+        `includes
+        {
+            // Comment
+            #include "..\\TestLibraries\\responses.cin"
+            include "..\\TestLibraries\\utils.cin"
+
+        }`;
+
+        const expectedErrors = [
+            {
+                line: 5,
+                col: 12,
+                error: 'ERROR: On statement \"include \"..\\TestLibraries\\utils.cin\"\" (expecting \"#\")',
+                priority: 1,
+                type: "Critical Rule"
+            }
+        ];
+
+        console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
+
+});
+
+
+describe('Test case for Token types and Registered Specs', () => {
 
     test('Types', async () => {
         const inputCode =
@@ -450,57 +491,339 @@ describe('Statement identifier Test', () => {
         message ExampleMessage {
             byte data[8];
         };
-
         // Variable Definition
         const int EXAMPLE_CONSTANT = 10;
         var float exampleVariable = 3.14;
-
         // Function Definition
         on message ExampleMessage {
             print("Received ExampleMessage");
         }
-
         // Control Structure
         if (condition) {
             print("Condition is true");
-        } else {
+        }
+        else {
             print("Condition is false");
         }
-
         // Function Call
         exampleFunction(arg1, arg2);
-
         // Event Handler
         on start {
             print("Script started");
         }
-
         // Loop Iteration
         for (int i = 0; i < 10; i++) {
             print("Iteration " + i);
         }
-
         // Timer Event
         on timer TimerEvent {
             print("Timer event occurred");
         }
-
         // Message Reception
         on message AnotherMessage {
             print("Received AnotherMessage");
         }
-
         // Signal Manipulation
         setSignal(SignalName, 100);
-
         // Environment Variable Handling
         setEnvVar(EnvVarName, "value");`;
+
         const expectedErrors = [
             {
-                line: 13,
-                error: 'Function declaration CANNOT be of type ARRAY, use Referenced variables to return array types. Statement: - byte[] myFunctionOfTypeArray()',
-                priority: 1,
-                type: "Critical Rule" }
+                identifier: "//",
+                original: "// Message Definition",
+                text: " Message Definition",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "message ExampleMessage {",
+                dataType: "message",
+                name: "ExampleMessage",
+                openCurly: "{",
+                tokenizerKind: 'MESSAGEDEFINITIONBLOCK',
+                type: "MessageDefinitionBlock"},
+            {
+                original: "byte data[8];",
+                modifier: undefined,
+                dataType: "byte",
+                name: "data",
+                arraySize: "[8]",
+                assigment: undefined,
+                value: undefined,
+                semicolon: ";",
+                tokenizerKind: 'VARIABLEDECLARATION',
+                type: "VariableDeclaration"},
+            {
+                original: "};",
+                closeCurly: "}",
+                semicolon: ";",
+                tokenizerKind: 'CLOSINGBLOCK',
+                type: "ClosingBlock"},
+            {
+                identifier: "//",
+                original: "// Variable Definition",
+                text: " Variable Definition",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "const int EXAMPLE_CONSTANT = 10;",
+                modifier: "const",
+                dataType: "int",
+                name: "EXAMPLE_CONSTANT",
+                arraySize: undefined,
+                assigment: "=",
+                value: "10",
+                semicolon: ";",
+                tokenizerKind: 'VARIABLEDECLARATION',
+                type: "VariableDeclaration"},
+            {
+                original: "var float exampleVariable = 3.14;",
+                modifier: "var",
+                dataType: "float",
+                name: "exampleVariable",
+                arraySize: undefined,
+                assigment: "=",
+                value: "3.14",
+                semicolon: ";",
+                tokenizerKind: 'VARIABLEDECLARATION',
+                type: "VariableDeclaration"},
+            {
+                identifier: "//",
+                original: "// Function Definition",
+                text: " Function Definition",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "on message ExampleMessage {",
+                dataType: "on message",
+                name: "ExampleMessage",
+                openCurly: "{",
+                tokenizerKind: 'MESSAGEEVENTBLOCK',
+                type: "MessageEventBlock"},
+            {
+                original: "print(\"Received ExampleMessage\");",
+                name: "print",
+                openParen: "(",
+                arguments: "\"Received ExampleMessage\"",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                original: "}",
+                closeCurly: "}",
+                semicolon: undefined,
+                tokenizerKind: 'CLOSINGBLOCK',
+                type: "ClosingBlock"},
+            {
+                identifier: "//",
+                original: "// Control Structure",
+                text: " Control Structure",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "if (condition) {",
+                ifkey: "if",
+                openParen: "(",
+                conditional: "condition",
+                closeParen: ")",
+                openCurly: "{",
+                tokenizerKind: 'IF',
+                type: "ifCall"},
+            {
+                original: "print(\"Condition is true\");",
+                name: "print",
+                openParen: "(",
+                arguments: "\"Condition is true\"",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                original: "}",
+                closeCurly: "}",
+                semicolon: undefined,
+                tokenizerKind: 'CLOSINGBLOCK',
+                type: "ClosingBlock"},
+            {
+                original: "else {",
+                elsekey: "else",
+                openCurly: "{",
+                tokenizerKind: 'ELSE',
+                type: "elseCall"},
+            {
+                original: "print(\"Condition is false\");",
+                name: "print",
+                openParen: "(",
+                arguments: "\"Condition is false\"",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                original: "}",
+                closeCurly: "}",
+                semicolon: undefined,
+                tokenizerKind: 'CLOSINGBLOCK',
+                type: "ClosingBlock"},
+            {
+                identifier: "//",
+                original: "// Function Call",
+                text: " Function Call",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "exampleFunction(arg1, arg2);",
+                name: "exampleFunction",
+                openParen: "(",
+                arguments: "arg1, arg2",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                identifier: "//",
+                original: "// Event Handler",
+                text: " Event Handler",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "on start {",
+                dataType: "on start",
+                openCurly: "{",
+                tokenizerKind: 'STARTEVENTBLOCK',
+                type: "StartEventBlock"},
+            {
+                original: "print(\"Script started\");",
+                name: "print",
+                openParen: "(",
+                arguments: "\"Script started\"",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                original: "}",
+                closeCurly: "}",
+                semicolon: undefined,
+                tokenizerKind: 'CLOSINGBLOCK',
+                type: "ClosingBlock"},
+            {
+                identifier: "//",
+                original: "// Loop Iteration",
+                text: " Loop Iteration",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "for (int i = 0; i < 10; i++) {",
+                forkey: "for",
+                openParen: "(",
+                initializer: "int i = 0; i < 10; i++",
+                closeParen: ")",
+                openCurly: "{",
+                tokenizerKind: 'FORLOOP',
+                type: "forLoop"},
+            {
+                original: "print(\"Iteration \" + i);",
+                name: "print",
+                openParen: "(",
+                arguments: "\"Iteration \" + i",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                original: "}",
+                closeCurly: "}",
+                semicolon: undefined,
+                tokenizerKind: 'CLOSINGBLOCK',
+                type: "ClosingBlock"},
+            {
+                identifier: "//",
+                original: "// Timer Event",
+                text: " Timer Event",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "on timer TimerEvent {",
+                dataType: "on timer",
+                name: "TimerEvent",
+                openCurly: "{",
+                tokenizerKind: 'TIMEREVENTBLOCK',
+                type: "TimerEventBlock"},
+            {
+                original: "print(\"Timer event occurred\");",
+                name: "print",
+                openParen: "(",
+                arguments: "\"Timer event occurred\"",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                original: "}",
+                closeCurly: "}",
+                semicolon: undefined,
+                tokenizerKind: 'CLOSINGBLOCK',
+                type: "ClosingBlock"},
+            {
+                identifier: "//",
+                original: "// Message Reception",
+                text: " Message Reception",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "on message AnotherMessage {",
+                dataType: "on message",
+                name: "AnotherMessage",
+                openCurly: "{",
+                tokenizerKind: 'MESSAGEEVENTBLOCK',
+                type: "MessageEventBlock"},
+            {
+                original: "print(\"Received AnotherMessage\");",
+                name: "print",
+                openParen: "(",
+                arguments: "\"Received AnotherMessage\"",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                original: "}",
+                closeCurly: "}",
+                semicolon: undefined,
+                tokenizerKind: 'CLOSINGBLOCK',
+                type: "ClosingBlock"},
+            {
+                identifier: "//",
+                original: "// Signal Manipulation",
+                text: " Signal Manipulation",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "setSignal(SignalName, 100);",
+                name: "setSignal",
+                openParen: "(",
+                arguments: "SignalName, 100",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"},
+            {
+                identifier: "//",
+                original: "// Environment Variable Handling",
+                text: " Environment Variable Handling",
+                tokenizerKind: null,
+                type: "Comment"},
+            {
+                original: "setEnvVar(EnvVarName, \"value\");",
+                name: "setEnvVar",
+                openParen: "(",
+                arguments: "EnvVarName, \"value\"",
+                closeParen: ")",
+                semicolon: ";",
+                tokenizerKind: 'FUNCTIONCALL',
+                type: "FunctionCall"}
         ];
         console.log(expectedErrors);
         let evaluatedErrors = await identicationTypesTest(inputCode);

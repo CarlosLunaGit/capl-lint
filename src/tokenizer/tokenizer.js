@@ -27,7 +27,15 @@ export class Tokenizer {
         this._blocks = [];
         this._lastClosedBlock = "";
         this.branchController = branchController;
+
         this._context = null;
+        this.BlockWithoutBrackets = false;
+        this.branchController.restartBranches();
+        this.restartInit();
+    }
+
+    restartInit(){
+        this.BlockWithoutBrackets = false;
     }
 
     /**
@@ -40,9 +48,6 @@ export class Tokenizer {
         if (matched == null){
             return null;
         }
-
-        console.log( "Match for : " + regexp )
-        console.log( matched[0] )
 
         this._cursor += matched[0].length;
         return { tokenValue: matched[0], tokenMatch: matched.groups, currentRow: this._currentRow, currentCol:this._currentCol }
@@ -58,9 +63,8 @@ export class Tokenizer {
     /**
      * Wheter the tokenizer reached EOF.
      */
-    isEOF(tokens){
+    isEOF(){
         if (this._cursor === this._string.length) {
-            tokens.push(this.eatEndOfFile());
             return true;
         }else{
             return false;
@@ -201,8 +205,11 @@ export class Tokenizer {
 
             }
 
-            this._currentRow = this.getLineWithCursor();
-            this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length);
+            // this._currentRow = this.getLineWithCursor();
+            // this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length);
+            this._currentRow = this.getLineWithCursor(String(tokenResult.tokenValue).length);
+            this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length, String(tokenResult.tokenValue).split('\n')[0]);
+
             return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
         }
 
@@ -210,6 +217,7 @@ export class Tokenizer {
         const unmatchedToken = string.split('\n')[0]; // Get the current line
         this._cursor += unmatchedToken.length; // Move the cursor to the end of the unmatched line
         let unmatchedTokenObj = createToken(this._currentRow, this._currentCol, 'UNMATCHED', unmatchedToken, null);
+        unmatchedTokenObj.definedInSpec = "UNMATCHED";
         errorHandler._unexpected(unmatchedTokenObj, this._parentParser);
         return unmatchedTokenObj;
     }
