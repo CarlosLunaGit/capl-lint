@@ -3,62 +3,8 @@ import { Parser } from '../../src/parser/parser.js';
 
 // describe('Critical Rules Suite', () => {
 
-    // test('lintCode detects not allowed statements within INCLUDES Block', async () => {
 
-    //     const inputCode =
-    //     `includes
-    //     {
-    //         // Comment
-    //         #include "..\\TestLibraries\\responses.cin"
-    //         #include "..\\TestLibraries\\utils.cin"
-    //         byte variable1[3]={0x01,0x02,0x03};
-    //         byte variable2[3]={0x01,0x02,0x03};
-    //     }`;
 
-    //     const expectedErrors = [
-    //         {
-    //             line: 6,
-    //             error: 'INCLUDES Block can only host lines of type = ["//", "*", "*/", "#include"...]. Statement: - byte variable1[3]={0x01,0x02,0x03};',
-    //             priority: 1,
-    //             type: "Critical Rule"
-    //         },
-    //         {
-    //             line: 7,
-    //             error: 'INCLUDES Block can only host lines of type = ["//", "*", "*/", "#include"...]. Statement: - byte variable2[3]={0x01,0x02,0x03};',
-    //             priority: 1,
-    //             type: "Critical Rule"
-    //         }
-    //     ];
-
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // });
-
-    // test('lintCode detects not allowed statements within VARIABLES Block', async () => {
-    //     const inputCode =
-    //     `variables
-    //     {
-    //         byte variable1[3]={0x01,0x02,0x03};
-    //         // Comment
-    //         byte variable2[3]={0x04,0x05,0x06};
-    //         int x = 10;
-    //         int y = 20;
-    //         #include "..\\myLibraries\\utils.cin"
-    //     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 8,
-    //             error: 'VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - #include "..\\myLibraries\\utils.cin"',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // })
 
     // test('lintCode detects not allowed statements within VARIABLES Block (const prefix case)', async () => {
     //     const inputCode =
@@ -91,40 +37,6 @@ import { Parser } from '../../src/parser/parser.js';
     //     console.log(evaluatedErrors);
     //     expect(evaluatedErrors).toEqual(expectedErrors);
     // })
-
-    // test('lintCode detects missing semicolons for LINE STATEMENTS', async () => {
-    //     const inputCode =
-    //     `variables
-    //     {
-    //         byte variable1[3]={0x01,0x02,0x03};
-    //         byte variable2[3]={0x04,0x05,0x06};
-    //         int x = 10;
-    //         int y = 20;
-    //     }
-    //         void MainTest ()
-    //     {
-    //         int x = 10;
-    //         int y = 20;
-    //         int z;
-    //         z = x + y;
-    //         // some comments
-    //         if (1){
-    //             write("%d",z);
-    //             write("%d",w)
-    //         }
-	//     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 17,
-    //             error: 'Line statement should end with a semicolon. Statement: - write("%d",w)',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // });
 
     // test('lintCode detects missing semicolons for Variables declaration (with Comment lines)', async () => {
     //     const inputCode =
@@ -441,47 +353,6 @@ import { Parser } from '../../src/parser/parser.js';
 //     });
 
 //   })
-
-describe('Critical Rules Suite', () => {
-
-    test('lintCode detects missing "#" on Include statements', async () => {
-
-        const inputCode =
-        `includes
-        {
-            // Comment
-            #include "..\\TestLibraries\\responses.cin"
-            include "..\\TestLibraries\\utils.cin"
-
-        }`;
-
-        const expectedErrors = [
-            {
-                line: 5,
-                col: 12,
-                error: 'ERROR: On statement \"include \"..\\TestLibraries\\utils.cin\"\" (expecting \"#\")',
-                priority: 1,
-                type: "Critical Rule"
-            }
-        ];
-
-        console.log(expectedErrors);
-
-        const parser = new Parser();
-
-        // Parse and analyze the code
-        const parserHandler = parser.parse(inputCode);
-        parserHandler.mainLoop();
-
-        // Collect errors
-        const evaluatedErrors = parserHandler.errors;
-
-        console.log(evaluatedErrors);
-        expect(evaluatedErrors).toEqual(expectedErrors);
-    });
-
-});
-
 
 describe('Test case for Token types and Registered Specs', () => {
 
@@ -825,10 +696,225 @@ describe('Test case for Token types and Registered Specs', () => {
                 tokenizerKind: 'FUNCTIONCALL',
                 type: "FunctionCall"}
         ];
-        console.log(expectedErrors);
+        // console.log(expectedErrors);
         let evaluatedErrors = await identicationTypesTest(inputCode);
         console.log(evaluatedErrors);
         expect(evaluatedErrors).toEqual(expectedErrors);
     })
+
+});
+
+describe('Critical Rules Suite', () => {
+
+    test('lintCode detects missing "#" on Include statements', async () => {
+
+        const inputCode =
+        `includes
+        {
+            // Comment
+            #include "..\\TestLibraries\\responses.cin"
+            include "..\\TestLibraries\\utils.cin"
+
+        }`;
+
+        const expectedErrors = [
+            {
+                line: 5,
+                col: 12,
+                error: 'ERROR: On statement \"include \"..\\TestLibraries\\utils.cin\"\" (expecting \"#\")',
+                priority: 1,
+                type: "Critical Rule"
+            }
+        ];
+
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
+
+    test('lintCode detects not allowed statements within INCLUDES Block', async () => {
+
+        const inputCode =
+        `includes
+        {
+            // Comment
+            #include "..\\TestLibraries\\responses.cin"
+            #include "..\\TestLibraries\\utils.cin"
+            byte variable1[3]={0x01,0x02,0x03};
+            byte variable2[3]={0x01,0x02,0x03};
+        }`;
+
+        const expectedErrors = [
+            {
+                line: 6,
+                col: 12,
+                error: 'ERROR: On statement \"byte variable1[3]={0x01,0x02,0x03};\" (unexpected \"statement, only \"#include\" statements are allowed within the Include block\")',
+                priority: 1,
+                type: "Critical Rule"
+            },
+            {
+                line: 7,
+                col: 12,
+                error: 'ERROR: On statement \"byte variable2[3]={0x01,0x02,0x03};\" (unexpected \"statement, only \"#include\" statements are allowed within the Include block\")',
+                priority: 1,
+                type: "Critical Rule"
+            }
+        ];
+
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
+
+    test('lintCode detects not allowed statements within VARIABLES Block', async () => {
+        const inputCode =
+        `variables
+        {
+            byte variable1[3]={0x01,0x02,0x03};
+            // Comment
+            byte variable2[3]={0x04,0x05,0x06};
+            int x = 10;
+            int y = 20;
+            #include "..\\myLibraries\\utils.cin"
+        }`;
+        const expectedErrors = [
+            {
+                line: 8,
+                col: 12,
+                error: 'ERROR: On statement \"#include \"..\\myLibraries\\utils.cin\"\" (unexpected \"statement, only variables definitions and initializations are allowed within the Variable block\")',
+                priority: 1,
+                type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    })
+
+    test('lintCode detects missing semicolons for LINE STATEMENTS', async () => {
+        const inputCode =
+        `variables
+        {
+            byte variable1[3]={0x01,0x02,0x03};
+            // Missing semicolon in Variables Block
+            byte variable2[3]={0x04,0x05,0x06}
+            int w = 10;
+            int x = 10;
+            int y = 20;
+        }
+        void MainTest ()
+        {
+            int z;
+            z = x + y;
+            // some comments
+            if (1){
+                write("%d",z);
+                // Missing semicolon in Line Statement
+                write("%d",w)
+            }
+	    }`;
+        const expectedErrors = [
+            {
+                line: 5,
+                col: 12,
+                error: 'ERROR: On statement \"byte variable2[3]={0x04,0x05,0x06}\" (expecting ;)',
+                priority: 1,
+                type: "Critical Rule" },
+            {
+                line: 18,
+                col: 16,
+                error: 'ERROR: On statement \"write(\"%d\",w)\" (expecting ;)',
+                priority: 1,
+                type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
+
+    // test('lintCode detects Duplicated variables declaration', async () => {
+    //     const inputCode =
+    //     `variables
+    //     {
+    //         byte variable1[3]={0x01,0x02,0x03};
+    //         int x = 10;
+    //         int y = 10;
+    //         int z = 20;
+    //     }
+    //     void MainTest ()
+    //     {
+    //         int z;
+    //         z = x + y;
+
+    //         write("%d",z);
+
+	//     }`;
+    //     const expectedErrors = [
+    //         {
+    //             line: 5,
+    //             col: 12,
+    //             error: 'ERROR: On statement \"byte variable2[3]={0x04,0x05,0x06}\" (expecting ;)',
+    //             priority: 1,
+    //             type: "Critical Rule" },
+    //         {
+    //             line: 18,
+    //             col: 16,
+    //             error: 'ERROR: On statement \"write(\"%d\",w)\" (expecting ;)',
+    //             priority: 1,
+    //             type: "Critical Rule" }
+    //     ];
+    //     // console.log(expectedErrors);
+
+    //     const parser = new Parser();
+
+    //     // Parse and analyze the code
+    //     const parserHandler = parser.parse(inputCode);
+    //     parserHandler.mainLoop();
+
+    //     // Collect errors
+    //     const evaluatedErrors = parserHandler.errors;
+
+    //     console.log(evaluatedErrors);
+    //     expect(evaluatedErrors).toEqual(expectedErrors);
+    // });
 
 });

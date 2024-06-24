@@ -37,6 +37,12 @@ export function addToBlockProperty(parser, token, property){
                     parentBlock[index][property] = token.tokenMatch.closeCurly;
                     parentBlock[index].closedBlock = true;
                 }
+                if (parentBlock[index].kind.includes('IncludesBlock')) {
+                    token.isInclude = true;
+                }
+                if (parentBlock[index].kind.includes('VariablesBlock')) {
+                    token.isVariable = true;
+                }
                 break;
             }
         }

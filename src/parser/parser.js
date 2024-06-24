@@ -253,6 +253,8 @@ export class Parser {
 
         return {
             kind: 'StringLiteral',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue.slice(1, -1),
             row: token.row,
             col: token.col,
@@ -270,6 +272,8 @@ export class Parser {
 
         return {
             kind: 'SemicolonLiteral',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue.slice(1, -1),
             row: token.row,
             col: token.col,
@@ -287,6 +291,8 @@ export class Parser {
 
         return {
             kind: 'NumericLiteral',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: Number(token.tokenValue),
             row: token.row,
             col: token.col,
@@ -306,6 +312,8 @@ export class Parser {
 
         return {
             kind: 'VariableDeclaration',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
@@ -330,6 +338,8 @@ export class Parser {
 
         return {
             kind: 'VariableDeclarationStruct',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
@@ -354,6 +364,8 @@ export class Parser {
 
         return {
             kind: 'InitializationStatement',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
@@ -375,6 +387,8 @@ export class Parser {
 
         return {
             kind: 'SysvarInitializationStatement',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
@@ -399,6 +413,8 @@ export class Parser {
 
         return {
             kind: 'FunctionCall',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: token.row,
             col: token.col,
@@ -422,6 +438,8 @@ export class Parser {
 
         return {
             kind: 'ifCall',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: token.row,
             col: token.col,
@@ -448,6 +466,8 @@ export class Parser {
 
         return {
             kind: 'elseCall',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: token.row,
             col: token.col,
@@ -471,6 +491,8 @@ export class Parser {
 
         return {
             kind: 'elseIfCall',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: token.row,
             col: token.col,
@@ -497,6 +519,8 @@ export class Parser {
 
         return {
             kind: 'forLoopCall',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: token.row,
             col: token.col,
@@ -522,6 +546,8 @@ export class Parser {
 
         return {
             kind: 'IncludesBlock',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
@@ -545,6 +571,8 @@ export class Parser {
 
         return {
             kind: 'IncludeStatement',
+            isInclude: true,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: token.row,
             col: token.col,
@@ -567,6 +595,8 @@ export class Parser {
 
         return {
             kind: 'VariablesBlock',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
@@ -590,6 +620,8 @@ export class Parser {
 
         return {
             kind: 'FunctionsBlock',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
@@ -617,6 +649,8 @@ export class Parser {
 
         return {
             kind: 'ReturnStatement',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
@@ -640,6 +674,8 @@ export class Parser {
 
         return {
             kind: 'ClosingBlockLiteral',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: token.row,
             col: token.col,
@@ -657,6 +693,8 @@ export class Parser {
 
         return {
             kind: 'endOfFile',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
             statement: token.tokenValue,
             row: token.row,
             col: token.col,
@@ -734,6 +772,10 @@ export class Parser {
             register.registerPublicVariable(token, isConstant, this)
 
             let missingSemicolon = token.semicolon === null;
+            let isInclude = token.isInclude === true;
+
+            if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+
             if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
 
     }
@@ -743,6 +785,9 @@ export class Parser {
         register.registerPublicVariable(token, isConstant, this)
 
         let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
 
 }
@@ -754,7 +799,9 @@ export class Parser {
         let equals = token.equals === null;
         let value = token.value === null;
         let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
 
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( variable === true) { errorHandler.expecting(token, 'variable', parser) }
         if ( equals === true) { errorHandler.expecting(token, '=', parser) }
         if ( value === true) { errorHandler.expecting(token, 'value', parser) }
@@ -771,7 +818,9 @@ export class Parser {
         let assignment = token.assignment === null;
         let value = token.value === null;
         let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
 
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( sysvarKey === true) { errorHandler.expecting(token, 'sysvarKey', parser) }
         if ( namespace === true) { errorHandler.expecting(token, 'namespace', parser) }
         if ( name === true) { errorHandler.expecting(token, 'name', parser) }
@@ -784,9 +833,13 @@ export class Parser {
     eatKind(token, parser) {
         // const token = rat.tokens.shift()
         let acceptedKind = typesModule.kinds.includes(token.kind);
-        if ( acceptedKind === false) { errorHandler.invalidStatement(token, '', parser) }
-
         let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+        if ( acceptedKind === false) { errorHandler.invalidStatement(token, '', parser) }
         if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
 
     }
@@ -799,7 +852,9 @@ export class Parser {
         let keyword = token.keyword === null;
         let dir = token.dir === null;
         let semicolon = token.semicolon === ';';
+        let isVariable = token.isVariable === true;
 
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
         if ( openKey === true) { errorHandler.expecting(token, '"#"', parser) }
         if ( keyword === true) { errorHandler.expecting(token, 'include', parser) }
         if ( dir === true) { errorHandler.expecting(token, '"valid File path"', parser) }
@@ -814,7 +869,9 @@ export class Parser {
         let openCurly = token.openCurly === null;
         let closeCurly = token.closeCurly === null;
         let semicolon = token.semicolon === ';';
+        let isVariable = token.isVariable === true;
 
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
         if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
         if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
         if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
@@ -826,7 +883,9 @@ export class Parser {
         let openCurly = token.openCurly === null;
         let closeCurly = token.closeCurly === null;
         let semicolon = token.semicolon === ';';
+        let isInclude = token.isInclude === true;
 
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
         if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
         if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
@@ -844,7 +903,11 @@ export class Parser {
         let body = token.body === '';
         let closeCurly = token.closeCurly === null;
         let semicolon = token.semicolon === ';';
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
 
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( dataType === true) { errorHandler.expecting(token, 'data type', parser) }
         if ( name === true) { errorHandler.expecting(token, 'function name', parser) }
         if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
@@ -866,8 +929,12 @@ export class Parser {
         let body = token.body === '';
         let closeCurly = token.closeCurly === null;
         let semicolon = token.semicolon === ';';
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
 
         if (token.closedBlock === true) {
+            if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+            if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
             if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
             if ( conditional === true) { errorHandler.expecting(token, '"(condition)"', parser) }
             if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
@@ -877,6 +944,8 @@ export class Parser {
             if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
         }
         else {
+            if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+            if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
             if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
             if ( conditional === true) { errorHandler.expecting(token, '"(condition)"', parser) }
             if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
@@ -897,7 +966,11 @@ export class Parser {
         let body = token.body === '';
         let closeCurly = token.closeCurly === null;
         let semicolon = token.semicolon === ';';
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
 
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
         if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
         if ( body === true) { errorHandler.unexpected(token, 'Empty/Unused ELSE block', parser) }
         if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
@@ -915,7 +988,11 @@ export class Parser {
         let body = token.body === '';
         let closeCurly = token.closeCurly === null;
         let semicolon = token.semicolon === ';';
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
 
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
         if ( conditional === true) { errorHandler.expecting(token, '"(condition)"', parser) }
         if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
@@ -936,7 +1013,11 @@ export class Parser {
         let openCurly = token.openCurly === null;
         let body = token.body === '';
         let closeCurly = token.closeCurly === null;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
 
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
         if ( forKey === true) { errorHandler.expecting(token, 'for', parser) }
         if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
         if ( initializer === true) { errorHandler.expecting(token, 'initializer', parser) }
@@ -951,7 +1032,11 @@ export class Parser {
 
             let returnStatement = token.returnStatement === null;
             let semicolon = token.semicolon === null;
+            let isInclude = token.isInclude === true;
+            let isVariable = token.isVariable === true;
 
+            if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+            if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
             if ( returnStatement === true) { errorHandler.expecting(token, 'return statement', parser) }
             if ( semicolon === true) { errorHandler.expecting(token, ';', parser) }
 
@@ -973,7 +1058,11 @@ export class Parser {
         let argumentsMissing = token.arguments === null;
         let closeParen = token.closeParen === null;
         let semicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
 
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( name === true) { errorHandler.expecting(token, 'function name', parser) }
         if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
         // TODO Handle arguments on a secondary function

@@ -34,6 +34,8 @@ function Token(row, col, kind, value, matches) {
     // during declaration:
     this.isImport = false
     this.isConstant = false
+    this.isInclude = false
+    this.isVariable = false
     // after declaration:
     this.wasUsed = false
     this.wasAssigned = false
