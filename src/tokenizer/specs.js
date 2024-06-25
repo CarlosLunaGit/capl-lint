@@ -87,7 +87,10 @@ export const blocksSpec = [
     ['FUNCTIONCALL', /^(?<name>(?:(?!\bif\b|\belse\b)\b\w+\b))\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/, 'FunctionCall'],
     // Initialization Statement:
 
-    ['INITIALIZATIONSTATEMENT', /^(?<variable>.+)\s*(?<equals>=)\s*(?<value>[^;]+)\s*(?<semicolon>;*)?/, 'InitializationStatement'],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\s*\+\s*\w+)(?<semicolon>;)?/, 'InitializationStatement'],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+\.\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\.\w+)(?<semicolon>;)?/, 'InitializationStatement'],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+\.\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+)(?<semicolon>;)?/, 'InitializationStatement'],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+)(?<semicolon>;)?/, 'InitializationStatement'],
 
     // Return Statement:
 

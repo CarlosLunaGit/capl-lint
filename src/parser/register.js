@@ -22,9 +22,9 @@ export function registerIncludesBlock(token, parser) {
 
 export function registerPublicVariable(token, isConstant, parser) {
     if (isConstant) { token.isConstant = isConstant }
-    const statement = token.statement;
-    register(statement, token, parser);
-    parser.exports[statement] = token;
+    const name = token.name;
+    register(name, token, parser);
+    parser.exports[name] = token;
 }
 
 export function registerPrivateVariable(token, isConstant) {
@@ -80,12 +80,12 @@ export function endGlobalFunction() { // good for main and init
 
 // IMPORTANT CORE FUNCTION FOR ALL KINDS OF DECLARATION
 
-function register(statement, token, parser) {
-    const first = parser.declareds[statement]
-    if (first == undefined) { parser.declareds[statement] = token; return }
+function register(name, token, parser) {
+    const first = parser.declareds[name]
+    if (first == undefined) { parser.declareds[name] = token; return }
     //
     const msg = "Variable already declared at row " + first.row
-    errorHandler.err(token, msg, parser)
+    errorHandler.dupicatedDeclaration(token, msg, parser)
     return
 }
 

@@ -33,6 +33,10 @@ export function err(token, msg, parser) {
     error(token.row, token.col, msg, parser)
 }
 
+export function dupicatedDeclaration(token, msg, parser) {
+    error(token.row, token.col, msg, parser)
+}
+
 // complete error function ////////////////////////////////////////////////////
 
 export function error(row, col, msg, parser) {

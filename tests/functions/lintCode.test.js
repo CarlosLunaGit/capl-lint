@@ -5,108 +5,6 @@ import { Parser } from '../../src/parser/parser.js';
 
 
 
-
-    // test('lintCode detects not allowed statements within VARIABLES Block (const prefix case)', async () => {
-    //     const inputCode =
-    //     `/*@!Encoding:65001*/
-    //     includes
-    //     {
-
-    //     }
-
-    //     variables
-    //     {
-
-    //         const int totalECUs=105;
-    //         char ECUName[5];
-    //         byte fcDIDCAN[3];
-    //         byte fcDIDCANFD1st[3];
-    //         byte fcDIDCANFD2nd[3];
-    //         #include "..\\TestLibraries\\utils.cin"
-
-    //     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 15,
-    //             error: 'VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - #include "..\\TestLibraries\\utils.cin"',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // })
-
-    // test('lintCode detects missing semicolons for Variables declaration (with Comment lines)', async () => {
-    //     const inputCode =
-    //     `/**
-    //     * @var Doxygen comment
-    //     * @brief This is a classic Doxygen compliance comment block
-    //     */
-    //     variables {
-    //         byte variable1[3]={0x01,0x02,0x03};
-    //         byte variable2[3]={0x04,0x05,0x06}
-    //         int x = 10;
-    //         int y = 20
-    //     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 7,
-    //             error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - byte variable2[3]={0x04,0x05,0x06}',
-    //             priority: 1,
-    //             type: "Critical Rule" },
-    //         {
-    //             line: 9,
-    //             error: 'Variable declaration should end with a semicolon. Statement: - int y = 20',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // });
-
-    // test('lintCode detects missing semicolons for Variables declaration (Multi-line case)', async () => {
-    //     const inputCode =
-    //     `variables
-    //     {
-    //         byte EDA0_RESPONSE[3]={0x62,0xED,0xA0};
-    //         byte EE01_RESPONSE[3]={0x62,0xEE,0x01}
-    //         int x = 10;
-    //         int y = 20
-
-    //         struct fcDIDLookupTableStr {
-    //             char ECUName[5];
-    //             byte fcDIDCAN[3];
-    //             byte fcDIDCANFD1st[3];
-    //             byte fcDIDCANFD2nd[3];
-    //         } fcDIDLookupTable[200]
-    //     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 4,
-    //             error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - byte EE01_RESPONSE[3]={0x62,0xEE,0x01}',
-    //             priority: 1,
-    //             type: "Critical Rule" },
-    //         {
-    //             line: 6,
-    //             error: 'Variable declaration should end with a semicolon. Statement: - int y = 20',
-    //             priority: 1,
-    //             type: "Critical Rule" },
-    //         {
-    //             line: 13,
-    //             error: 'Variable Declaration BLOCK should end with a semicolon. Statement: - } fcDIDLookupTable[200]',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // });
-
     // test('lindCode detects declaration of local variables not at the beginning portion of the FUNCTION.', async () => {
     //     const inputCode =
     //     `/*@!Encoding:1252*/
@@ -820,6 +718,48 @@ describe('Critical Rules Suite', () => {
         expect(evaluatedErrors).toEqual(expectedErrors);
     })
 
+    test('lintCode detects not allowed statements within VARIABLES Block (const prefix case)', async () => {
+        const inputCode =
+        `/*@!Encoding:65001*/
+        includes
+        {
+
+        }
+
+        variables
+        {
+
+            const int varInt=105;
+            char varChar[5];
+            byte varByte1[3];
+            byte varByte2[3];
+            byte varByte3[3];
+            #include "..\\TestLibraries\\utils.cin"
+
+        }`;
+        const expectedErrors = [
+            {
+                line: 15,
+                col: 12,
+                error: 'ERROR: On statement \"#include \"..\\TestLibraries\\utils.cin\"\" (unexpected \"statement, only variables definitions and initializations are allowed within the Variable block\")',
+                priority: 1,
+                type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    })
+
     test('lintCode detects missing semicolons for LINE STATEMENTS', async () => {
         const inputCode =
         `variables
@@ -871,50 +811,158 @@ describe('Critical Rules Suite', () => {
         expect(evaluatedErrors).toEqual(expectedErrors);
     });
 
-    // test('lintCode detects Duplicated variables declaration', async () => {
-    //     const inputCode =
-    //     `variables
-    //     {
-    //         byte variable1[3]={0x01,0x02,0x03};
-    //         int x = 10;
-    //         int y = 10;
-    //         int z = 20;
-    //     }
-    //     void MainTest ()
-    //     {
-    //         int z;
-    //         z = x + y;
+    test('lintCode detects missing semicolons for Variables declaration (with Comment lines)', async () => {
+        const inputCode =
+        `/**
+        * @var Doxygen comment
+        * @brief This is a classic Doxygen compliance comment block
+        */
+        variables {
+            byte variable1[3]={0x01,0x02,0x03};
+            byte variable2[3]={0x04,0x05,0x06}
+            int x = 10;
+            int y = 20
+        }
+        testcase function1(int param1)
+        {
+            byte varLocal1[8];
+            byte varLocal2[8];
+            int varLocal3;
+            char varLocal4[100];
+            char varLocal5[50]
 
-    //         write("%d",z);
+            varLocal1.prop1 = varLocal2
+        }`;
+        const expectedErrors = [
+            {
+                line: 7,
+                col: 12,
+                error: 'ERROR: On statement \"byte variable2[3]={0x04,0x05,0x06}\" (expecting ;)',
+                priority: 1,
+                type: "Critical Rule" },
+            {
+                line: 9,
+                col: 12,
+                error: 'ERROR: On statement \"int y = 20\" (expecting ;)',
+                priority: 1,
+                type: "Critical Rule" },
+            {
+                line: 17,
+                col: 12,
+                error: 'ERROR: On statement \"char varLocal5[50]\" (expecting ;)',
+                priority: 1,
+                type: "Critical Rule" },
+            {
+                line: 19,
+                col: 12,
+                error: 'ERROR: On statement \"varLocal1.prop1 = varLocal2\" (expecting ;)',
+                priority: 1,
+                type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
 
-	//     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 5,
-    //             col: 12,
-    //             error: 'ERROR: On statement \"byte variable2[3]={0x04,0x05,0x06}\" (expecting ;)',
-    //             priority: 1,
-    //             type: "Critical Rule" },
-    //         {
-    //             line: 18,
-    //             col: 16,
-    //             error: 'ERROR: On statement \"write(\"%d\",w)\" (expecting ;)',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     // console.log(expectedErrors);
+        const parser = new Parser();
 
-    //     const parser = new Parser();
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
 
-    //     // Parse and analyze the code
-    //     const parserHandler = parser.parse(inputCode);
-    //     parserHandler.mainLoop();
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
 
-    //     // Collect errors
-    //     const evaluatedErrors = parserHandler.errors;
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
 
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // });
+    test('lintCode detects missing semicolons for Variables declaration (Multi-line case)', async () => {
+        const inputCode =
+        `variables
+        {
+            byte variable1[3]={0x62,0xED,0xA0};
+            byte variable2[3]={0x62,0xEE,0x01}
+            int x = 10;
+            int y = 20
+
+            struct varitableStructType {
+                char varChar[5];
+                byte varByte1[3];
+                byte varByte2[3];
+                byte varByte3[3];
+            } variableStructName[200]
+        }`;
+        const expectedErrors = [
+            {
+                line: 4,
+                col: 12,
+                error: 'ERROR: On statement \"byte variable2[3]={0x62,0xEE,0x01}\" (expecting ;)',
+                priority: 1,
+                type: "Critical Rule" },
+            {
+                line: 6,
+                col: 12,
+                error: 'ERROR: On statement \"int y = 20\" (expecting ;)',
+                priority: 1,
+                type: "Critical Rule" },
+            {
+                line: 14,
+                col: 8,
+                error: 'ERROR: Unexpected token out of any block scope (Includes, Variables or Function scope ) }',
+                priority: 1,
+                type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
+
+    test('lintCode detects Duplicated variables declaration', async () => { // TODO fix parser logic to handle local variables
+        const inputCode =
+        `variables
+        {
+            byte variable1[3]={0x01,0x02,0x03};
+            int x = 10;
+            int y = 10;
+            int z = 20;
+        }
+        void MainTest ()
+        {
+            int z;
+            z = x + y;
+
+            write("%d",z);
+
+	    }`;
+        const expectedErrors = [
+            {
+                line: 10,
+                col: 12,
+                error: 'ERROR: Variable already declared at row 6',
+                priority: 1,
+                type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
 
 });
