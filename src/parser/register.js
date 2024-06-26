@@ -27,6 +27,19 @@ export function registerPublicVariable(token, isConstant, parser) {
     parser.exports[name] = token;
 }
 
+
+export function checkRegisterPublicVariable(token, parser) {
+
+    const registered = markUsed(token, parser);
+
+    if (registered == true) {
+        errorHandler.err(token, "Variable declared but not a valid statement, Parse Error", parser)
+    }else{
+        errorHandler.err(token, "Variable not declared or unexpected statement, Parse Error", parser)
+    }
+
+}
+
 export function registerPrivateVariable(token, isConstant) {
     if (isConstant) { token.isConstant = isConstant }
     const name = token.tokenValue
@@ -100,13 +113,12 @@ function registerIncludes(statement, token, parser) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export function markUsed(token) { // not really marking the token
-    const name = token.tokenValue
-    if (builtins.indexOf(name) != -1) { return }
+export function markUsed(token, parser) { // not really marking the token
+    const name = token.unexpected;
+    if ([token.unexpected].map(key => key in parser.declareds)[0] == false) { return false }
     //
-    const fullname = branchedName(name)
-    if (rat.useds[fullname] == undefined) { rat.useds[fullname] = token } // registering only
-                                                                          // the first occurrence
+    return true;
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////

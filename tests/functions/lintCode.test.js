@@ -904,9 +904,15 @@ describe('Critical Rules Suite', () => {
                 priority: 1,
                 type: "Critical Rule" },
             {
-                line: 14,
-                col: 8,
-                error: 'ERROR: Unexpected token out of any block scope (Includes, Variables or Function scope ) }',
+                line: 8,
+                col: 12,
+                error: `ERROR: On statement \"struct varitableStructType {
+                char varChar[5];
+                byte varByte1[3];
+                byte varByte2[3];
+                byte varByte3[3];
+            } variableStructName[200]
+        \" (expecting ;)`,
                 priority: 1,
                 type: "Critical Rule" }
         ];
@@ -949,6 +955,50 @@ describe('Critical Rules Suite', () => {
                 error: 'ERROR: Variable already declared at row 6',
                 priority: 1,
                 type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
+
+    test('lintCode detects parse errors (Unexpected Literals)', async () => { // TODO fix parser logic to handle local variables
+        const inputCode =
+        `variables
+        {
+            byte variable1[3]={0x01,0x02,0x03};
+            int x = 20;
+            int z = 20;
+        }
+        void MainTest ()
+        {
+            x
+            write("Hello World %d",z);.
+
+	    }`;
+        const expectedErrors = [
+            {
+                line: 9,
+                col: 12,
+                error: 'ERROR: Variable declared but not a valid statement, Parse Error',
+                priority: 1,
+                type: "Critical Rule" },
+            {
+                line: 10,
+                col: 38,
+                error: 'ERROR: Variable not declared or unexpected statement, Parse Error',
+                priority: 1,
+                type: "Critical Rule" }
+
         ];
         // console.log(expectedErrors);
 

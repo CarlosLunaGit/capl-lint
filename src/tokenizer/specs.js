@@ -52,7 +52,7 @@ export const blocksSpec = [
     [null, /^(?<identifier>\/\/)(?<text>.*)/, 'Comment'],
 
     // Skip multi-line comments:
-    [null, /^\/\*[\s\S]*?\*\//, 'CommentMultiline'],
+    [null, /^(?<commentOpenBlock>\/\*)(?<text>[\s\S]*?)(?<commentCloseBlock>\*\/)/, 'CommentMultiline'],
 
     // Semicolon:
 
@@ -75,6 +75,7 @@ export const blocksSpec = [
 
     ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+)(?<arraySize>(?:\[\d+\])*)? *(?<assigment>=)? *(?<value>(?:\{[^}]*\}|[^;\s]+))?(?<semicolon>;)?/, 'VariableDeclaration'],
     ['VARIABLEDECLARATION_STRUCT', /^(?<structKeyword>struct) +(?<dataType>\w+) +(?<name>\w+) *(?<arrayStart>\[)?(?<arraySize>\d+)?(?<arrayEnd>\])?(?<semicolon>;)?/, 'VariableDeclarationStruct'],
+    ['VARIABLEDECLARATION_STRUCTARRAY', /^(?<structKeyword>struct)\s+(?<structType>\w+)\s*\{\s*(?<structBody>[^}]+)\}\s*(?<variableName>\w+)(?:\[(?<arraySize>\d+)\])\s*(?<semicolon>;)?/, 'VariableDeclarationStructArray'],
 
     // System Variable declaration:
 
@@ -99,4 +100,9 @@ export const blocksSpec = [
     // Closing block:
 
     ['CLOSINGBLOCK', /^(?<closeCurly>\})\s*(?<semicolon>;)?/, 'ClosingBlock'],
+
+    // Unexpected:
+
+    ['UNEXPECTED', /^(?<![\w\d])(?<unexpected>\.)(?![\w\d])/, 'Unexpected'],
+    ['UNEXPECTED', /^\b(?<unexpected>[a-zA-Z_]+)\b(?![\(\)\[\];,])/, 'Unexpected'],
 ];

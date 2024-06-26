@@ -149,6 +149,12 @@ export class Parser {
                     this.pushToken(this.VariableDeclarationStruct(this._lookBehind));
                     break;
 
+                case 'VARIABLEDECLARATION_STRUCTARRAY':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body')
+                    this.pushToken(this.VariableDeclarationStructArray(this._lookBehind));
+                    break;
+
                 case 'FUNCTIONSBLOCK':
                     this._lookBehind = this._lookahead;
                     this.tokenizer.branchController.openBranch();
@@ -215,8 +221,14 @@ export class Parser {
                     this.pushToken(this.ClosingBlockLiteral(this._lookBehind));
                     break;
 
+                case 'UNEXPECTED':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body');
+                    this.pushToken(this.unexpectedStatement(this._lookBehind));
+                    break;
+
                 case 'UNMATCHED':
-                    console.error(`Unmatched token encountered: ${this._lookahead.tokenValue}`);
+                    console.error(`UNMATCHED token encountered: ${this._lookahead.tokenValue}`);
                     break;
 
                 default:
@@ -354,6 +366,31 @@ export class Parser {
             parentBlockIndentation: token.parentBlockIndentation || 0
         };
     }
+
+    /**
+     * VariableDeclarationStructArray
+     * : VARIABLEDECLARATION_STRUCTARRAY
+     * ;
+     * */
+    VariableDeclarationStructArray(token) {
+
+            return {
+                kind: 'VariableDeclarationStructArray',
+                isInclude: token.isInclude,
+                isVariable: token.isVariable,
+                statement: token.tokenValue,
+                row: this.tokenizer._currentRow,
+                col: this.tokenizer._currentCol,
+                structKeyword: token.tokenMatch.structKeyword || null,
+                structType: token.tokenMatch.structType || null,
+                structBody: token.tokenMatch.structBody || null,
+                variableName: token.tokenMatch.variableName || null,
+                arraySize: token.tokenMatch.arraySize || null,
+                semicolon: token.tokenMatch.semicolon || null,
+                path: this.tokenizer.branchController.getCurrentBranch(),
+                parentBlockIndentation: token.parentBlockIndentation || 0
+            };
+        }
 
     /**
      * InitializationStatement
@@ -663,6 +700,23 @@ export class Parser {
     }
 
     /**
+     * unexpectedStatement
+     * : UNEXPECTED
+     * ;
+     * */
+    unexpectedStatement(token) {
+
+        return {
+            kind: 'unexpectedStatement',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            row: token.row,
+            col: token.col,
+            unexpected: token.tokenMatch.unexpected || null
+        };
+    }
+
+    /**
      * ClosingBlockLiteral
      *  : CLOSINGBLOCK
      *  ;
@@ -737,6 +791,7 @@ export class Parser {
         while (this.tokens.length > 0) {
             const token = this.eat();
             if (token.path == "")  { this.eatOutOfScope(token, this); continue }
+            if (token.kind == "unexpectedStatement")  { this.eatUnexpectedStatement(token, this); continue }
             if (token.kind == "IncludesBlock")  { this.eatIncludesBlock(token, this); continue }
             if (token.kind == "IncludeStatement")  { this.eatIncludeStatement(token, this); continue }
             if (token.kind == "VariablesBlock")  { this.eatVariablesBlock(token, this); continue }
@@ -754,6 +809,7 @@ export class Parser {
             if (token.kind == "SysvarInitializationStatement") { this.eatSysvarInitializationStatement(token, this); continue }
             if (token.kind == "VariableDeclaration")    { this.eatVariableDeclaration(token, false, false, this); continue }
             if (token.kind == "VariableDeclarationStruct")    { this.eatVariableDeclarationStruct(token, false, false, this); continue }
+            if (token.kind == "VariableDeclarationStructArray")    { this.eatVariableDeclarationStructArray(token, false, false, this); continue }
             if (token.kind == "InitializationStatement")    { this.eatInitializationStatement(token, false, false, this); continue }
             if (token.kind == "FunctionCall")    { this.eatFunctionCall(token, false, false, this); continue }
             if (token.kind == "ReturnStatement")  { this.eatReturnStatement(token, this); continue }
@@ -791,6 +847,19 @@ export class Parser {
         if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
 
 }
+
+    eatVariableDeclarationStructArray(token, isExporting, isConstant, parser) {
+
+        register.registerPublicVariable(token, isConstant, this)
+
+        let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
+
+    }
+
 
     eatInitializationStatement(token, isExporting, isConstant, parser) {
 
@@ -841,6 +910,32 @@ export class Parser {
         if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
         if ( acceptedKind === false) { errorHandler.invalidStatement(token, '', parser) }
         if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
+
+    }
+
+    eatUnexpectedStatement(token, parser) {
+
+        let isGlobalVar;
+        isGlobalVar = register.checkRegisterPublicVariable(token, this);
+
+    }
+
+
+
+
+    eatStringLiteral(token, parser) {
+        // const token = rat.tokens.shift()
+        let isGlobalVar;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+        let statement = token.statement === '';
+
+        isGlobalVar = register.checkRegisterPublicVariable(token, this)
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+
+
 
     }
 
