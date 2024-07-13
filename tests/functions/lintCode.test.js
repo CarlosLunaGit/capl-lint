@@ -3,137 +3,6 @@ import { Parser } from '../../src/parser/parser.js';
 
 // describe('Critical Rules Suite', () => {
 
-
-
-    // test('lindCode detects declaration of local variables not at the beginning portion of the FUNCTION.', async () => {
-    //     const inputCode =
-    //     `/*@!Encoding:1252*/
-    //     includes
-    //     {
-
-    //     }
-
-    //     variables {
-
-
-    //     }
-
-    //     void MainTest ()
-    //     {
-    //         int x = 10;
-    //         int y = 20;
-    //         int z;
-    //         z = x + y;
-    //         // some comments
-    //         if (1){
-    //         write("%d",z);
-    //             int w = 10;
-    //             write("%d",w);
-    //         }
-
-    //     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 21,
-    //             error: 'Variable declarations must be the first lines within curly brackets of a block. Statement: - int w = 10;',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // })
-
-    // test('lindCode detects declaration of local variables not at the beginning portion of the TESTCASE.', async () => {
-    //     const inputCode =
-    //     `/*@!Encoding:65001*/
-    // /**
-    //  * @file testCase01BlockSizeValueHandlingCANGroup.cin
-    //  */
-    // includes
-    // {
-
-
-    // }
-
-    // variables
-    // {
-
-
-    // }
-
-    // testcase myTestCase(byte data, enum ENUMERATION mode)
-    // {
-    //     byte data1[8];
-    //     byte data2[8];
-    //     int dataLength;
-    //     char text1[100];
-    //     char text2[50];
-
-    //     dutData.D1 = data1;
-    //     dutData.D2 = data2;
-    //     dutData.DL = dataLength;
-
-    //     int x;
-    //     strncpy(text1, text2, elcount(text1));
-
-    // }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 29,
-    //             error: 'Variable declarations must be the first lines within curly brackets of a block. Statement: - int x;',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // })
-
-    // test('lindCode detects declaration of local variables not at the beginning portion of the FUNCTION (Ignoring empty rows).', async () => {
-    //     const inputCode =
-    //     `/*@!Encoding:1252*/
-    //     includes
-    //     {
-
-    //     }
-
-    //     variables
-    //     {
-
-
-    //     }
-
-    //     void MainTest ()
-    //     {
-
-    //         int x = 10;
-    //         int y = 20;
-    //         int z;
-    //         z = x + y;
-    //         // some comments
-    //         if (1){
-    //         write("%d",z);
-    //             int w = 10;
-    //             write("%d",w);
-    //         }
-
-    //     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 23,
-    //             error: 'Variable declarations must be the first lines within curly brackets of a block. Statement: - int w = 10;',
-    //             priority: 1,
-    //             type: "Critical Rule" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // })
-
     // test('lindCode detects missing comma to separate parameters in TESTCASE.', async () => {
     //     const inputCode =
     //     `/*@!Encoding:65001*/
@@ -971,6 +840,114 @@ describe('Critical Rules Suite', () => {
         expect(evaluatedErrors).toEqual(expectedErrors);
     });
 
+    test('lindCode detects declaration of local variables not at the beginning portion of the FUNCTION.', async () => {
+        const inputCode =
+        `/*@!Encoding:1252*/
+        includes
+        {
+
+        }
+
+        variables {
+
+        }
+
+        void MainTest ()
+        {
+            int x = 10;
+            int y = 20;
+            int z;
+
+            z = x + y;
+
+            // A comment statement
+            if (1){
+            write("%d",z);
+                int w = 10; // Error here
+                write("%d",w);
+            }
+
+        }`;
+        const expectedErrors = [
+            {
+                line: 22,
+                col: 16,
+                error: 'ERROR: On statement \"int w = 10;\" (unexpected \"Declaration of local VARIABLES must happen at the beginning of a FUNCTION block\")',
+                priority: 1,
+                type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    })
+
+    test('lindCode detects declaration of local variables not at the beginning portion of the TESTCASE.', async () => {
+        const inputCode =
+        `/*@!Encoding:65001*/
+    /**
+     * @file testCase01BlockSizeValueHandlingCANGroup.cin
+     */
+    includes
+    {
+
+
+    }
+
+    variables
+    {
+
+
+    }
+
+    testcase myTestCase(byte data, enum ENUMERATION mode)
+    {
+        byte data1[8];
+        byte data2[8];
+        int dataLength;
+        char text1[100];
+        char text2[50];
+
+        dutData.D1 = data1;
+        dutData.D2 = data2;
+        dutData.DL = dataLength;
+
+        int x;
+        strncpy(text1, text2, elcount(text1));
+
+    }`;
+        const expectedErrors = [
+            {
+                line: 29,
+                col: 8,
+                error: 'ERROR: On statement \"int x;\" (unexpected \"Declaration of local VARIABLES must happen at the beginning of a FUNCTION block\")',
+                priority: 1,
+                type: "Critical Rule" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    })
+
     test('lintCode detects parse errors (Unexpected Literals)', async () => { // TODO fix parser logic to handle local variables
         const inputCode =
         `variables
@@ -1014,5 +991,7 @@ describe('Critical Rules Suite', () => {
         console.log(evaluatedErrors);
         expect(evaluatedErrors).toEqual(expectedErrors);
     });
+
+
 
 });

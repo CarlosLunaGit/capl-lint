@@ -31,6 +31,7 @@ export class Parser {
         this.includes = { } // Include block and their includes statements
         this.useds = { } // fullname: token
         this._offset = 0;
+        this.variablesInitializationAllowed = false;
 
     }
 
@@ -829,10 +830,12 @@ export class Parser {
 
             let missingSemicolon = token.semicolon === null;
             let isInclude = token.isInclude === true;
+            let isVariable = token.isVariable === true;
 
             if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
 
             if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
+            if ( parser.variablesInitializationAllowed === false && isInclude !== true && isVariable !== true) { errorHandler.unexpected(token, 'Declaration of local VARIABLES must happen at the beginning of a FUNCTION block', parser) }
 
     }
 
@@ -864,6 +867,7 @@ export class Parser {
     eatInitializationStatement(token, isExporting, isConstant, parser) {
 
         // register.registerPublicVariable(token, isConstant, this)
+        parser.variablesInitializationAllowed = false;
         let variable = token.variable === null;
         let equals = token.equals === null;
         let value = token.value === null;
@@ -989,6 +993,7 @@ export class Parser {
 
     eatFunctionsBlock(token, parser) {
 
+        parser.variablesInitializationAllowed = true;
         let dataType = token.dataType === null;
         let name = token.name === null;
         let openParen = token.openParen === null;
