@@ -144,6 +144,12 @@ export class Parser {
                     this.pushToken(this.VariableDeclaration(this._lookBehind));
                     break;
 
+                case 'VARIABLEDECLARATION_ENUM':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body')
+                    this.pushToken(this.VariableDeclarationEnum(this._lookBehind));
+                    break;
+
                 case 'VARIABLEDECLARATION_STRUCT':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body')
@@ -336,6 +342,32 @@ export class Parser {
             arraySize: token.tokenMatch.arraySize || null,
             assigment: token.tokenMatch.assigment || null,
             value: token.tokenMatch.value || null,
+            semicolon: token.tokenMatch.semicolon || null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            parentBlockIndentation: token.parentBlockIndentation || 0
+        };
+    }
+
+    /**
+     * VariableDeclarationEnum
+     *  : VARIABLEDECLARATION_ENUM
+     *  ;
+     */
+    VariableDeclarationEnum(token) {
+
+        return {
+            kind: 'VariableDeclarationEnum',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: this.tokenizer._currentRow,
+            col: this.tokenizer._currentCol,
+            enumKeyword: token.tokenMatch.structKeyword || null,
+            enumType: token.tokenMatch.dataType || null,
+            name: token.tokenMatch.name || null,
+            arrayStart: token.tokenMatch.arrayStart || null,
+            arraySize: token.tokenMatch.arraySize || null,
+            arrayEnd: token.tokenMatch.arrayEnd || null,
             semicolon: token.tokenMatch.semicolon || null,
             path: this.tokenizer.branchController.getCurrentBranch(),
             parentBlockIndentation: token.parentBlockIndentation || 0
@@ -809,6 +841,7 @@ export class Parser {
             //TODO
             if (token.kind == "SysvarInitializationStatement") { this.eatSysvarInitializationStatement(token, this); continue }
             if (token.kind == "VariableDeclaration")    { this.eatVariableDeclaration(token, false, false, this); continue }
+            if (token.kind == "VariableDeclarationEnum")    { this.eatVariableDeclarationEnum(token, false, false, this); continue }
             if (token.kind == "VariableDeclarationStruct")    { this.eatVariableDeclarationStruct(token, false, false, this); continue }
             if (token.kind == "VariableDeclarationStructArray")    { this.eatVariableDeclarationStructArray(token, false, false, this); continue }
             if (token.kind == "InitializationStatement")    { this.eatInitializationStatement(token, false, false, this); continue }
@@ -838,6 +871,18 @@ export class Parser {
             if ( parser.variablesInitializationAllowed === false && isInclude !== true && isVariable !== true) { errorHandler.unexpected(token, 'Declaration of local VARIABLES must happen at the beginning of a FUNCTION block', parser) }
 
     }
+
+    eatVariableDeclarationEnum(token, isExporting, isConstant, parser) {
+
+        register.registerPublicVariable(token, isConstant, this)
+
+        let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
+
+}
 
     eatVariableDeclarationStruct(token, isExporting, isConstant, parser) {
 

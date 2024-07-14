@@ -71,9 +71,14 @@ export const blocksSpec = [
 
     ['INCLUDE', /^(?<openKey>#)?(?<keyword>include)?\s*(?<dir>".*")(?<semicolon>;)?/, 'IncludeStatement'],
 
+    // Diagnostic Message Variable Declaration:
+
+    ['VARIABLEDECLARATION_DIAGMESSAGE', /^(?<type>diagRequest|diagResponse)\s*(?<ecuQualifier>\w+)?\s*::\s*(?<serviceIdentifier1>\w+)\s*::\s*(?<serviceIdentifier2>\w+)?\s*(?<objectName>\w+)\s*(?<semicolon>;)?/, 'DiagMessage'],
+
     // Variable Declaration:
 
     ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+)(?<arraySize>(?:\[\d+\])*)? *(?<assigment>=)? *(?<value>(?:\{[^}]*\}|[^;\s]+))?(?<semicolon>;)?/, 'VariableDeclaration'],
+    ['VARIABLEDECLARATION_ENUM', /^(?<enumKeyword>enum) +(?<enumType>\w+) +(?<name>\w+) *(?<arrayStart>\[)?(?<arraySize>\d+)?(?<arrayEnd>\])?(?<semicolon>;)?/, 'VariableDeclarationEnum'],
     ['VARIABLEDECLARATION_STRUCT', /^(?<structKeyword>struct) +(?<dataType>\w+) +(?<name>\w+) *(?<arrayStart>\[)?(?<arraySize>\d+)?(?<arrayEnd>\])?(?<semicolon>;)?/, 'VariableDeclarationStruct'],
     ['VARIABLEDECLARATION_STRUCTARRAY', /^(?<structKeyword>struct)\s+(?<structType>\w+)\s*\{\s*(?<structBody>[^}]+)\}\s*(?<variableName>\w+)(?:\[(?<arraySize>\d+)\])\s*(?<semicolon>;)?/, 'VariableDeclarationStructArray'],
 
@@ -86,11 +91,18 @@ export const blocksSpec = [
 
     // ['FUNCTIONCALL', /^(?<name>\w+)\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/],
     ['FUNCTIONCALL', /^(?<name>(?:(?!\bif\b|\belse\b)\b\w+\b))\s*(?<openParen>\()(?<arguments>(?:[^()]*\([^()]*\))*[^()]*)\s*(?<closeParen>\))(?<semicolon>;?)/, 'FunctionCall'],
+
     // Initialization Statement:
 
+    ['INITIALIZATIONSTATEMENT_ARRAYELEMENT', /^(?<variable>\w+)\[(?<index>\d+)\]\s*=\s*(?<value>[^;]+)(?<semicolon>;)?/, 'InitializationStatementArrayElement'],
+    ['INITIALIZATIONSTATEMENT_TERNARY', /^(?<variable>\w+)\s*=\s*(?<condition>.+?)\s*\?\s*(?<trueValue>.+?)\s*:\s*(?<falseValue>.+?)(?<semicolon>;)?/, 'InitializationStatementTernary'],
+    ['INITIALIZATIONSTATEMENT_FUNCTIONCALL', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<functionName>\w+)\((?<arguments>[^;]*)\)(?<semicolon>;)?/, 'InitializationStatementFunctionCall'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\s*\+\s*\w+)(?<semicolon>;)?/, 'InitializationStatement'],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\s*\-\s*\w+)(?<semicolon>;)?/, 'InitializationStatement'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+\.\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\.\w+)(?<semicolon>;)?/, 'InitializationStatement'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+\.\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+)(?<semicolon>;)?/, 'InitializationStatement'],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>\w+\[\w+\]\.\w+)(?<semicolon>;)?/, 'InitializationStatement'],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>\w+\.\w+)(?<semicolon>;)?/, 'InitializationStatement'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+)(?<semicolon>;)?/, 'InitializationStatement'],
 
     // Return Statement:
