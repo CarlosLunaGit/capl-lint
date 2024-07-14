@@ -97,7 +97,7 @@ export class Parser {
      *  : VariableDeclaration
      */
     Literal() {
-        console.log(this._lookahead);
+        // console.log(this._lookahead);// only for dev logs
 
         if (this._lookahead == undefined) {
             return this.tokens;
@@ -246,7 +246,7 @@ export class Parser {
             // Fetch the next token AFTER processing the current one
             this._lookahead = this.tokenizer.getNextToken(this._context);
 
-            console.log("Next token: ", this._lookahead);
+            // console.log("Next token: ", this._lookahead); // only for dev logs
 
         } while (this._lookahead && !this.tokenizer.isEOF());
 
