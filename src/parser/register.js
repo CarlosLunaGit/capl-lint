@@ -21,8 +21,15 @@ export function registerIncludesBlock(token, parser) {
 // global variables ///////////////////////////////////////////////////////////
 
 export function registerPublicVariable(token, isConstant, parser) {
+    let name;
     if (isConstant) { token.isConstant = isConstant }
-    const name = token.name;
+
+    if (token.isVariable == false) {
+        name = 'local.' + token.name + '.' + token.path;
+    } else {
+        name = 'global.' + token.name + '.' + token.path;
+    }
+
     register(name, token, parser);
     parser.exports[name] = token;
 }

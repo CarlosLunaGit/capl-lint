@@ -17,6 +17,9 @@ app.use(cors());
 
 //   app.use(cors(corsOptions));
 
+// POST /lint 200 33.054 ms - 164Ending Log Tail of existing logs ---Starting Live Log Stream ---
+// 2024-07-14T20:23:42.099220500Z: [INFO]  {"accept":"application/json, text/plain, */*","host":"capllintserver.azurewebsites.net","user-agent":"axios/1.6.8","accept-encoding":"gzip, compress, deflate, br","cookie":"ARRAffinity=c82c30dbd554f70842d9b1bd407167e0fe5bf4a88594522e4dc923b169330686","max-forwards":"10","x-arr-log-id":"02f95929-b977-4c15-bd70-34c823e29a98","client-ip":"90.231.35.161:58520","x-client-ip":"90.231.35.161","disguised-host":"capllintserver.azurewebsites.net","x-site-deployment-id":"CAPLLintServer","was-default-hostname":"capllintserver.azurewebsites.net","x-forwarded-for":"90.231.35.161:58520","x-original-url":"/lint","x-waws-unencoded-url":"/lint","x-client-port":"58520","content-type":"application/x-www-form-urlencoded","content-length":"227"}
+
 app.use(json());
 app.use(urlencoded({ extended: true }));
 app.use(morgan('dev'));

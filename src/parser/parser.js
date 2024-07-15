@@ -859,7 +859,7 @@ export class Parser {
 
     eatVariableDeclaration(token, isExporting, isConstant, parser) {
 
-            register.registerPublicVariable(token, isConstant, this)
+            register.registerPublicVariable(token, isConstant, this);
 
             let missingSemicolon = token.semicolon === null;
             let isInclude = token.isInclude === true;
