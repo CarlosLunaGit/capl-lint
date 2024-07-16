@@ -33,8 +33,12 @@ export function err(token, msg, parser) {
     error(token.row, token.col, msg, parser)
 }
 
-export function dupicatedDeclaration(token, msg, parser) {
+export function duplicatedDeclaration(token, msg, parser) {
     error(token.row, token.col, msg, parser)
+}
+
+export function overwritenDeclaration(token, msg, parser) {
+    warning(token.row, token.col, msg, parser)
 }
 
 // complete error function ////////////////////////////////////////////////////
@@ -48,9 +52,22 @@ export function error(row, col, msg, parser) {
         line: row,
         col: col,
         error: message,
-        type: 'Critical Rule',
+        type: 'Error',
         priority: 1});
 
+}
+
+export function warning(row, col, msg, parser) {
+    let message;
+    console.log("\n" + "   (" + row + ":" + col +")")
+    message = "WARNING: " + msg;
+    console.log(message)
+    parser.errors.push({
+        line: row,
+        col: col,
+        error: message,
+        type: 'Warning',
+        priority: 2});
 }
 
 // private helper functions ///////////////////////////////////////////////////

@@ -1,7 +1,7 @@
 const { lintCode, identicationTypesTest } = require('../../src/core/lintCode').default;
 import { Parser } from '../../src/parser/parser.js';
 
-// describe('Critical Rules Suite', () => {
+// describe('Errors Suite', () => {
 
     // test('lindCode detects missing comma to separate parameters in TESTCASE.', async () => {
     //     const inputCode =
@@ -41,7 +41,7 @@ import { Parser } from '../../src/parser/parser.js';
     //             line: 17,
     //             error: 'Missing comma to separate parameters in function declaration. Statement: - testCase01BlockSizeValueHandlingCANGroup(byte session_ind enum ADDRESSING_MODE mode, enum BT_BusTypes busType, struct TEST_CASE_DATA data, int index)',
     //             priority: 1,
-    //             type: "Critical Rule" }
+    //             type: "Error" }
     //     ];
     //     console.log(expectedErrors);
     //     let evaluatedErrors = await lintCode(inputCode);
@@ -82,7 +82,7 @@ import { Parser } from '../../src/parser/parser.js';
     //             line: 13,
     //             error: 'Function declaration CANNOT be of type ARRAY, use Referenced variables to return array types. Statement: - byte[] myFunctionOfTypeArray()',
     //             priority: 1,
-    //             type: "Critical Rule" }
+    //             type: "Error" }
     //     ];
     //     console.log(expectedErrors);
     //     let evaluatedErrors = await lintCode(inputCode);
@@ -471,7 +471,7 @@ describe('Test case for Token types and Registered Specs', () => {
 
 });
 
-describe('Critical Rules Suite', () => {
+describe('Errors Suite', () => {
 
     test('lintCode detects missing "#" on Include statements', async () => {
 
@@ -490,7 +490,7 @@ describe('Critical Rules Suite', () => {
                 col: 12,
                 error: 'ERROR: On statement \"include \"..\\TestLibraries\\utils.cin\"\" (expecting \"#\")',
                 priority: 1,
-                type: "Critical Rule"
+                type: "Error"
             }
         ];
 
@@ -527,14 +527,14 @@ describe('Critical Rules Suite', () => {
                 col: 12,
                 error: 'ERROR: On statement \"byte variable1[3]={0x01,0x02,0x03};\" (unexpected \"statement, only \"#include\" statements are allowed within the Include block\")',
                 priority: 1,
-                type: "Critical Rule"
+                type: "Error"
             },
             {
                 line: 7,
                 col: 12,
                 error: 'ERROR: On statement \"byte variable2[3]={0x01,0x02,0x03};\" (unexpected \"statement, only \"#include\" statements are allowed within the Include block\")',
                 priority: 1,
-                type: "Critical Rule"
+                type: "Error"
             }
         ];
 
@@ -570,7 +570,7 @@ describe('Critical Rules Suite', () => {
                 col: 12,
                 error: 'ERROR: On statement \"#include \"..\\myLibraries\\utils.cin\"\" (unexpected \"statement, only variables definitions and initializations are allowed within the Variable block\")',
                 priority: 1,
-                type: "Critical Rule" }
+                type: "Error" }
         ];
         // console.log(expectedErrors);
 
@@ -612,7 +612,7 @@ describe('Critical Rules Suite', () => {
                 col: 12,
                 error: 'ERROR: On statement \"#include \"..\\TestLibraries\\utils.cin\"\" (unexpected \"statement, only variables definitions and initializations are allowed within the Variable block\")',
                 priority: 1,
-                type: "Critical Rule" }
+                type: "Error" }
         ];
         // console.log(expectedErrors);
 
@@ -657,13 +657,13 @@ describe('Critical Rules Suite', () => {
                 col: 12,
                 error: 'ERROR: On statement \"byte variable2[3]={0x04,0x05,0x06}\" (expecting ;)',
                 priority: 1,
-                type: "Critical Rule" },
+                type: "Error" },
             {
                 line: 18,
                 col: 16,
                 error: 'ERROR: On statement \"write(\"%d\",w)\" (expecting ;)',
                 priority: 1,
-                type: "Critical Rule" }
+                type: "Error" }
         ];
         // console.log(expectedErrors);
 
@@ -708,25 +708,25 @@ describe('Critical Rules Suite', () => {
                 col: 12,
                 error: 'ERROR: On statement \"byte variable2[3]={0x04,0x05,0x06}\" (expecting ;)',
                 priority: 1,
-                type: "Critical Rule" },
+                type: "Error" },
             {
                 line: 9,
                 col: 12,
                 error: 'ERROR: On statement \"int y = 20\" (expecting ;)',
                 priority: 1,
-                type: "Critical Rule" },
+                type: "Error" },
             {
                 line: 17,
                 col: 12,
                 error: 'ERROR: On statement \"char varLocal5[50]\" (expecting ;)',
                 priority: 1,
-                type: "Critical Rule" },
+                type: "Error" },
             {
                 line: 19,
                 col: 12,
                 error: 'ERROR: On statement \"varLocal1.prop1 = varLocal2\" (expecting ;)',
                 priority: 1,
-                type: "Critical Rule" }
+                type: "Error" }
         ];
         // console.log(expectedErrors);
 
@@ -765,13 +765,13 @@ describe('Critical Rules Suite', () => {
                 col: 12,
                 error: 'ERROR: On statement \"byte variable2[3]={0x62,0xEE,0x01}\" (expecting ;)',
                 priority: 1,
-                type: "Critical Rule" },
+                type: "Error" },
             {
                 line: 6,
                 col: 12,
                 error: 'ERROR: On statement \"int y = 20\" (expecting ;)',
                 priority: 1,
-                type: "Critical Rule" },
+                type: "Error" },
             {
                 line: 8,
                 col: 12,
@@ -783,7 +783,7 @@ describe('Critical Rules Suite', () => {
             } variableStructName[200]
         \" (expecting ;)`,
                 priority: 1,
-                type: "Critical Rule" }
+                type: "Error" }
         ];
         // console.log(expectedErrors);
 
@@ -821,9 +821,9 @@ describe('Critical Rules Suite', () => {
             {
                 line: 10,
                 col: 12,
-                error: 'ERROR: Variable already declared at row 6',
-                priority: 1,
-                type: "Critical Rule" }
+                error: 'WARNING: Variable value initialized at row 6 will be overwritten by the new value at row 10. Statement: - int z;',
+                priority: 2,
+                type: "Warning" }
         ];
         // console.log(expectedErrors);
 
@@ -874,7 +874,7 @@ describe('Critical Rules Suite', () => {
                 col: 16,
                 error: 'ERROR: On statement \"int w = 10;\" (unexpected \"Declaration of local VARIABLES must happen at the beginning of a FUNCTION block\")',
                 priority: 1,
-                type: "Critical Rule" }
+                type: "Error" }
         ];
         // console.log(expectedErrors);
 
@@ -931,7 +931,7 @@ describe('Critical Rules Suite', () => {
                 col: 8,
                 error: 'ERROR: On statement \"int x;\" (unexpected \"Declaration of local VARIABLES must happen at the beginning of a FUNCTION block\")',
                 priority: 1,
-                type: "Critical Rule" }
+                type: "Error" }
         ];
         // console.log(expectedErrors);
 
@@ -968,13 +968,13 @@ describe('Critical Rules Suite', () => {
                 col: 12,
                 error: 'ERROR: Variable declared but not a valid statement, Parse Error',
                 priority: 1,
-                type: "Critical Rule" },
+                type: "Error" },
             {
                 line: 10,
                 col: 38,
                 error: 'ERROR: Variable not declared or unexpected statement, Parse Error',
                 priority: 1,
-                type: "Critical Rule" }
+                type: "Error" }
 
         ];
         // console.log(expectedErrors);

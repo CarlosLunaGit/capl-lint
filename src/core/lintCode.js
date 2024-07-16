@@ -146,7 +146,7 @@ async function checkVariableDeclaration(line, trimmedLine, context) {
                     errors.push({
                         line: line.index,
                         error: `Variable Declaration BLOCK should end with a semicolon. Statement: - ${trimmedLine}`,
-                        type: 'Critical Rule',
+                        type: 'Error',
                         priority: 1});
                 }
                 context.isInDeclarationBlock = false;
@@ -155,7 +155,7 @@ async function checkVariableDeclaration(line, trimmedLine, context) {
                 errors.push({
                     line: line.index,
                     error: `Variable declaration should end with a semicolon. Statement: - ${trimmedLine}`,
-                    type: 'Critical Rule',
+                    type: 'Error',
                     priority: 1});
             }
         }
@@ -184,7 +184,7 @@ async function checkBlockImplementation(line, trimmedLine) {
             error.push({
                 line: line.index,
                 error: `INCLUDES Block can only host lines of type = ["//", "*", "*/", "#include"...]. Statement: - ${trimmedLine}`,
-                type: 'Critical Rule',
+                type: 'Error',
                 priority: 1});
         };
 
@@ -192,7 +192,7 @@ async function checkBlockImplementation(line, trimmedLine) {
             error.push({
                 line: line.index,
                 error: `VARIABLES Block can only host lines of type = ["//", "*", "*/", "variables"...]. Statement: - ${trimmedLine}`,
-                type: 'Critical Rule',
+                type: 'Error',
                 priority: 1});
         };
 
@@ -218,7 +218,7 @@ async function checkSemicolonUsage(line, trimmedLine){
         error.push({
             line: line.index,
             error: `Line statement should end with a semicolon. Statement: - ${trimmedLine}`,
-            type: 'Critical Rule',
+            type: 'Error',
             priority: 1
         });
     }
@@ -270,7 +270,7 @@ async function checkDeclarationBlockOrder(line, trimmedLine, context) {
             errors.push({
                 line: line.index,
                 error: `Variable declarations must be the first lines within curly brackets of a block. Statement: - ${trimmedLine}`,
-                type: 'Critical Rule',
+                type: 'Error',
                 priority: 1
             });
         }
@@ -310,7 +310,7 @@ async function checkFunctionParameters(line, trimmedLine) {
                 error.push({
                     line: line.index,
                     error: `Missing comma to separate parameters in function declaration. Statement: - ${functionName}(${parameters})`,
-                    type: 'Critical Rule',
+                    type: 'Error',
                     priority: 1
                 });
             }
@@ -337,7 +337,7 @@ async function checkFunctionTypes(line, trimmedLine) {
                     error.push({
                         line: line.index,
                         error: `Function declaration CANNOT be of type ARRAY, use Referenced variables to return array types. Statement: - ${functionName}`,
-                        type: 'Critical Rule',
+                        type: 'Error',
                         priority: 1
                     });
                 }

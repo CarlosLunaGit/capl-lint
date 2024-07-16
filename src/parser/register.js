@@ -100,14 +100,70 @@ export function endGlobalFunction() { // good for main and init
 
 // IMPORTANT CORE FUNCTION FOR ALL KINDS OF DECLARATION
 
+// function register(name, token, parser) {
+//     const first = parser.declareds[name]
+
+//     if (first == undefined) { parser.declareds[name] = token; return }
+//     //
+//     const msg = "Variable already declared at row " + first.row
+//     errorHandler.duplicatedDeclaration(token, msg, parser)
+//     return
+// }
+
 function register(name, token, parser) {
-    const first = parser.declareds[name]
-    if (first == undefined) { parser.declareds[name] = token; return }
-    //
-    const msg = "Variable already declared at row " + first.row
-    errorHandler.dupicatedDeclaration(token, msg, parser)
-    return
+    const [context, variableName, variablePath] = name.split('.');
+    // const variableName = variablePath.split('.').slice(0, -1).join('.');
+
+    const declareds = parser.declareds;
+
+    const isGlobal = context === 'global';
+    const isLocal = context === 'local';
+
+    if (isGlobal) {
+        const globalKey = `global.${variableName}`;
+        if (declareds[globalKey] == undefined) {
+            declareds[globalKey] = token;
+            return;
+        } else {
+            const msg = `Global variable already declared at row ${declareds[globalKey].row}`;
+            errorHandler.duplicatedDeclaration(token, msg, parser);
+            return;
+        }
+    }
+
+    if (isLocal) {
+        // Extract the scope level
+        const scopePath = variablePath.split('.');
+        const currentScope = scopePath.slice(0, scopePath.length - 1).join('.');
+
+        for (const key in declareds) {
+            if (key.startsWith('local.') && key.split('.')[1] === variableName) {
+                const declaredScopePath = key.split('.').slice(1); // Remove the 'local' prefix
+                const declaredScope = declaredScopePath.slice(0, declaredScopePath.length - 1).join('.');
+
+                if (declaredScope === currentScope) {
+                    const msg = `Variable already declared in the same scope at row ${declareds[key].row}`;
+                    errorHandler.duplicatedDeclaration(token, msg, parser);
+                    return;
+                } else if (currentScope.startsWith(declaredScope) || declaredScope.startsWith(currentScope)) {
+                    const msg = `Variable already declared in a nested scope at row ${declareds[key].row}`;
+                    errorHandler.duplicatedDeclaration(token, msg, parser);
+                    return;
+                }
+            }
+            if (key.startsWith('global.') && key.split('.')[1] === variableName) {
+                const globalKey = `global.${variableName}`;
+                const msg = `Variable value initialized at row ${declareds[globalKey].row} will be overwritten by the new value at row ${token.row}. Statement: - ${token.statement}`;
+                errorHandler.overwritenDeclaration(token, msg, parser);
+                return;
+            }
+        }
+
+        // If no conflicts were found, register the variable
+        declareds[name] = token;
+    }
 }
+
 
 function registerIncludes(statement, token, parser) {
     const first = parser.includes[statement]
@@ -120,13 +176,33 @@ function registerIncludes(statement, token, parser) {
 
 ///////////////////////////////////////////////////////////////////////////////
 
-export function markUsed(token, parser) { // not really marking the token
-    const name = token.unexpected;
-    if ([token.unexpected].map(key => key in parser.declareds)[0] == false) { return false }
-    //
-    return true;
+// export function markUsed(token, parser) { // not really marking the token
+//     const name = token.unexpected;
+//     if ([token.unexpected].map(key => key in parser.declareds)[0] == false) { return false }
+//     //
+//     return true;
 
+// }
+
+export function markUsed(token, parser) {
+    const name = token.unexpected;
+    // const [context, variableName, variablePath] = name.split('.');
+    // const variableName = variablePath.split('.').slice(0, -1).join('.');
+
+    const declareds = parser.declareds;
+
+    for (const key in declareds) {
+        if (key.startsWith(`global.${name}`)) {
+            return true;
+        }
+        if (key.startsWith(`local.${name}`)) {
+            return true;
+        }
+    }
+
+    return false;
 }
+
 
 ///////////////////////////////////////////////////////////////////////////////
 
