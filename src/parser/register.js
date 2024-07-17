@@ -111,8 +111,11 @@ export function endGlobalFunction() { // good for main and init
 // }
 
 function register(name, token, parser) {
-    const [context, variableName, variablePath] = name.split('.');
-    // const variableName = variablePath.split('.').slice(0, -1).join('.');
+    const parts = name.split('.');
+    const context = parts[0];
+    const variableName = parts[1];
+    const variablePath = parts.slice(2).join('.');
+
 
     const declareds = parser.declareds;
 
@@ -134,24 +137,31 @@ function register(name, token, parser) {
     if (isLocal) {
         // Extract the scope level
         const scopePath = variablePath.split('.');
-        const currentScope = scopePath.slice(0, scopePath.length - 1).join('.');
-
+        const currentScope = scopePath[0];
+        // context, variableName, variablePath
         for (const key in declareds) {
-            if (key.startsWith('local.') && key.split('.')[1] === variableName) {
-                const declaredScopePath = key.split('.').slice(1); // Remove the 'local' prefix
-                const declaredScope = declaredScopePath.slice(0, declaredScopePath.length - 1).join('.');
 
-                if (declaredScope === currentScope) {
-                    const msg = `Variable already declared in the same scope at row ${declareds[key].row}`;
+            const partsKey = key.split('.');
+            const contextKey = partsKey[0];
+            const variableNameKey = partsKey[1];
+            const variablePathKey = partsKey.slice(2).join('.');
+
+            if (contextKey === 'local' && variableNameKey === variableName) {
+                const declaredScopePath = variablePathKey.split('.'); // Remove the 'local' prefix
+                const declaredScope = declaredScopePath[0];
+
+                if (variablePathKey === variablePath) {
+                    const msg = `Variable already declared at the same local scope at row ${declareds[key].row}`;
                     errorHandler.duplicatedDeclaration(token, msg, parser);
                     return;
-                } else if (currentScope.startsWith(declaredScope) || declaredScope.startsWith(currentScope)) {
-                    const msg = `Variable already declared in a nested scope at row ${declareds[key].row}`;
+                }
+                else if (declaredScope === currentScope) {
+                    const msg = `Variable already declared at a higher nesting level from the same local scope at row ${declareds[key].row}`;
                     errorHandler.duplicatedDeclaration(token, msg, parser);
                     return;
                 }
             }
-            if (key.startsWith('global.') && key.split('.')[1] === variableName) {
+            if ( contextKey === 'global' && variableNameKey === variableName) {
                 const globalKey = `global.${variableName}`;
                 const msg = `Variable value initialized at row ${declareds[globalKey].row} will be overwritten by the new value at row ${token.row}. Statement: - ${token.statement}`;
                 errorHandler.overwritenDeclaration(token, msg, parser);

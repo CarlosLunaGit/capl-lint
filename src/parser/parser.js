@@ -696,6 +696,7 @@ export class Parser {
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
             dataType: token.tokenMatch.dataType || null,
+            customeType: token.tokenMatch.customeType || null,
             name: token.tokenMatch.name || null,
             openParen: token.tokenMatch.openParen || null,
             arguments: token.tokenMatch.arguments || null,
@@ -725,6 +726,7 @@ export class Parser {
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
             returnStatement: token.tokenMatch.returnStatement || null,
+            returnedValue: token.tokenMatch.returnedValue || null,
             semicolon: token.tokenMatch.semicolon || null,
             path: this.tokenizer.branchController.getCurrentBranch(),
             parentBlockIndentation: token.parentBlockIndentation || 0

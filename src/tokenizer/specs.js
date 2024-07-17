@@ -14,7 +14,7 @@ export const blocksSpec = [
 
     // FunctionBlock:
 
-    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword)(?:\[\])?)\s*(?<name>\w+)\s*(?<openParen>\()\s*(?<arguments>.*?)?\s*(?<closeParen>\))\s*(?<openCurly>\{)/, 'FunctionsBlock'],
+    ['FUNCTIONSBLOCK', /^(?<dataType>(?:testcase|void|int|long|float|double|char|byte|word|dword|int64|gword|enum)(?:\[\])?)\s*(?<customeType>.*?)?\s*(?<name>\w+)\s*(?<openParen>\()\s*(?<arguments>.*?)?\s*(?<closeParen>\))\s*(?<openCurly>\{)/, 'FunctionsBlock'],
 
     // MessageDefinitionBlock:
 
@@ -97,6 +97,7 @@ export const blocksSpec = [
     ['INITIALIZATIONSTATEMENT_ARRAYELEMENT', /^(?<variable>\w+)\[(?<index>\d+)\]\s*=\s*(?<value>[^;]+)(?<semicolon>;)?/, 'InitializationStatementArrayElement'],
     ['INITIALIZATIONSTATEMENT_TERNARY', /^(?<variable>\w+)\s*=\s*(?<condition>.+?)\s*\?\s*(?<trueValue>.+?)\s*:\s*(?<falseValue>.+?)(?<semicolon>;)?/, 'InitializationStatementTernary'],
     ['INITIALIZATIONSTATEMENT_FUNCTIONCALL', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<functionName>\w+)\((?<arguments>[^;]*)\)(?<semicolon>;)?/, 'InitializationStatementFunctionCall'],
+    ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>\(.*\)\s*\+\s*0x[\da-fA-F]+)(?<semicolon>;)?/, 'InitializationStatement'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\s*\+\s*\w+)(?<semicolon>;)?/, 'InitializationStatement'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\s*\-\s*\w+)(?<semicolon>;)?/, 'InitializationStatement'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+\.\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\.\w+)(?<semicolon>;)?/, 'InitializationStatement'],
@@ -104,10 +105,11 @@ export const blocksSpec = [
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>\w+\[\w+\]\.\w+)(?<semicolon>;)?/, 'InitializationStatement'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>\w+\.\w+)(?<semicolon>;)?/, 'InitializationStatement'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+)(?<semicolon>;)?/, 'InitializationStatement'],
+    // ^(?<variable>\w+)\s*=\s*(?<expression>.+?)(?<semicolon>;)?$ // This pattern captures any expression on the right side of the = until an optional semicolon. It's less specific but more flexible.
 
     // Return Statement:
 
-    ['RETURN', /^(?<returnStatement>return)\s*(?<semicolon>;?)/, 'ReturnStatement'],
+    ['RETURN', /^(?<returnStatement>return)\s*(?<returnedValue>[^;]*)?\s*(?<semicolon>;)?/, 'ReturnStatement'],
 
     // Closing block:
 

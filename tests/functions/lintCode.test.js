@@ -822,10 +822,55 @@ describe('Errors Suite', () => {
             {
                 line: 11,
                 col: 12,
-                error: 'ERROR: Variable already declared in a nested scope at row 10',
+                error: 'ERROR: Variable already declared at the same local scope at row 10',
                 priority: 1,
                 type: "Error" }
         ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    });
+
+    test('lintCode detects Duplicated variables declaration (Locally scoped duplication is allowed, when duplication happens in multiple blocks)', async () => { // TODO fix parser logic to handle local variables
+        const inputCode =
+        `includes{
+        }
+        variables
+        {
+            byte variable1[3]={0x01,0x02,0x03};
+            int x = 10;
+            int y = 10;
+            int z = 20;
+        }
+        void MainTest ()
+        {
+            int localScopeAllowed;
+            z = x + y;
+
+            write("%d",z);
+
+	    }
+
+        void myTestingFunction () {
+
+            int localScopeAllowed;
+            z = x + y;
+
+            write("%d",z);
+
+        }
+        `;
+        const expectedErrors = [];
         // console.log(expectedErrors);
 
         const parser = new Parser();
