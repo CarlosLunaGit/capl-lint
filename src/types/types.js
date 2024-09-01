@@ -9,3 +9,6 @@ export const variablesBlock = ['{', '}', 'variables', '//', '*', '*/', '', 'byte
 export const functionBlocks = ['function','if'];
 export const noSemicolonNeeded = ['testcase', 'includes','variables','/*','/**', 'for', 'while', 'do', 'if', 'else', '//', '*', '*/', '#include', '','{', '}'];
 export const kinds = ['VariableDeclaration'];
+
+//Approved
+export const functionsDataTypes = ['testcase', 'void', 'byte', 'word', 'dword', 'int', 'long', 'int64', 'gword','char','float','double','struct','enum'];

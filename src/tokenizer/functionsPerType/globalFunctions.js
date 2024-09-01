@@ -22,7 +22,8 @@ export function addToBlockProperty(parser, token, property){
                 || element.kind.includes('ifCall')
                 || element.kind.includes('elseCall')
                 || element.kind.includes('elseIfCall')
-                || element.kind.includes('forLoopCall'));
+                || element.kind.includes('forLoopCall')
+                || element.kind.includes('whileCall'));
         });
 
         for (let index = parentBlock.length - 1; index >= 0; index--) {
@@ -49,3 +50,11 @@ export function addToBlockProperty(parser, token, property){
     }
 }
 
+export function checkFunctionDataType (token, functionsDataTypes, parser) {
+
+    if (functionsDataTypes.includes(token.dataType)) {
+
+    } else {
+        errorHandler.invalidFunctionDeclaration(token, `Function declaration is not valid, cannot be of type: ${token.dataType}`, parser);
+    }
+}

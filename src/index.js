@@ -45,7 +45,7 @@ app.post('/lint', async (req, res, next) => {
         const errors = parserHandler.errors;
 
         // console.log(errors);// only for dev logs
-        // console.log(parserHandler.sysErrors);// only for dev logs
+        console.log(parserHandler.sysErrors);// only for dev logs
 
         // Send response
         res.json({ errors });

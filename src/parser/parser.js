@@ -7,7 +7,7 @@ import * as errorHandler from './errors.js';
 import * as register from './register.js';
 import * as typesModule from '../types/types.js';
 import * as scan from '../tokenizer/scan.js';
-import { addToBlockProperty } from '../tokenizer/functionsPerType/globalFunctions.js';
+import { addToBlockProperty, checkFunctionDataType } from '../tokenizer/functionsPerType/globalFunctions.js';
 import { createToken } from '../types/tokens.js';
 
 
@@ -76,10 +76,22 @@ export class Parser {
 
         this.tokens.push(token);
 
-        if (this.tokenizer.BlockWithoutBrackets === true && (token.kind != 'ifCall' && token.kind != 'elseCall' && token.kind != 'elseIfCall')) {
+        if (token.row == 657) {
+            console.log("Debug row");
+        }
+
+
+        if (this.tokenizer.BlockWithoutBrackets === true &&
+            (token.kind != 'ifCall' &&
+                token.kind != 'elseCall' &&
+                token.kind != 'elseIfCall' &&
+                token.kind != 'ifCallNoBrackets')) {
+            console.log(token.kind);
             this.tokenizer.branchController.closeBranch();
             this.tokenizer.BlockWithoutBrackets = false;
         }
+
+
         // this.tokenizer._cursor += String(token.statement).length;
 
         // callback(false, this)
@@ -150,16 +162,16 @@ export class Parser {
                     this.pushToken(this.VariableDeclarationEnum(this._lookBehind));
                     break;
 
-                case 'VARIABLEDECLARATION_STRUCT':
+                case 'VARIABLEDECLARATION_STRUCT1DARRAY':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body')
-                    this.pushToken(this.VariableDeclarationStruct(this._lookBehind));
+                    this.pushToken(this.VariableDeclarationStructArray1D(this._lookBehind));
                     break;
 
-                case 'VARIABLEDECLARATION_STRUCTARRAY':
+                case 'VARIABLEDECLARATION_STRUCT1DARRAY_BODY':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body')
-                    this.pushToken(this.VariableDeclarationStructArray(this._lookBehind));
+                    this.pushToken(this.VariableDeclarationStructArray1DBody(this._lookBehind));
                     break;
 
                 case 'FUNCTIONSBLOCK':
@@ -204,6 +216,12 @@ export class Parser {
                     this.pushToken(this.elseIfCall(this._lookBehind));
                     break;
 
+                case 'WHILE':
+                    this._lookBehind = this._lookahead;
+                    this.tokenizer.branchController.openBranch();
+                    this.pushToken(this.whileCall(this._lookBehind));
+                    break;
+
                 case 'FORLOOP':
                     this._lookBehind = this._lookahead;
                     this.tokenizer.branchController.openBranch();
@@ -226,6 +244,18 @@ export class Parser {
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'closeCurly');
                     this.pushToken(this.ClosingBlockLiteral(this._lookBehind));
+                    break;
+
+                case 'BREAK':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body');
+                    this.pushToken(this.BreakStatement(this._lookBehind));
+                    break;
+
+                case 'INCREMENT':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body');
+                    this.pushToken(this.IncrementStatement(this._lookBehind));
                     break;
 
                 case 'UNEXPECTED':
@@ -340,7 +370,7 @@ export class Parser {
             dataType: token.tokenMatch.dataType || null,
             name: token.tokenMatch.name || null,
             arraySize: token.tokenMatch.arraySize || null,
-            assigment: token.tokenMatch.assigment || null,
+            assignment: token.tokenMatch.assignment || null,
             value: token.tokenMatch.value || null,
             semicolon: token.tokenMatch.semicolon || null,
             path: this.tokenizer.branchController.getCurrentBranch(),
@@ -375,14 +405,14 @@ export class Parser {
     }
 
     /**
-     * VariableDeclarationStruct
-     *  : VARIABLEDECLARATION_STRUCT
+     * VariableDeclarationStructArray1D
+     *  : VARIABLEDECLARATION_STRUCT1DARRAY
      *  ;
      */
-    VariableDeclarationStruct(token) {
+    VariableDeclarationStructArray1D(token) {
 
         return {
-            kind: 'VariableDeclarationStruct',
+            kind: 'VariableDeclarationStructArray1D',
             isInclude: token.isInclude,
             isVariable: token.isVariable,
             statement: token.tokenValue,
@@ -401,14 +431,14 @@ export class Parser {
     }
 
     /**
-     * VariableDeclarationStructArray
-     * : VARIABLEDECLARATION_STRUCTARRAY
+     * VariableDeclarationStructArray1DBody
+     * : VARIABLEDECLARATION_STRUCT1DARRAY_BODY
      * ;
      * */
-    VariableDeclarationStructArray(token) {
+    VariableDeclarationStructArray1DBody(token) {
 
             return {
-                kind: 'VariableDeclarationStructArray',
+                kind: 'VariableDeclarationStructArray1DBody',
                 isInclude: token.isInclude,
                 isVariable: token.isVariable,
                 statement: token.tokenValue,
@@ -577,6 +607,33 @@ export class Parser {
             closedBlock: null,
             parentBlockIndentation: token.parentBlockIndentation || 0
 
+        };
+    }
+
+    /**
+     * whileCall
+     * : WHILE
+     * ;
+     * */
+    whileCall(token) {
+
+        return {
+            kind: 'whileCall',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: token.row,
+            col: token.col,
+            whilekey: token.tokenMatch.whilekey || null,
+            openParen: token.tokenMatch.openParen || null,
+            conditional: token.tokenMatch.conditional || null,
+            closeParen: token.tokenMatch.closeParen || null,
+            openCurly: token.tokenMatch.openCurly || null,
+            body: '',
+            closeCurly: null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null,
+            parentBlockIndentation: token.parentBlockIndentation || 0
         };
     }
 
@@ -774,6 +831,49 @@ export class Parser {
     }
 
     /**
+     * BreakStatement
+     * : BREAK
+     * ;
+     * */
+    BreakStatement(token) {
+
+        return {
+            kind: 'BreakStatement',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: token.row,
+            col: token.col,
+            breakStatement: token.tokenMatch.breakStatement || null,
+            semicolon: token.tokenMatch.semicolon || null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            parentBlockIndentation: token.parentBlockIndentation || 0
+        };
+    }
+
+    /**
+     * IncrementStatement
+     * : INCREMENT
+     * ;
+     * */
+    IncrementStatement(token) {
+
+        return {
+            kind: 'IncrementStatement',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: token.row,
+            col: token.col,
+            variable: token.tokenMatch.variable || null,
+            incrementStatement: token.tokenMatch.incrementKey || null,
+            semicolon: token.tokenMatch.semicolon || null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            parentBlockIndentation: token.parentBlockIndentation || 0
+        };
+    }
+
+    /**
      * EndOfFile
      *  : endOfFile
      *  ;
@@ -835,6 +935,7 @@ export class Parser {
             if (token.kind == "elseCall")  { this.eatElseCallBlock(token, this); continue }
             if (token.kind == "elseIfCall")  { this.eatElseIfCallBlock(token, this); continue }
             if (token.kind == "forLoopCall")  { this.eatForLoopBlock(token, this); continue }
+            if (token.kind == "whileCall")  { this.eatWhileBlock(token, this); continue }
 
             //TODO
             if (token.kind == "StringLiteral")  { this.eatKind(token, this); continue }
@@ -844,12 +945,14 @@ export class Parser {
             if (token.kind == "SysvarInitializationStatement") { this.eatSysvarInitializationStatement(token, this); continue }
             if (token.kind == "VariableDeclaration")    { this.eatVariableDeclaration(token, false, false, this); continue }
             if (token.kind == "VariableDeclarationEnum")    { this.eatVariableDeclarationEnum(token, false, false, this); continue }
-            if (token.kind == "VariableDeclarationStruct")    { this.eatVariableDeclarationStruct(token, false, false, this); continue }
-            if (token.kind == "VariableDeclarationStructArray")    { this.eatVariableDeclarationStructArray(token, false, false, this); continue }
+            if (token.kind == "VariableDeclarationStructArray1D")    { this.eatVariableDeclarationStruct(token, false, false, this); continue }
+            if (token.kind == "VariableDeclarationStructArray1DBody")    { this.eatVariableDeclarationStructArray(token, false, false, this); continue }
             if (token.kind == "InitializationStatement")    { this.eatInitializationStatement(token, false, false, this); continue }
             if (token.kind == "FunctionCall")    { this.eatFunctionCall(token, false, false, this); continue }
             if (token.kind == "ReturnStatement")  { this.eatReturnStatement(token, this); continue }
+            if (token.kind == "BreakStatement")  { this.eatBreakStatement(token, this); continue }
             if (token.kind == "ClosingBlockLiteral")  { this.eatClossingLiteral(token, this); continue }
+            if (token.kind == "IncrementStatement")  { this.eatIncrementStatement(token, this); continue }
             if (token.kind == "endOfFile") { return }
             errorHandler.unexpected(token, '', this)
         }
@@ -1042,6 +1145,7 @@ export class Parser {
 
         parser.variablesInitializationAllowed = true;
         let dataType = token.dataType === null;
+        let dataTypeValidity;
         let name = token.name === null;
         let openParen = token.openParen === null;
 
@@ -1064,6 +1168,8 @@ export class Parser {
         if ( body === true) { errorHandler.unexpected(token, 'Empty/Unused Function block', parser) }
         if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
         if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
+
+        dataTypeValidity = checkFunctionDataType(token, typesModule.functionsDataTypes, this);
 
     }
 
@@ -1175,6 +1281,31 @@ export class Parser {
 
     }
 
+    eatWhileBlock(token, parser) {
+
+        let whilekey = token.whilekey === null;
+        let openParen = token.openParen === null;
+        let conditional = token.conditional === null;
+        let closeParen = token.closeParen === null;
+        let openCurly = token.openCurly === null;
+        let body = token.body === '';
+        let closeCurly = token.closeCurly === null;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( whilekey === true) { errorHandler.expecting(token, 'while', parser) }
+        if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
+        if ( conditional === true) { errorHandler.expecting(token, 'conditional', parser) }
+        if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
+        if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
+        // if ( body === true) { errorHandler.unexpected(token, 'Empty/Unused WHILE block', parser) }
+        if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
+
+    }
+
+
     eatReturnStatement(token, parser) {
 
             let returnStatement = token.returnStatement === null;
@@ -1189,12 +1320,41 @@ export class Parser {
 
         }
 
+    eatBreakStatement(token, parser) {
+
+        let breakStatement = token.breakStatement === null;
+        let semicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( breakStatement === true) { errorHandler.expecting(token, 'break statement', parser) }
+        if ( semicolon === true) { errorHandler.expecting(token, ';', parser) }
+
+    }
+
 
     eatClossingLiteral(token, parser) {
 
         let path = token.path === null;
 
         if ( path === true) { errorHandler.unexpected(token, '}', parser) }
+
+    }
+
+    eatIncrementStatement(token, parser) {
+
+        let incrementStatement = token.incrementStatement === null;
+        let semicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        // TODO: A test for variable name declared should be here
+        if ( incrementStatement === true) { errorHandler.expecting(token, 'increment statement', parser) }
+        if ( semicolon === true) { errorHandler.expecting(token, ';', parser) }
 
     }
 

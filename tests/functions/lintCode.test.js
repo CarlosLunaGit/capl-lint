@@ -49,46 +49,7 @@ import { Parser } from '../../src/parser/parser.js';
     //     expect(evaluatedErrors).toEqual(expectedErrors);
     // })
 
-    // test('lindCode detects wrong FUNCTION declaration (function type array).', async () => {
-    //     const inputCode =
-    //     `/*@!Encoding:1252*/
-    //     includes
-    //     {
 
-    //     }
-
-    //     variables
-    //     {
-
-
-    //     }
-
-    //     byte[] myFunctionOfTypeArray()
-    //     {
-
-    //         int x = 10;
-    //         int y = 20;
-    //         int z;
-    //         z = x + y;
-    //         // some comments
-    //         if (1){
-    //         write("%d",z);
-    //             write("%d",w);
-    //         }
-    //         return [];
-    //     }`;
-    //     const expectedErrors = [
-    //         {
-    //             line: 13,
-    //             error: 'Function declaration CANNOT be of type ARRAY, use Referenced variables to return array types. Statement: - byte[] myFunctionOfTypeArray()',
-    //             priority: 1,
-    //             type: "Error" }
-    //     ];
-    //     console.log(expectedErrors);
-    //     let evaluatedErrors = await lintCode(inputCode);
-    //     console.log(evaluatedErrors);
-    //     expect(evaluatedErrors).toEqual(expectedErrors);
-    // })
 
 
 
@@ -186,7 +147,7 @@ describe('Test case for Token types and Registered Specs', () => {
                 dataType: "byte",
                 name: "data",
                 arraySize: "[8]",
-                assigment: undefined,
+                assignment: undefined,
                 value: undefined,
                 semicolon: ";",
                 tokenizerKind: 'VARIABLEDECLARATION',
@@ -209,7 +170,7 @@ describe('Test case for Token types and Registered Specs', () => {
                 dataType: "int",
                 name: "EXAMPLE_CONSTANT",
                 arraySize: undefined,
-                assigment: "=",
+                assignment: "=",
                 value: "10",
                 semicolon: ";",
                 tokenizerKind: 'VARIABLEDECLARATION',
@@ -220,7 +181,7 @@ describe('Test case for Token types and Registered Specs', () => {
                 dataType: "float",
                 name: "exampleVariable",
                 arraySize: undefined,
-                assigment: "=",
+                assignment: "=",
                 value: "3.14",
                 semicolon: ";",
                 tokenizerKind: 'VARIABLEDECLARATION',
@@ -1077,6 +1038,57 @@ describe('Errors Suite', () => {
         console.log(evaluatedErrors);
         expect(evaluatedErrors).toEqual(expectedErrors);
     });
+
+    test('lindCode detects wrong FUNCTION declaration (function type array).', async () => {
+        const inputCode =
+        `/*@!Encoding:1252*/
+        includes
+        {
+
+        }
+
+        variables
+        {
+
+
+        }
+
+        byte[] myFunctionOfTypeArray()
+        {
+
+            int x = 10;
+            int y = 20;
+            int z;
+            z = x + y;
+            // some comments
+            if (1){
+            write("%d",z);
+                write("%d",w);
+            }
+            return [];
+        }`;
+        const expectedErrors = [
+            {
+                line: 13,
+                col: 8,
+                error: 'ERROR: Function declaration is not valid, cannot be of type: byte[]',
+                priority: 1,
+                type: "Error" }
+        ];
+        // console.log(expectedErrors);
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+        parserHandler.mainLoop();
+
+        // Collect errors
+        const evaluatedErrors = parserHandler.errors;
+
+        console.log(evaluatedErrors);
+        expect(evaluatedErrors).toEqual(expectedErrors);
+    })
 
 
 

@@ -143,7 +143,7 @@ export async function identifyCAPLStatementTypes(line) {
     //         dataType: match[2],
     //         name: match[3],
     //         arraySize: match[4],
-    //         assigment: match[5],
+    //         assignment: match[5],
     //         value: match[6],
     //         semicolon: match[7]
     //     }];

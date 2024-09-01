@@ -37,9 +37,15 @@ export function duplicatedDeclaration(token, msg, parser) {
     error(token.row, token.col, msg, parser)
 }
 
+export function invalidFunctionDeclaration(token, msg, parser) {
+    error(token.row, token.col, msg, parser)
+}
+
 export function overwritenDeclaration(token, msg, parser) {
     warning(token.row, token.col, msg, parser)
 }
+
+
 
 // complete error function ////////////////////////////////////////////////////
 
