@@ -83,6 +83,12 @@ export const blocksSpec = [
 
     ['VARIABLEDECLARATION_MULTIPLE', /^(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<variables>\w+(?:\[\d+\])*(?:\s*,\s*\w+(?:\[\d+\])*)+)(?<semicolon>;)?/, 'VariableDeclarationMultiple'],
 
+    // Timer variable declaration
+
+    ['VARIABLEDECLARATION_STIMER', /^(?<timerKeyword>timer) +(?<variableName>\w+) *(?<semicolon>;)?/, 'VariableDeclarationSecondsTimer'],
+
+
+
     // Variable Declaration:
 
     ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+)(?<arraySize>(?:\[\d+\])*)? *(?<assignment>=)? *(?<value>(?:\{[^}]*\}|\"[^\"]*\"|[^;\s]+))? *(?<semicolon>;)?/, 'VariableDeclaration'],
@@ -143,6 +149,6 @@ export const blocksSpec = [
 
     // Unexpected:
 
-    ['UNEXPECTED', /^(?<![\w\d])(?<unexpected>\.)(?![\w\d])/, 'Unexpected'],
+    ['UNEXPECTED', /^(?<![\w\d])(?<unexpected>\.)(?![\w\d])/, 'Unexpected'], // TODO: Add example
     ['UNEXPECTED', /^\b(?<unexpected>[a-zA-Z_]+)\b(?![\(\)\[\];,])/, 'Unexpected'],
 ];

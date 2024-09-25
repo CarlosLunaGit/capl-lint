@@ -258,6 +258,12 @@ export class Parser {
                     this.pushToken(this.IncrementStatement(this._lookBehind));
                     break;
 
+                case 'VARIABLEDECLARATION_STIMER':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body');
+                    this.pushToken(this.VariableDeclarationSecondsTimer(this._lookBehind));
+                    break;
+
                 case 'UNEXPECTED':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body');
@@ -794,7 +800,7 @@ export class Parser {
     /**
      * unexpectedStatement
      * : UNEXPECTED
-     * ;
+     * ; Assigned when no proper spect has matched the token but the UNEXPECTED regex rule did, indication of a missing spec.
      * */
     unexpectedStatement(token) {
 
@@ -867,6 +873,28 @@ export class Parser {
             col: token.col,
             variable: token.tokenMatch.variable || null,
             incrementStatement: token.tokenMatch.incrementKey || null,
+            semicolon: token.tokenMatch.semicolon || null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            parentBlockIndentation: token.parentBlockIndentation || 0
+        };
+    }
+
+    /**
+     * VariableDeclarationSecondsTimer
+     * : VARIABLEDECLARATION_STIMER (Seconds are used to set this timer)
+     * ;
+     */
+    VariableDeclarationSecondsTimer(token) {
+
+        return {
+            kind: 'VariableDeclarationSecondsTimer',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: this.tokenizer._currentRow,
+            col: this.tokenizer._currentCol,
+            timerKeyword: token.tokenMatch.timerKeyword || null,
+            variableName: token.tokenMatch.variableName || null,
             semicolon: token.tokenMatch.semicolon || null,
             path: this.tokenizer.branchController.getCurrentBranch(),
             parentBlockIndentation: token.parentBlockIndentation || 0
