@@ -28,6 +28,7 @@ export class Parser {
         this.exports = { } // fullname: token
         //
         this.declareds = { } // fullname: token // includes standard, import, export and constant
+        this.declaredTypes = { } // Data types declarations e.g. structs, enums with no instantiation
         this.includes = { } // Include block and their includes statements
         this.useds = { } // fullname: token
         this._offset = 0;
@@ -180,6 +181,12 @@ export class Parser {
                     this.pushToken(this.FunctionsBlock(this._lookBehind));
                     break;
 
+                case 'TIMEREVENTBLOCK':
+                    this._lookBehind = this._lookahead;
+                    this.tokenizer.branchController.openBranch();
+                    this.pushToken(this.TimerEventBlock(this._lookBehind));
+                    break;
+
                 case 'INITIALIZATIONSTATEMENT':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body')
@@ -262,6 +269,12 @@ export class Parser {
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body');
                     this.pushToken(this.VariableDeclarationSecondsTimer(this._lookBehind));
+                    break;
+
+                case 'TYPEDEFINITION_ENUM_NO_INSTANTIATION':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body');
+                    this.pushToken(this.TypeDefinitionEnumNoInstantiation(this._lookBehind));
                     break;
 
                 case 'UNEXPECTED':
@@ -775,6 +788,32 @@ export class Parser {
     }
 
     /**
+     * TimerEventBlock
+     * : TIMEREVENTBLOCK
+     * ;
+     * */
+    TimerEventBlock(token) {
+
+        return {
+            kind: 'TimerEventBlock',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: this.tokenizer._currentRow,
+            col: this.tokenizer._currentCol,
+            dataType: token.tokenMatch.eventType || null,
+            name: token.tokenMatch.name || null,
+            openCurly: token.tokenMatch.openCurly || null,
+            body: token.tokenMatch.body || '',
+            closeCurly: token.tokenMatch.closeCurly || null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null,
+            parentBlockIndentation: token.parentBlockIndentation || 0
+
+        };
+    }
+
+    /**
      * ReturnStatement
      *  : RETURN
      *  ;
@@ -894,12 +933,37 @@ export class Parser {
             row: this.tokenizer._currentRow,
             col: this.tokenizer._currentCol,
             timerKeyword: token.tokenMatch.timerKeyword || null,
-            variableName: token.tokenMatch.variableName || null,
+            name: token.tokenMatch.variableName || null,
             semicolon: token.tokenMatch.semicolon || null,
             path: this.tokenizer.branchController.getCurrentBranch(),
             parentBlockIndentation: token.parentBlockIndentation || 0
         };
     }
+
+    /**
+     * TypeDefinitionEnumNoInstantiation
+     * : TYPEDEFINITION_ENUM_NO_INTANTIAZATION
+     * ;
+     */
+    TypeDefinitionEnumNoInstantiation(token) {
+
+            return {
+                kind: 'TypeDefinitionEnumNoInstantiation',
+                isInclude: token.isInclude,
+                isVariable: token.isVariable,
+                statement: token.tokenValue,
+                row: this.tokenizer._currentRow,
+                col: this.tokenizer._currentCol,
+                enumKeyword: token.tokenMatch.enumKeyword || null,
+                name: token.tokenMatch.enumTypeName || null,
+                openingbracket: token.tokenMatch.openingbracket || null,
+                enumValues: token.tokenMatch.enumValues || null,
+                closingbracket: token.tokenMatch.closingbracket || null,
+                semicolon: token.tokenMatch.semicolon || null,
+                path: this.tokenizer.branchController.getCurrentBranch(),
+                parentBlockIndentation: token.parentBlockIndentation || 0
+            };
+        }
 
     /**
      * EndOfFile
@@ -959,6 +1023,7 @@ export class Parser {
             if (token.kind == "IncludeStatement")  { this.eatIncludeStatement(token, this); continue }
             if (token.kind == "VariablesBlock")  { this.eatVariablesBlock(token, this); continue }
             if (token.kind == "FunctionsBlock")  { this.eatFunctionsBlock(token, this); continue }
+            if (token.kind == "TimerEventBlock")  { this.eatTimerEventBlock(token, this); continue }
             if (token.kind == "ifCall")  { this.eatIfCallBlock(token, this); continue }
             if (token.kind == "elseCall")  { this.eatElseCallBlock(token, this); continue }
             if (token.kind == "elseIfCall")  { this.eatElseIfCallBlock(token, this); continue }
@@ -971,7 +1036,9 @@ export class Parser {
 
             //TODO
             if (token.kind == "SysvarInitializationStatement") { this.eatSysvarInitializationStatement(token, this); continue }
+            if (token.kind == "VariableDeclarationSecondsTimer") { this.eatVariableDeclarationSecondsTimer(token, this); continue }
             if (token.kind == "VariableDeclaration")    { this.eatVariableDeclaration(token, false, false, this); continue }
+            if (token.kind == "TypeDefinitionEnumNoInstantiation")    { this.eatTypeDefinitionEnumNoInstantiation(token, false, false, this); continue }
             if (token.kind == "VariableDeclarationEnum")    { this.eatVariableDeclarationEnum(token, false, false, this); continue }
             if (token.kind == "VariableDeclarationStructArray1D")    { this.eatVariableDeclarationStruct(token, false, false, this); continue }
             if (token.kind == "VariableDeclarationStructArray1DBody")    { this.eatVariableDeclarationStructArray(token, false, false, this); continue }
@@ -990,6 +1057,22 @@ export class Parser {
         return this.tokens.shift()
     }
 
+    eatVariableDeclarationSecondsTimer(token, parser) {
+
+        register.registerPublicVariable(token, false, this)
+
+        let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+
+        if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
+        if ( parser.variablesInitializationAllowed === false && isInclude !== true && isVariable !== true) { errorHandler.unexpected(token, 'Declaration of local VARIABLES must happen at the beginning of a FUNCTION block', parser) }
+
+    }
+
+
     eatVariableDeclaration(token, isExporting, isConstant, parser) {
 
             register.registerPublicVariable(token, isConstant, this);
@@ -1005,6 +1088,19 @@ export class Parser {
 
     }
 
+    eatTypeDefinitionEnumNoInstantiation(token, isExporting, isConstant, parser) {
+
+        register.registerPublicVariableTypes(token, isConstant, this)
+
+        let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
+
+    }
+
     eatVariableDeclarationEnum(token, isExporting, isConstant, parser) {
 
         register.registerPublicVariable(token, isConstant, this)
@@ -1015,7 +1111,7 @@ export class Parser {
         if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
 
-}
+    }
 
     eatVariableDeclarationStruct(token, isExporting, isConstant, parser) {
 
@@ -1027,7 +1123,7 @@ export class Parser {
         if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
 
-}
+    }
 
     eatVariableDeclarationStructArray(token, isExporting, isConstant, parser) {
 
@@ -1198,6 +1294,28 @@ export class Parser {
         if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
 
         dataTypeValidity = checkFunctionDataType(token, typesModule.functionsDataTypes, this);
+
+    }
+
+    eatTimerEventBlock(token, parser) {
+
+        let eventType = token.eventType === null;
+        let name = token.name === null;
+        let openCurly = token.openCurly === null;
+        let body = token.body === '';
+        let closeCurly = token.closeCurly === null;
+        let semicolon = token.semicolon === ';';
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+
+        if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( eventType === true) { errorHandler.expecting(token, 'event type', parser) }
+        if ( name === true) { errorHandler.expecting(token, 'timer name', parser) }
+        if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
+        if ( body === true) { errorHandler.unexpected(token, 'Empty/Unused Timer block', parser) }
+        if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
+        if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
 
     }
 

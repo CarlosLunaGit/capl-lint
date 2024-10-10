@@ -30,6 +30,13 @@ export async function identifyCAPLStatementTypes(line) {
                         original: match[0],
                         ...match.groups
                     }];
+                case 'VariableDeclarationSecondsTimer':
+                    return [{
+                        type: type,
+                        tokenizerKind: kind,
+                        original: match[0],
+                        ...match.groups
+                    }];
                 case 'ClosingBlock':
                     return [{
                         type: type,

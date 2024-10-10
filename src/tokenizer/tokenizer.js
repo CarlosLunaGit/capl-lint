@@ -6,6 +6,7 @@ import * as branchController from './branches.js'
 import * as scan from './scan.js'
 import { Parser } from '../parser/parser.js';
 import * as errorHandler from '../parser/errors.js';
+import { token } from 'morgan';
 
 /**
  * Tokenizer class.
@@ -41,12 +42,19 @@ export class Tokenizer {
     /**
      *
      */
-    _match(regexp, string){
+    _match(regexp, string, tokenType){
 
         const matched = regexp.exec(string);
 
         if (matched == null){
             return null;
+        }
+
+        if (tokenType == 'VARIABLEDECLARATION_MULTIPLE') {
+            if (matched[0].includes("{") == true && matched[0].includes("}") == false) {
+                return null;
+            }
+
         }
 
         this._cursor += matched[0].length;
@@ -173,11 +181,18 @@ export class Tokenizer {
             return null;
         }
         let save;
+        let currentRowChange;
         const string = this._string.slice(this._cursor);
 
+        currentRowChange = this._currentRow;
+
         for (const [tokenType, regexp] of blocksSpec) {
-            const tokenResult = this._match(regexp, string);
+            const tokenResult = this._match(regexp, string, tokenType);
+
+
+
             save = tokenResult;
+
             if (tokenResult == null) {
                 continue;
             }
@@ -186,10 +201,13 @@ export class Tokenizer {
                 return this.getNextToken(context);
             }
 
+
+
             if (context) {
                 // Apply context-specific rules
                 if (context === 'INCLUDESBLOCK' && tokenType === 'CLOSINGBLOCK') {
                     this._context = null;
+                    currentRowChange = this._currentRow;
                     return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
                 }
                 // Additional context-specific logic here...
@@ -197,10 +215,18 @@ export class Tokenizer {
 
             if (tokenType == 'INCLUDESBLOCK' ||
                 tokenType == 'VARIABLESBLOCK' ||
-                tokenType == 'FUNCTIONSBLOCK') {
+                tokenType == 'FUNCTIONSBLOCK' ||
+                tokenType == 'TIMEREVENTBLOCK') {
                 this._currentRow = this.getLineWithCursor(String(tokenResult.tokenValue).length);
                 this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length, String(tokenResult.tokenValue).split('\n')[0]);
                 this._context = tokenType;  // Set the context for nested tokens
+                if (tokenType == 'VARIABLEDECLARATION') {
+                    if (currentRowChange != this._currentRow)  {
+                        console.log("Current Row has Changed");
+                    }else{
+                        console.log("Current Row has not Changed");
+                    }
+                }
                 return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
 
             }
@@ -209,7 +235,13 @@ export class Tokenizer {
             // this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length);
             this._currentRow = this.getLineWithCursor(String(tokenResult.tokenValue).length);
             this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length, String(tokenResult.tokenValue).split('\n')[0]);
-
+            if (tokenType == 'VARIABLEDECLARATION') {
+                if (currentRowChange != this._currentRow)  {
+                    console.log("Current Row has Changed");
+                }else{
+                    console.log("Current Row has not Changed");
+                }
+            }
             return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
         }
 

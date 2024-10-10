@@ -34,6 +34,20 @@ export function registerPublicVariable(token, isConstant, parser) {
     parser.exports[name] = token;
 }
 
+export function registerPublicVariableTypes(token, isConstant, parser) {
+    let name;
+    if (isConstant) { token.isConstant = isConstant }
+
+    if (token.isVariable == false) {
+        name = 'local.' + token.name + '.' + token.path;
+    } else {
+        name = 'global.' + token.name + '.' + token.path;
+    }
+
+    registerType(name, token, parser);
+    parser.exports[name] = token;
+}
+
 
 export function checkRegisterPublicVariable(token, parser) {
 
@@ -174,6 +188,69 @@ function register(name, token, parser) {
     }
 }
 
+function registerType(name, token, parser) {
+    const parts = name.split('.');
+    const context = parts[0];
+    const variableName = parts[1];
+    const variablePath = parts.slice(2).join('.');
+
+
+    const declaredTypes = parser.declaredTypes;
+
+    const isGlobal = context === 'global';
+    const isLocal = context === 'local';
+
+    if (isGlobal) {
+        const globalKey = `global.${variableName}`;
+        if (declaredTypes[globalKey] == undefined) {
+            declaredTypes[globalKey] = token;
+            return;
+        } else {
+            const msg = `Global variable already declared at row ${declaredTypes[globalKey].row}`;
+            errorHandler.duplicatedDeclaration(token, msg, parser);
+            return;
+        }
+    }
+
+    if (isLocal) {
+        // Extract the scope level
+        const scopePath = variablePath.split('.');
+        const currentScope = scopePath[0];
+        // context, variableName, variablePath
+        for (const key in declaredTypes) {
+
+            const partsKey = key.split('.');
+            const contextKey = partsKey[0];
+            const variableNameKey = partsKey[1];
+            const variablePathKey = partsKey.slice(2).join('.');
+
+            if (contextKey === 'local' && variableNameKey === variableName) {
+                const declaredTypescopePath = variablePathKey.split('.'); // Remove the 'local' prefix
+                const declaredTypescope = declaredTypescopePath[0];
+
+                if (variablePathKey === variablePath) {
+                    const msg = `Variable already declared at the same local scope at row ${declaredTypes[key].row}`;
+                    errorHandler.duplicatedDeclaration(token, msg, parser);
+                    return;
+                }
+                else if (declaredTypescope === currentScope) {
+                    const msg = `Variable already declared at a higher nesting level from the same local scope at row ${declaredTypes[key].row}`;
+                    errorHandler.duplicatedDeclaration(token, msg, parser);
+                    return;
+                }
+            }
+            if ( contextKey === 'global' && variableNameKey === variableName) {
+                const globalKey = `global.${variableName}`;
+                const msg = `Variable value initialized at row ${declaredTypes[globalKey].row} will be overwritten by the new value at row ${token.row}. Statement: - ${token.statement}`;
+                errorHandler.overwritenDeclaration(token, msg, parser);
+                return;
+            }
+        }
+
+        // If no conflicts were found, register the variable
+        declaredTypes[name] = token;
+    }
+}
 
 function registerIncludes(statement, token, parser) {
     const first = parser.includes[statement]

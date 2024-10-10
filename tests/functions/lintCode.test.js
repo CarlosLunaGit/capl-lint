@@ -93,6 +93,7 @@ describe('Test case for Token types and Registered Specs', () => {
         // Variable Definition
         const int EXAMPLE_CONSTANT = 10;
         var float exampleVariable = 3.14;
+        timer exampleSecondsTimer;
         // Function Definition
         on message ExampleMessage {
             print("Received ExampleMessage");
@@ -186,6 +187,13 @@ describe('Test case for Token types and Registered Specs', () => {
                 semicolon: ";",
                 tokenizerKind: 'VARIABLEDECLARATION',
                 type: "VariableDeclaration"},
+            {
+                original: "timer exampleSecondsTimer;",
+                timerKeyword: "timer",
+                variableName: "exampleSecondsTimer",
+                semicolon: ";",
+                tokenizerKind: 'VARIABLEDECLARATION_STIMER',
+                type: "VariableDeclarationSecondsTimer"},
             {
                 identifier: "//",
                 original: "// Function Definition",

@@ -81,14 +81,14 @@ export const blocksSpec = [
 
     // Multiple variable declaration:
 
-    ['VARIABLEDECLARATION_MULTIPLE', /^(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<variables>\w+(?:\[\d+\])*(?:\s*,\s*\w+(?:\[\d+\])*)+)(?<semicolon>;)?/, 'VariableDeclarationMultiple'],
+    ['VARIABLEDECLARATION_MULTIPLE', /^(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<variables>\w+(?:\[\d+\])?(?:\s*=\s*[^,;]+)?(?:\s*,\s*\w+(?:\[\d+\])?(?:\s*=\s*[^,;]+)?)+)(?<semicolon>;)?/, 'VariableDeclarationMultiple'],
 
     // Timer variable declaration
 
     ['VARIABLEDECLARATION_STIMER', /^(?<timerKeyword>timer) +(?<variableName>\w+) *(?<semicolon>;)?/, 'VariableDeclarationSecondsTimer'],
 
-
-
+    // Type definition:
+    ['TYPEDEFINITION_ENUM_NO_INSTANTIATION', /^(?<enumKeyword>enum) +(?<enumTypeName>\w+)\s*(?<openingbracket>\{)\s*(?<enumValues>[^}]+)\s*(?<closingbracket>\})\s*(?<semicolon>;)?/, 'TypeDefEnumNoInstantiation'],
     // Variable Declaration:
 
     ['VARIABLEDECLARATION', /^(?<modifier>var|const)? ?(?<dataType>void|int|long|float|double|char|byte|word|dword|int64|gword) +(?<name>\w+)(?<arraySize>(?:\[\d+\])*)? *(?<assignment>=)? *(?<value>(?:\{[^}]*\}|\"[^\"]*\"|[^;\s]+))? *(?<semicolon>;)?/, 'VariableDeclaration'],
@@ -97,8 +97,6 @@ export const blocksSpec = [
     ['VARIABLEDECLARATION_STRUCT1DARRAY_BODY', /^(?<structKeyword>struct)\s+(?<structType>\w+)\s*(?<openingbracket>\{)\s*(?<structBody>[^}]+)\s*(?<closingbracket>\})\s*(?<variableName>\w+)(?:\[(?<arraySize>\d+)\])\s*(?<semicolon>;)?/, 'VariableDeclarationStructArray1DBody'],
     ['VARIABLEDECLARATION_STRUCT', /^(?<structKeyword>struct)\s*(?<structType>\w+)\s+(?<name>\w+)\s*(?<semicolon>;)?/, 'VariableDeclarationStruct'],
     ['VARIABLEDECLARATION_STRUCT_BODY', /^(?<structKeyword>struct)\s*(?<structType>\w+)\s*(?<openingbracket>\{)\s*(?<structBody>[^}]+)\s*(?<closingbracket>\})\s*(?<name>\w+)\s*(?<semicolon>;)?/, 'VariableDeclarationStructBody'],
-
-
 
     // System Variable declaration:
 

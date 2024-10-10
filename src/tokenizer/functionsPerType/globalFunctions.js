@@ -23,7 +23,8 @@ export function addToBlockProperty(parser, token, property){
                 || element.kind.includes('elseCall')
                 || element.kind.includes('elseIfCall')
                 || element.kind.includes('forLoopCall')
-                || element.kind.includes('whileCall'));
+                || element.kind.includes('whileCall')
+                || element.kind.includes('TimerEventBlock'));
         });
 
         for (let index = parentBlock.length - 1; index >= 0; index--) {
