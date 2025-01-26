@@ -440,6 +440,64 @@ describe('Test case for Token types and Registered Specs', () => {
 
 });
 
+describe('Test case for If statements handlers', () => {
+
+    test('Types', async () => {
+        const inputCode =
+        `
+        // Inline with opening curly bracket
+        // If statement single integer as conditional
+        if (1) {
+
+        // If statement single variable as conditional
+        if (condition) {
+
+        // If statement single interger as conditional with integer comparison (equality)
+        if ( 1 == 1) {
+
+        // If statement single variable as conditional with integer comparison (not equality)
+        if (condition != 1) {
+
+        // If statement single variable as conditional with integer comparison (equality)
+        if (condition == 1) {
+
+        // If statement single variable as conditional with variable comparison (equality)
+        if (condition == condition2) {
+
+        // If statement system variable as conditional with integer comparison (equality)
+        if (@sysvar::namespace::variable == 1) {
+
+        // Inline without opening curly bracket
+        // If statement single integer as conditional
+        if (1)
+
+        // End of file
+
+        `;
+
+        const expectedTokens = [
+            {kind: "ifCall"},
+            {kind: "ifCall"},
+            {kind: "ifCall"},
+            {kind: "ifCall"},
+            {kind: "ifCall"},
+            {kind: "ifCall"},
+            {kind: "ifCall"},
+            {kind: "ifCallNoBrackets"},
+            {kind: "endOfFile"}
+        ];
+
+        const parser = new Parser();
+
+        // Parse and analyze the code
+        const parserHandler = parser.parse(inputCode);
+
+        console.log(parserHandler.tokens);
+        expect(parserHandler.tokens).toMatchObject(expectedTokens);
+    })
+
+});
+
 describe('Errors Suite', () => {
 
     test('lintCode detects missing "#" on Include statements', async () => {

@@ -482,7 +482,6 @@ async function testTypesIdentifier(blocks) {
 }
 
 
-
 async function lintCode(sourceCode) {
     const preprocessedCode = preprocessCode(sourceCode);
     const lines = preprocessedCode.split('\n');

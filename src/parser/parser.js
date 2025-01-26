@@ -77,7 +77,7 @@ export class Parser {
 
         this.tokens.push(token);
 
-        if (token.row == 657) {
+        if (token.row == 22) {
             console.log("Debug row");
         }
 
@@ -193,6 +193,18 @@ export class Parser {
                     this.pushToken(this.InitializationStatement(this._lookBehind));
                     break;
 
+                case 'INITIALIZATIONSTATEMENT_FUNCTIONCALL_WITH_ARITHMETIC_OPERATION':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body')
+                    this.pushToken(this.InitializationStatementFunctionCallWithArithmeticOperation(this._lookBehind));
+                    break;
+
+                case 'INITIALIZATIONSTATEMENT_FUNCTIONCALL':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'body')
+                    this.pushToken(this.InitializationStatementFunctionCall(this._lookBehind));
+                    break;
+
                 case 'FUNCTIONCALL':
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body')
@@ -207,7 +219,7 @@ export class Parser {
                         this.pushToken(this.ifCall(this._lookBehind));
                     } else {
                         this.tokenizer.BlockWithoutBrackets = true;
-                        this.pushToken(this.ifCall(this._lookBehind));
+                        this.pushToken(this.ifCallNoBrackets(this._lookBehind));
                     }
                     break;
 
@@ -245,6 +257,12 @@ export class Parser {
                     this._lookBehind = this._lookahead;
                     addToBlockProperty(this, this._lookBehind, 'body');
                     this.pushToken(this.SysvarInitializationStatement(this._lookBehind));
+                    break;
+
+                case 'OPENINGBLOCK':
+                    this._lookBehind = this._lookahead;
+                    addToBlockProperty(this, this._lookBehind, 'openCurly');
+                    this.pushToken(this.OpeningBlockLiteral(this._lookBehind));
                     break;
 
                 case 'CLOSINGBLOCK':
@@ -498,6 +516,57 @@ export class Parser {
     }
 
     /**
+     * InitializationStatementFunctionCallWithArithmeticOperation
+     *  : INITIALIZATIONSTATEMENT_FUNCTIONCALL_WITH_ARITHMETIC_OPERATION
+     *  ;
+     */
+    InitializationStatementFunctionCallWithArithmeticOperation(token) {
+
+        return {
+            kind: 'InitializationStatementFunctionCallWithArithmeticOperation',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: this.tokenizer._currentRow,
+            col: this.tokenizer._currentCol,
+            variable: token.tokenMatch.variable || null,
+            equals: token.tokenMatch.equals || null,
+            functionName: token.tokenMatch.functionName || null,
+            arguments: token.tokenMatch.arguments || null,
+            operator: token.tokenMatch.operator || null,
+            operand: token.tokenMatch.operand || null,
+            semicolon: token.tokenMatch.semicolon || null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            parentBlockIndentation: token.parentBlockIndentation || 0
+        };
+    }
+
+    /**
+     * InitializationStatementFunctionCall
+     *  : INITIALIZATIONSTATEMENT_FUNCTIONCALL
+     *  ;
+     */
+    InitializationStatementFunctionCall(token) {
+
+        return {
+            kind: 'InitializationStatementFunctionCall',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: this.tokenizer._currentRow,
+            col: this.tokenizer._currentCol,
+            variable: token.tokenMatch.variable || null,
+            equals: token.tokenMatch.equals || null,
+            functionName: token.tokenMatch.functionName || null,
+            arguments: token.tokenMatch.arguments || null,
+            semicolon: token.tokenMatch.semicolon || null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            parentBlockIndentation: token.parentBlockIndentation || 0
+        };
+    }
+
+
+    /**
      * SysvarInitializationStatement
      *  : SYSVARINITIALIZATION
      *  ;
@@ -574,6 +643,35 @@ export class Parser {
             parentBlockIndentation: token.parentBlockIndentation || 0
 
         };
+    }
+
+    /**
+     * ifCallNoBrackets
+     * : IF
+     * ;
+     */
+    ifCallNoBrackets(token) {
+
+        return {
+            kind: 'ifCallNoBrackets',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            statement: token.tokenValue,
+            row: token.row,
+            col: token.col,
+            ifkey: token.tokenMatch.ifkey || null,
+            openParen: token.tokenMatch.openParen || null,
+            conditional: token.tokenMatch.conditional || null,
+            closeParen: token.tokenMatch.closeParen || null,
+            openCurly: token.tokenMatch.openCurly || null,
+            body: '',
+            closeCurly: null,
+            path: this.tokenizer.branchController.getCurrentBranch(),
+            closedBlock: null,
+            parentBlockIndentation: token.parentBlockIndentation || 0
+
+        };
+
     }
 
     /**
@@ -854,6 +952,30 @@ export class Parser {
     }
 
     /**
+     * OpeningBlockLiteral
+     * : OPENINGBLOCK
+     * ;
+     */
+    OpeningBlockLiteral(token) {
+
+        let localBranch = this.tokenizer.branchController.getCurrentBranch();
+
+        return {
+            kind: 'OpeningBlockLiteral',
+            isInclude: token.isInclude,
+            isVariable: token.isVariable,
+            isBlockAssigned: token.isBlockAssigned,
+            statement: token.tokenValue,
+            row: token.row,
+            col: token.col,
+            path: localBranch,
+            parentBlockIndentation: token.parentBlockIndentation || 0,
+            isBlockAssigned: token.isBlockAssigned || false
+        };
+    }
+
+
+    /**
      * ClosingBlockLiteral
      *  : CLOSINGBLOCK
      *  ;
@@ -1025,6 +1147,7 @@ export class Parser {
             if (token.kind == "FunctionsBlock")  { this.eatFunctionsBlock(token, this); continue }
             if (token.kind == "TimerEventBlock")  { this.eatTimerEventBlock(token, this); continue }
             if (token.kind == "ifCall")  { this.eatIfCallBlock(token, this); continue }
+            if (token.kind == "ifCallNoBrackets")  { this.eatIfCallNoBracketsBlock(token, this); continue }
             if (token.kind == "elseCall")  { this.eatElseCallBlock(token, this); continue }
             if (token.kind == "elseIfCall")  { this.eatElseIfCallBlock(token, this); continue }
             if (token.kind == "forLoopCall")  { this.eatForLoopBlock(token, this); continue }
@@ -1043,9 +1166,12 @@ export class Parser {
             if (token.kind == "VariableDeclarationStructArray1D")    { this.eatVariableDeclarationStruct(token, false, false, this); continue }
             if (token.kind == "VariableDeclarationStructArray1DBody")    { this.eatVariableDeclarationStructArray(token, false, false, this); continue }
             if (token.kind == "InitializationStatement")    { this.eatInitializationStatement(token, false, false, this); continue }
+            if (token.kind == "InitializationStatementFunctionCallWithArithmeticOperation")    { this.eatInitializationStatementFunctionCallWithArithmeticOperation(token, false, false, this); continue }
+            if (token.kind == "InitializationStatementFunctionCall")    { this.eatInitializationStatementFunctionCall(token, false, false, this); continue }
             if (token.kind == "FunctionCall")    { this.eatFunctionCall(token, false, false, this); continue }
             if (token.kind == "ReturnStatement")  { this.eatReturnStatement(token, this); continue }
             if (token.kind == "BreakStatement")  { this.eatBreakStatement(token, this); continue }
+            if (token.kind == "OpeningBlockLiteral")  { this.eatOpeningLiteral(token, this); continue }
             if (token.kind == "ClosingBlockLiteral")  { this.eatClossingLiteral(token, this); continue }
             if (token.kind == "IncrementStatement")  { this.eatIncrementStatement(token, this); continue }
             if (token.kind == "endOfFile") { return }
@@ -1139,6 +1265,48 @@ export class Parser {
 
 
     eatInitializationStatement(token, isExporting, isConstant, parser) {
+
+        // register.registerPublicVariable(token, isConstant, this)
+        parser.variablesInitializationAllowed = false;
+        let variable = token.variable === null;
+        let equals = token.equals === null;
+        let value = token.value === null;
+        let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( variable === true) { errorHandler.expecting(token, 'variable', parser) }
+        if ( equals === true) { errorHandler.expecting(token, '=', parser) }
+        if ( value === true) { errorHandler.expecting(token, 'value', parser) }
+        if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
+
+    }
+
+    eatInitializationStatementFunctionCallWithArithmeticOperation(token, isExporting, isConstant, parser) {
+
+        // register.registerPublicVariable(token, isConstant, this)
+        parser.variablesInitializationAllowed = false;
+        let variable = token.variable === null;
+        let equals = token.equals === null;
+        // let functionName = token.functionName === null;
+        // let arguments = token.arguments === null;
+        let operator = token.operator === null;
+        let operand = token.operand === null;
+        let missingSemicolon = token.semicolon === null;
+        let isInclude = token.isInclude === true;
+
+        if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+        if ( variable === true) { errorHandler.expecting(token, 'variable', parser) }
+        if ( equals === true) { errorHandler.expecting(token, '=', parser) }
+        // if ( functionName === true) { errorHandler.expecting(token, 'functionName', parser) }
+        // if ( arguments === true) { errorHandler.expecting(token, 'arguments', parser) }
+        if ( operator === true) { errorHandler.expecting(token, 'operator', parser) }
+        if ( operand === true) { errorHandler.expecting(token, 'operand', parser) }
+        if ( missingSemicolon === true) { errorHandler.expecting(token, ';', parser) }
+
+    }
+
+    eatInitializationStatementFunctionCall(token, isExporting, isConstant, parser) {
 
         // register.registerPublicVariable(token, isConstant, this)
         parser.variablesInitializationAllowed = false;
@@ -1358,6 +1526,45 @@ export class Parser {
 
     }
 
+    eatIfCallNoBracketsBlock(token, parser) {
+
+        let openParen = token.openParen === null;
+        let conditional = token.conditional === null;
+        let closeParen = token.closeParen === null;
+        let openCurly = token.openCurly === null;
+        let body = token.body === '';
+        let closeCurly = token.closeCurly === null;
+        let semicolon = token.semicolon === ';';
+        let isInclude = token.isInclude === true;
+        let isVariable = token.isVariable === true;
+
+        if (token.closedBlock === true) {
+            if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+            if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+            if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
+            if ( conditional === true) { errorHandler.expecting(token, '"(condition)"', parser) }
+            if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
+            if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
+            if ( body === true) { errorHandler.unexpected(token, 'Empty/Unused IF block', parser) }
+            if ( closeCurly === true) { errorHandler.expecting(token, '"Carlos }"', parser) }
+            if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
+        }
+        else {
+            if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
+            if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
+            if ( openParen === true) { errorHandler.expecting(token, '"("', parser) }
+            if ( conditional === true) { errorHandler.expecting(token, '"(condition)"', parser) }
+            if ( closeParen === true) { errorHandler.expecting(token, '")"', parser) }
+            // if ( openCurly === true) { errorHandler.expecting(token, '"{"', parser) }
+            if ( body === true) { errorHandler.unexpected(token, 'Empty/Unused IF block', parser) }
+            // if ( closeCurly === true) { errorHandler.expecting(token, '"}"', parser) }
+            if ( semicolon === true) { errorHandler.unexpected(token, ';', parser) }
+        }
+
+
+
+    }
+
     eatElseCallBlock(token, parser) {
 
 
@@ -1367,6 +1574,11 @@ export class Parser {
         let semicolon = token.semicolon === ';';
         let isInclude = token.isInclude === true;
         let isVariable = token.isVariable === true;
+
+        if (openCurly === true)
+        {
+            console.log("Missing Curly bracket");
+        }
 
         if ( isInclude === true) { errorHandler.unexpected(token, 'statement, only "#include" statements are allowed within the Include block', parser) }
         if ( isVariable === true) { errorHandler.unexpected(token, 'statement, only variables definitions and initializations are allowed within the Variable block', parser) }
@@ -1480,6 +1692,15 @@ export class Parser {
 
     }
 
+    eatOpeningLiteral(token, parser) {
+
+        let path = token.path === null;
+        let isBlockAssigned = token.isBlockAssigned === true;
+
+        if ( path === true) { errorHandler.unexpected(token, '{', parser) }
+        if ( isBlockAssigned === false) { errorHandler.unexpected(token, 'Opening block, block not assigned', parser) }
+
+    }
 
     eatClossingLiteral(token, parser) {
 

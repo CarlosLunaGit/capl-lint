@@ -220,13 +220,7 @@ export class Tokenizer {
                 this._currentRow = this.getLineWithCursor(String(tokenResult.tokenValue).length);
                 this._currentCol = this.getColumnWithCursor(String(tokenResult.tokenValue).length, String(tokenResult.tokenValue).split('\n')[0]);
                 this._context = tokenType;  // Set the context for nested tokens
-                if (tokenType == 'VARIABLEDECLARATION') {
-                    if (currentRowChange != this._currentRow)  {
-                        console.log("Current Row has Changed");
-                    }else{
-                        console.log("Current Row has not Changed");
-                    }
-                }
+
                 return createToken(this._currentRow, this._currentCol, tokenType, tokenResult.tokenValue, tokenResult.tokenMatch);
 
             }

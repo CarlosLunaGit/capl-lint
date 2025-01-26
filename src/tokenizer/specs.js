@@ -36,8 +36,8 @@ export const blocksSpec = [
 
     ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]|\((?:[^()]|\([^()]*\))*\))*?)\s*(?<closeParen>\))\s*(?<openCurly>\{)/, 'ifCall'],
     ['IF', /^(?<ifkey>if)\s*(?<openParen>\()(?<conditional>(?:[^()]|\((?:[^()]|\([^()]*\))*\))*?)\s*(?<closeParen>\))\s*(?<openCurly>\{)?/, 'ifCallNoBrackets'], // if without brackets
-    ['ELSE', /^(?<elsekey>else)\s*(?<openCurly>\{)/, 'elseCall'],
     ['ELSEIF', /^(?<elseifkey>else if)\s*(?<openParen>\()(?<conditional>(?:[^()]|\((?:[^()]|\([^()]*\))*\))*?)\s*(?<closeParen>\))\s*(?<openCurly>\{)/, 'elseIfCall'],
+    ['ELSE', /^(?<elsekey>else)\s*(?<openCurly>\{)?/, 'elseCall'],
 
     // While block:
 
@@ -116,6 +116,7 @@ export const blocksSpec = [
     ['INITIALIZATIONSTATEMENT_ARRAYELEMENT_2DIMENSIONS', /^(?<variable>\w+)\[(?<index1>\d+)\]\[(?<index2>\d+)\]\s*=\s*(?<value>[^;]+)(?<semicolon>;)?/, 'InitializationStatementArrayElement2Dimensions'],
     ['INITIALIZATIONSTATEMENT_ARRAYELEMENT_2DIMENSIONS_VARIABLE_AS_INDEX', /^(?<variable>\w+)\[(?<index>[a-zA-Z]+)\]\s*\[(?<index2>[a-zA-Z]+)\]\s*=\s*(?<value>[^;]+)(?<semicolon>;)?/, 'InitializationStatementArrayElement2DimensionsVariableAsIndex'],
     ['INITIALIZATIONSTATEMENT_TERNARY', /^(?<variable>\w+)\s*=\s*(?<condition>.+?)\s*\?\s*(?<trueValue>.+?)\s*:\s*(?<falseValue>.+?)(?<semicolon>;)?/, 'InitializationStatementTernary'],
+    ['INITIALIZATIONSTATEMENT_FUNCTIONCALL_WITH_ARITHMETIC_OPERATION', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<functionName>\w+)\((?<arguments>[^;]*)\)\s*(?<operator>[+\-*/])\s*(?<operand>[^;]+)(?<semicolon>;)?/, 'InitializationStatementFunctionCallWithArithmeticOperation'],
     ['INITIALIZATIONSTATEMENT_FUNCTIONCALL', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<functionName>\w+)\((?<arguments>[^;]*)\)(?<semicolon>;)?/, 'InitializationStatementFunctionCall'],
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>\(.*\)\s*\+\s*0x[\da-fA-F]+)(?<semicolon>;)?/, 'InitializationStatement'], // e.g variable1 = (variable2 + 0x1);
     ['INITIALIZATIONSTATEMENT', /^(?<variable>\w+)\s*(?<equals>=)\s*(?<value>[^;]\w+\s*\+\s*\w+)(?<semicolon>;)?/, 'InitializationStatement'], // e.g variable1 = variable2 + variable3;
@@ -137,6 +138,10 @@ export const blocksSpec = [
 
     ['BREAK', /^(?<breakStatement>break)\s*(?<semicolon>;)?/, 'BreakStatement'],
 
+    // Opening block:
+
+    ['OPENINGBLOCK', /^(?<openCurly>\{)\s*(?<semicolon>;)?/, 'OpeningBlock'],
+
     // Closing block:
 
     ['CLOSINGBLOCK', /^(?<closeCurly>\})\s*(?<semicolon>;)?/, 'ClosingBlock'],
@@ -150,3 +155,54 @@ export const blocksSpec = [
     ['UNEXPECTED', /^(?<![\w\d])(?<unexpected>\.)(?![\w\d])/, 'Unexpected'], // TODO: Add example
     ['UNEXPECTED', /^\b(?<unexpected>[a-zA-Z_]+)\b(?![\(\)\[\];,])/, 'Unexpected'],
 ];
+
+/**
+ * Token specifications for the CAPL tokenizer.
+ * Each token is defined by a regular expression pattern and a corresponding token type.
+ */
+
+// const tokenSpecs = [
+//     // Keywords
+//     { type: 'KEYWORD_IF', regex: /\bif\b/ },
+//     { type: 'KEYWORD_ELSE', regex: /\belse\b/ },
+//     { type: 'KEYWORD_WHILE', regex: /\bwhile\b/ },
+//     { type: 'KEYWORD_FOR', regex: /\bfor\b/ },
+//     { type: 'KEYWORD_RETURN', regex: /\breturn\b/ },
+//     { type: 'KEYWORD_INCLUDES', regex: /\bincludes\b/ },
+//     { type: 'KEYWORD_VARIABLES', regex: /\bvariables\b/ },
+//     // Add more keywords as needed
+
+//     // Operators
+//     { type: 'OPERATOR_ASSIGN', regex: /=/ },
+//     { type: 'OPERATOR_EQUAL', regex: /==/ },
+//     { type: 'OPERATOR_NOT_EQUAL', regex: /!=/ },
+//     { type: 'OPERATOR_LESS_THAN', regex: /</ },
+//     { type: 'OPERATOR_GREATER_THAN', regex: />/ },
+//     // Add more operators as needed
+
+//     // Delimiters
+//     { type: 'DELIMITER_SEMICOLON', regex: /;/ },
+//     { type: 'DELIMITER_COMMA', regex: /,/ },
+//     { type: 'DELIMITER_OPEN_PAREN', regex: /\(/ },
+//     { type: 'DELIMITER_CLOSE_PAREN', regex: /\)/ },
+//     { type: 'DELIMITER_OPEN_BRACE', regex: /\{/ },
+//     { type: 'DELIMITER_CLOSE_BRACE', regex: /\}/ },
+//     // Add more delimiters as needed
+
+//     // Identifiers
+//     { type: 'IDENTIFIER', regex: /\b[a-zA-Z_][a-zA-Z0-9_]*\b/ },
+
+//     // Literals
+//     { type: 'LITERAL_NUMBER', regex: /\b\d+(\.\d+)?\b/ }, // Matches integers and decimals
+//     { type: 'LITERAL_STRING', regex: /"(?:\\.|[^"\\])*"/ }, // Matches double-quoted strings
+//     // Add more literals as needed
+
+//     // Comments
+//     { type: 'COMMENT_SINGLE_LINE', regex: /\/\/.*/ },
+//     { type: 'COMMENT_MULTI_LINE', regex: /\/\*[\s\S]*?\*\// },
+
+//     // Whitespace
+//     { type: 'WHITESPACE', regex: /\s+/ },
+//   ];
+
+//   module.exports = tokenSpecs;

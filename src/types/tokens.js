@@ -48,6 +48,9 @@ function Token(row, col, kind, value, matches) {
     // contoller for parent block indentation
     this.parentBlockIndentation = 0
 
+    // for block assignment
+    this.isBlockAssigned = false
+
 }
 
 //

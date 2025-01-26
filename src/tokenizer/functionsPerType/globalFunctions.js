@@ -20,6 +20,7 @@ export function addToBlockProperty(parser, token, property){
                 || element.kind.includes('VariablesBlock')
                 || element.kind.includes('FunctionsBlock')
                 || element.kind.includes('ifCall')
+                || element.kind.includes('ifCallNoBrackets')
                 || element.kind.includes('elseCall')
                 || element.kind.includes('elseIfCall')
                 || element.kind.includes('forLoopCall')
@@ -38,6 +39,11 @@ export function addToBlockProperty(parser, token, property){
                     parentBlock[index].body = parentBlock[index].body + JSON.stringify(token);
                     parentBlock[index][property] = token.tokenMatch.closeCurly;
                     parentBlock[index].closedBlock = true;
+                }
+                else if (property === 'openCurly') {
+                    parentBlock[index].body = parentBlock[index].body + JSON.stringify(token);
+                    parentBlock[index][property] = token.tokenMatch.openCurly;
+                    token.isBlockAssigned = true;
                 }
                 if (parentBlock[index].kind.includes('IncludesBlock')) {
                     token.isInclude = true;
