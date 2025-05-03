@@ -54,4 +54,17 @@ describe('Linter', () => {
             ]
         });
     });
+
+    it('Should throw error for missing semicolon in assignment', () => {
+        const linter = new Linter();
+        const code = 'UserStruct.member = 10';
+
+        const result = linter.lint(code);
+
+        expect(result).toStrictEqual({"errors":
+            [
+                {"message": "Missing semicolon at the end of 'StructMemberVariableDeclaration'", "line": "unknown", "type": "Error"}
+            ]
+        });
+      });
 });

@@ -5,7 +5,7 @@ export default class CheckMissingSemicolon {
         let issues = [];
 
         parsedCode.forEach(statement => {
-            if (['VariableDeclaration', 'ReturnStatement'].includes(statement.type) && !statement.hasSemicolon) {
+            if (['StructMemberVariableDeclaration', 'VariableDeclaration', 'ReturnStatement'].includes(statement.type) && !statement.hasSemicolon) {
                 issues.push({
                   type: 'Error',
                   message: `Missing semicolon at the end of '${statement.type}'`,

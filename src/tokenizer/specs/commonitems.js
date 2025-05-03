@@ -9,6 +9,7 @@ export const commonitems = [
     { type: 'DELIMITER_CLOSE_BRACE', regex: /^\}/ },
     { type: 'DELIMITER_OPEN_BRACKET', regex: /^\[/ },
     { type: 'DELIMITER_CLOSE_BRACKET', regex: /^\]/ },
+    { type: 'DELIMITER_DOT', regex: /^\./ },
     // Add more delimiters as needed
 
     // Identifiers

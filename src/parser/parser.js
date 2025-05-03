@@ -15,7 +15,7 @@ export default class Parser {
     const program = [];
 
     while (this.currentIndex < this.tokens.length) {
-        // try {
+
             const statement = this.parseStatement();
 
             if (this.errors.length > 0) {
@@ -25,25 +25,18 @@ export default class Parser {
             if (statement) {
                 program.push(statement);
             }
-        // }
-        // catch (error) {
 
-
-
-
-            // this.skipToNextStatement(); // 🆕 Skip to avoid infinite loops
-        // }
     }
 
     return program;
   }
 
-  getType(token) {
-    if (token.type === this) {
-        return true;
+    getType(token) {
+        if (token.type === this) {
+            return true;
+        }
+        return false;
     }
-    return false;
-}
 
   parseStatement() {
     if (this.currentIndex >= this.tokens.length) {
@@ -51,10 +44,13 @@ export default class Parser {
     }
 
     const token = this.tokens[this.currentIndex];
+
     const variableDataType = this.tokenizer.datatypeslib.find(this.getType, token.type);
 
     if (token.type === 'IF') {
         return this.parseIfStatement();
+    }else if (token.type === 'ELSE') {
+        return this.parseElseStatement();
     }else if (token.type === 'RETURN') {
         return this.parseReturnStatement();
     }else if (token.type === 'INCLUDESBLOCK') {
@@ -65,6 +61,8 @@ export default class Parser {
         return this.parseTestCaseBlockStatement();
     }else if (token.type === 'TESTFUNCTION') {
         return this.parseTestFunctionBlockStatement();
+    }else if (token.type === 'IDENTIFIER_STRUCT') {
+        return this.parseStructStatement();
     }else if (variableDataType !== undefined) {
         return this.parseVariableDeclaration(token.type);
     }
@@ -88,7 +86,29 @@ export default class Parser {
 
     this.consume('DELIMITER_CLOSE_BRACE'); // Consume '}'
 
-    return { type: 'IfStatement', condition, body };
+    if (this.peek().type === 'ELSE') {
+        let elseBody = this.parseElseStatement();
+        return { type: 'IfStatement', condition, body, elseBody };
+    }else{
+        return { type: 'IfStatement', condition, body };
+    }
+
+
+  }
+
+  parseElseStatement() {
+    this.consume('ELSE'); // Consume 'if'
+
+    this.consume('DELIMITER_OPEN_BRACE'); // Consume '{'
+
+    const body = [];
+    while (this.peek().type !== 'DELIMITER_CLOSE_BRACE') {
+      body.push(this.parseStatement());
+    }
+
+    this.consume('DELIMITER_CLOSE_BRACE'); // Consume '}'
+
+    return { type: 'ElseStatement', body };
   }
 
   parseReturnStatement() {
@@ -118,7 +138,7 @@ export default class Parser {
         this.consume('INCLUDE'); // Consume 'include'
     }
     else {
-        this.errors.push(`⚠️ Not allowed statement within 'IncludeBlockStatement'`);
+        this.errors.push(`Not allowed statement within 'IncludeBlockStatement'`);
         // this.skipToNextStatement();
         this.parseStatement();
         statementType = 'NotAllowedStatement';
@@ -193,6 +213,43 @@ export default class Parser {
     return { type: 'TestCaseBlockStatement', testCaseName, testCaseParameters, value: testCaseBlockValue };
   }
 
+//   parseTestFunctionBlockStatement(){//TODO: Define function}
+
+  parseStructStatement(nestedExpression = false){
+
+    let memberName = null;
+    let memberValue = null;
+    let hasSemicolon = false;
+
+    const variableName = this.consume('IDENTIFIER_STRUCT').value; // Consume 'Identifier STRUCT type (Initialization)'
+    this.consume('DELIMITER_DOT'); // Consume '.'
+
+    memberName = this.consume('IDENTIFIER').value;
+
+
+
+    if (this.peek().type === 'ASSIGNMENT') {
+      this.consume('ASSIGNMENT'); // Consume '='
+      memberValue = this.parseExpression(true);
+    }
+
+    if (nestedExpression == false)
+    {
+
+        if (this.peek().type !== 'DELIMITER_SEMICOLON') {
+            this.errors.push(`Missing semicolon after variable declaration '${variableName.value}'`);
+        }
+        else {
+            this.consume('DELIMITER_SEMICOLON');
+            hasSemicolon = true;
+        }
+    }
+
+
+    return { type: 'StructMemberVariableDeclaration', variableName, memberName, memberValue, hasSemicolon };
+
+  }
+
   parseParameterDeclaration(type) {
     this.consume(type); //
 
@@ -234,7 +291,7 @@ export default class Parser {
 
     let hasSemicolon = false;
     if (this.peek().type !== 'DELIMITER_SEMICOLON') {
-        this.errors.push(`⚠️ Missing semicolon after variable declaration '${variableName.value}'`);
+        this.errors.push(`Missing semicolon after variable declaration '${variableName.value}'`);
     }
     else {
         this.consume('DELIMITER_SEMICOLON');
@@ -244,11 +301,15 @@ export default class Parser {
     return { type: 'VariableDeclaration', variableName, variableValue, hasSemicolon };
     }
 
-  parseExpression() {
+  parseExpression(nestedExpression = false) {
     const token = this.peek();
     if (token.type === 'IDENTIFIER' || token.type === 'LITERAL_NUMBER' || token.type === 'LITERAL_STRING') {
       return this.consume(token.type);
     }
+
+    if (token.type === 'IDENTIFIER_STRUCT' ) {
+        return this.parseStructStatement(nestedExpression);
+      }
 
     throw new Error(`Unexpected token in expression: ${token.value}`);
   }

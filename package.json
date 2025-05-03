@@ -7,7 +7,7 @@
   "scripts": {
     "test": "jest --notify --verbose",
     "test2": "jest --notify --onlyFailures --verbose",
-    "test3": "jest --notify --onlyChanged --verbose",
+    "test3": "jest --notify --onlyChanged --verbose --detectOpenHandles",
     "start": "node ./src/index.js"
   },
   "keywords": [],

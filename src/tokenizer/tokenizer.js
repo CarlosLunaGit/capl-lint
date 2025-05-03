@@ -31,6 +31,10 @@ export default class Tokenizer {
                 const match = remainingCode.match(spec.regex);
 
                 if (match) {
+                    // Update Struct types by its Member access operator
+                    if (spec.type === 'DELIMITER_DOT' && tokens.length > 0){
+                        tokens[tokens.length - 1].type = 'IDENTIFIER_STRUCT'
+                    }
                     // Ignore whitespace tokens
                     // Ignore comments
                     if (spec.type !== 'WHITESPACE' &&
@@ -42,6 +46,8 @@ export default class Tokenizer {
                             value: match[0],
                         });
                     }
+
+
 
                     remainingCode = remainingCode.slice(match[0].length).trimStart(); // Remove matched part & trim leading space
                     matched = true;
