@@ -1,0 +1,61 @@
+export const datatypes = [
+    // Scalar data types
+    { type: 'BYTE', regex: /^byte/ },
+    { type: 'WORD', regex: /^word/ },
+    { type: 'DWORD', regex: /^dword/ },
+    { type: 'INT', regex: /^int/ },
+    { type: 'LONG', regex: /^long/ },
+    { type: 'INT64', regex: /^int64/ },
+    { type: 'GWORD', regex: /^gword/ },
+    { type: 'CHAR', regex: /^char/ },
+    { type: 'FLOAT', regex: /^float/ },
+    { type: 'DOUBLE', regex: /^double/ },
+
+    // Self defined structures
+    { type: 'STRUCT', regex: /^struct/ },
+
+    // Enumeration types
+    { type: 'ENUM', regex: /^enum/ },
+
+    // Objects
+    { type: 'A429WORD', regex: /^a429word/ },
+    { type: 'A429SETTINGS', regex: /^a429settings/ },
+    { type: 'A664MESSAGE', regex: /^a664Message/ },
+    { type: 'A664FRAME', regex: /^a664Frame/ },
+    { type: 'MESSAGE', regex: /^message/ },
+    { type: 'MULTIPLEXEDMESSAGE', regex: /^multiplexed_message/ },
+    { type: 'LINFRAME', regex: /^linFrame/ },
+    { type: 'DBMSG', regex: /^dbMsg/ },
+    { type: 'DBNODE', regex: /^dbNode/ },
+    { type: 'DBPDU', regex: /^dbPdu/ },
+    { type: 'DBFRFRAME', regex: /^dbFrFrame/ },
+    { type: 'DBFRPDU', regex: /^dbFrPdu/ },
+    { type: 'DIAGREQUEST', regex: /^diagRequest/ },
+    { type: 'DIAGRESPONSE', regex: /^diagResponse/ },
+    { type: 'FRFRAME', regex: /^FRFrame/ },
+    { type: 'FRPDU', regex: /^FRPDU/ },
+    { type: 'FRCONFIGURATION', regex: /^FRConfiguration/ },
+    { type: 'MOSTMESSAGE', regex: /^mostMessage/ },
+    { type: 'MOSTAMSMESSAGE', regex: /^mostAmsMessage/ },
+    { type: 'MOSTRAWMESSAGE', regex: /^mostRawMessage/ },
+    { type: 'SIGNAL', regex: /^Signal/ },
+    { type: 'SERVICESIGNAL', regex: /^ServiceSignal/ },
+    { type: 'SERVICESIGNALDATA', regex: /^ServiceSignalData/ },
+    { type: 'SERVICESIGNALDATANUMBER', regex: /^ServiceSignalDataNumber/ },
+    { type: 'SERVICESIGNALDATASTRING', regex: /^ServiceSignalDataString/ },
+    { type: 'SYSVAR', regex: /^SysVar/ },
+    { type: 'SYSVARINT', regex: /^SysVarInt/ },
+    { type: 'SYSVARLONGLONG', regex: /^SysVarLongLong/ },
+    { type: 'SYSVARFLOAT', regex: /^SysVarFloat/ },
+    { type: 'SYSVARSTRING', regex: /^SysVarString/ },
+    { type: 'SYSVARINTARRAY', regex: /^SysVarIntArray/ },
+    { type: 'SYSVARFLOATARRAY', regex: /^SysVarFloatArray/ },
+    { type: 'SYSVARDATA', regex: /^SysVarData/ },
+    { type: 'TIMER', regex: /^Timer/ },
+    { type: 'MSTIMER', regex: /^MsTimer/ },
+    { type: 'SIGNALNAME', regex: /^\$[a-zA-Z_][a-zA-Z0-9_]*/ },
+
+    // Test
+    { type: 'TESTCASE', regex: /^[T-t]est[C-c]ase / },
+    { type: 'TESTFUNCTION', regex: /^[T-t]est[F-f]unction / },
+];

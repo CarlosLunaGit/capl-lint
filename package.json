@@ -5,7 +5,9 @@
   "type": "module",
   "main": "index.js",
   "scripts": {
-    "test": "jest",
+    "test": "jest --notify --verbose",
+    "test2": "jest --notify --onlyFailures --verbose",
+    "test3": "jest --notify --onlyChanged --verbose",
     "start": "node ./src/index.js"
   },
   "keywords": [],
@@ -19,6 +21,7 @@
     "express": "^4.18.2",
     "http": "^0.0.1-security",
     "morgan": "^1.10.0",
+    "node-notifier": "^10.0.1",
     "stripe": "^15.4.0",
     "supertest": "^7.0.0"
   },
