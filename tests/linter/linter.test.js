@@ -38,7 +38,7 @@ describe('Linter', () => {
 
         const result = linter.lint(code);
 
-        expect(result).toStrictEqual( {'errors': [{'message': 'Unused variable: x', 'type': 'Warning'}]});
+        assert.deepEqual(result, {errors: [{message: 'Unused variable: x', type: 'Warning'}]});
     });
 
     it('Should report an ERROR on a missing Colon', () => {

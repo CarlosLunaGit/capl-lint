@@ -25,25 +25,22 @@ export function tokenToString(token) {
 
 // constructor ////////////////////////////////////////////////////////////////
 
-function Token(row, col, kind, value, matches) {
+function Token(row, col, type, value, matches) {
     this.row = row
     this.col = col
-    this.kind  = kind
-    this.tokenValue = value
-    this.tokenMatch = matches
+    this.type  = type
+    this.value = value
+
     // during declaration:
     this.isImport = false
     this.isConstant = false
     this.isInclude = false
     this.isVariable = false
+
     // after declaration:
     this.wasUsed = false
     this.wasAssigned = false
     this.wasExported = false
-    // defined in Specs:
-    this.definedInSpec = "MATCHED"
-    // defined in Literals:
-    this.definedInLiterals = "HANDLED"
 
     // contoller for parent block indentation
     this.parentBlockIndentation = 0
@@ -52,5 +49,3 @@ function Token(row, col, kind, value, matches) {
     this.isBlockAssigned = false
 
 }
-
-//

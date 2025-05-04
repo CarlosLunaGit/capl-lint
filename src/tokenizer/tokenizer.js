@@ -1,3 +1,4 @@
+import { createToken }  from '../types/tokens.js';
 
 import { datatypes } from './specs/datatypes.js';
 import { keywords } from './specs/keywords.js';
@@ -18,48 +19,61 @@ export default class Tokenizer {
     }
 
     tokenize(code) {
-
         let tokens = [];
-        let remainingCode = code.trim(); // Trim leading/trailing spaces
+        let index = 0;
+        let line = 1;
+        let column = 1;
 
-        while (remainingCode.length > 0) {
-
+        while (index < code.length) {
             let matched = false;
 
             for (let spec of this.tokenSpecs) {
-
-                const match = remainingCode.match(spec.regex);
+                const match = code.slice(index).match(spec.regex);
 
                 if (match) {
-                    // Update Struct types by its Member access operator
-                    if (spec.type === 'DELIMITER_DOT' && tokens.length > 0){
-                        tokens[tokens.length - 1].type = 'IDENTIFIER_STRUCT'
+                    const value = match[0];
+
+                    // Compute the token's position
+                    const tokenRow = line;
+                    const tokenCol = column;
+
+                    // Count newlines and reset column if needed
+                    const lines = value.split('\n');
+                    if (lines.length > 1) {
+                        line += lines.length - 1;
+                        column = lines[lines.length - 1].length + 1;
+                    } else {
+                        column += value.length;
                     }
-                    // Ignore whitespace tokens
-                    // Ignore comments
-                    if (spec.type !== 'WHITESPACE' &&
-                        spec.type !== 'COMMENT_ENCODING'
-                        && spec.type !== 'COMMENT_SINGLE_LINE'
-                        && spec.type !== 'COMMENT_MULTI_LINE') {
-                        tokens.push({
-                            type: spec.type,
-                            value: match[0],
-                        });
+
+                    // Ignore whitespace/comments if needed
+                    if (!['WHITESPACE', 'COMMENT_ENCODING', 'COMMENT_SINGLE_LINE', 'COMMENT_MULTI_LINE'].includes(spec.type)) {
+                        // Special handling for struct identifiers
+                        if (spec.type === 'DELIMITER_DOT' && tokens.length > 0) {
+                            tokens[tokens.length - 1].type = 'IDENTIFIER_STRUCT';
+                        }
+
+                        const token = createToken(tokenRow, tokenCol, spec.type, value, match);
+                        tokens.push(token);
                     }
 
-
-
-                    remainingCode = remainingCode.slice(match[0].length).trimStart(); // Remove matched part & trim leading space
+                    index += value.length;
                     matched = true;
                     break;
                 }
             }
 
             if (!matched) {
-                throw new Error(`Unrecognized token at: ${remainingCode}`);
+                throw new Error(`Unrecognized token at line ${line}, column ${column}: ${code.slice(index, index + 20)}`);
             }
         }
 
         return tokens;
-        }
+    }
+
+    isDataType(type){
+        const DeclarationDataType = this.datatypeslib.filter((item) =>  item.type === type);
+
+        return DeclarationDataType.length > 0;
+    }
 }

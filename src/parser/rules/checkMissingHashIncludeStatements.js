@@ -3,7 +3,7 @@ export default class CheckMissingHashIncludeStatements {
     check(parsedCode) {
         let issues = [];
 
-        parsedCode.forEach(statements => {
+        parsedCode.ast.forEach(statements => {
 
             if (statements.type !== 'IncludeBlockStatement') return issues;
 

@@ -2,6 +2,10 @@
 import Tokenizer from '../../src/tokenizer/tokenizer.js';
 const assert = require('assert');
 
+function projectTokens(tokens) {
+    return tokens.map(t => ({ type: t.type, value: t.value, row: t.row, col: t.col }));
+}
+
 describe('Tokenizer', () => {
 
     it('Should tokenize CAPL datatype INT', () => {
@@ -9,10 +13,10 @@ describe('Tokenizer', () => {
         const code = 'int x;';
         const tokens = tokenizer.tokenize(code);
 
-        assert.deepEqual(tokens, [
-            { type: 'INT', value: 'int' },
-            { type: 'IDENTIFIER', value: 'x' },
-            { type: 'DELIMITER_SEMICOLON', value: ';' },
+        assert.deepEqual(projectTokens(tokens), [
+            { type: 'INT', value: 'int', row: "1", col: "1" },
+            { type: 'IDENTIFIER', value: 'x', row: "1", col: "5"  },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row: "1", col: "6"  },
         ]);
     });
 
@@ -21,18 +25,18 @@ describe('Tokenizer', () => {
         const code = 'if (x == 10) { return "true"; }';
         const tokens = tokenizer.tokenize(code);
 
-        assert.deepEqual(tokens, [
-            { type: 'IF', value: 'if' },
-            { type: 'DELIMITER_OPEN_PAREN', value: '(' },
-            { type: 'IDENTIFIER', value: 'x' },
-            { type: 'OPERATOR_EQUAL', value: '==' },
-            { type: 'LITERAL_NUMBER', value: '10' },
-            { type: 'DELIMITER_CLOSE_PAREN', value: ')' },
-            { type: 'DELIMITER_OPEN_BRACE', value: '{' },
-            { type: 'RETURN', value: 'return' },
-            { type: 'LITERAL_STRING', value: '"true"' },
-            { type: 'DELIMITER_SEMICOLON', value: ';' },
-            { type: 'DELIMITER_CLOSE_BRACE', value: '}' },
+        assert.deepEqual(projectTokens(tokens), [
+            { type: 'IF', value: 'if', row: "1", col: "1" },
+            { type: 'DELIMITER_OPEN_PAREN', value: '(', row: "1", col: "4" },
+            { type: 'IDENTIFIER', value: 'x', row: "1", col: "5" },
+            { type: 'OPERATOR_EQUAL', value: '==', row: "1", col: "7" },
+            { type: 'LITERAL_NUMBER', value: '10', row: "1", col: "10" },
+            { type: 'DELIMITER_CLOSE_PAREN', value: ')', row: "1", col: "12" },
+            { type: 'DELIMITER_OPEN_BRACE', value: '{', row: "1", col: "14" },
+            { type: 'RETURN', value: 'return', row: "1", col: "16" },
+            { type: 'LITERAL_STRING', value: '"true"', row: "1", col: "23" },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row: "1", col: "29" },
+            { type: 'DELIMITER_CLOSE_BRACE', value: '}', row: "1", col: "31" },
 
         ]);
     });
@@ -42,13 +46,13 @@ describe('Tokenizer', () => {
         const code = 'UserStruct.member = 10;';
         const tokens = tokenizer.tokenize(code);
 
-        assert.deepEqual(tokens, [
-            { type: 'IDENTIFIER_STRUCT', value: 'UserStruct' },
-            { type: 'DELIMITER_DOT', value: '.' },
-            { type: 'IDENTIFIER', value: 'member' },
-            { type: 'ASSIGNMENT', value: '=' },
-            { type: 'LITERAL_NUMBER', value: '10' },
-            { type: 'DELIMITER_SEMICOLON', value: ';' },
+        assert.deepEqual(projectTokens(tokens), [
+            { type: 'IDENTIFIER_STRUCT', value: 'UserStruct', row: "1", col: "1" },
+            { type: 'DELIMITER_DOT', value: '.', row: "1", col: "11" },
+            { type: 'IDENTIFIER', value: 'member', row: "1", col: "12" },
+            { type: 'ASSIGNMENT', value: '=', row: "1", col: "19" },
+            { type: 'LITERAL_NUMBER', value: '10', row: "1", col: "21" },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row: "1", col: "23" },
 
         ]);
     });
@@ -57,14 +61,14 @@ describe('Tokenizer', () => {
         const tokenizer = new Tokenizer();
         const code = 'x[5] = 3;';
         const tokens = tokenizer.tokenize(code);
-        assert.deepEqual(tokens, [
-          { type: 'IDENTIFIER', value: 'x' },
-          { type: 'DELIMITER_OPEN_BRACKET', value: '[' },
-          { type: 'LITERAL_NUMBER', value: '5' },
-          { type: 'DELIMITER_CLOSE_BRACKET', value: ']' },
-          { type: 'ASSIGNMENT', value: '=' },
-          { type: 'LITERAL_NUMBER', value: '3' },
-          { type: 'DELIMITER_SEMICOLON', value: ';' }
+        assert.deepEqual(projectTokens(tokens), [
+          { type: 'IDENTIFIER', value: 'x', row: "1", col: "1" },
+          { type: 'DELIMITER_OPEN_BRACKET', value: '[', row: "1", col: "2" },
+          { type: 'LITERAL_NUMBER', value: '5', row: "1", col: "3" },
+          { type: 'DELIMITER_CLOSE_BRACKET', value: ']', row: "1", col: "4" },
+          { type: 'ASSIGNMENT', value: '=', row: "1", col: "6" },
+          { type: 'LITERAL_NUMBER', value: '3', row: "1", col: "8" },
+          { type: 'DELIMITER_SEMICOLON', value: ';', row: "1", col: "9" }
         ]);
       });
 
@@ -73,10 +77,10 @@ describe('Tokenizer', () => {
         const code = '/* comment */ int x;';
         const tokens = tokenizer.tokenize(code);
         // Ensure comment is skipped
-        assert.deepEqual(tokens, [
-            { type: 'INT', value: 'int' },
-            { type: 'IDENTIFIER', value: 'x' },
-            { type: 'DELIMITER_SEMICOLON', value: ';' }
+        assert.deepEqual(projectTokens(tokens), [
+            { type: 'INT', value: 'int', row: "1", col: "15" },
+            { type: 'IDENTIFIER', value: 'x', row: "1", col: "19" },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row: "1", col: "20" }
           ]);
       });
 
@@ -86,19 +90,19 @@ describe('Tokenizer', () => {
         const tokens = tokenizer.tokenize(code);
         // Add expected tokens including OPERATOR_AND and OPERATOR_OR
 
-        assert.deepEqual(tokens, [
-            { type: 'IF', value: 'if' },
-            { type: 'DELIMITER_OPEN_PAREN', value: '(' },
-            { type: 'IDENTIFIER', value: 'a' },
-            { type: 'AND', value: '&&' },
-            { type: 'IDENTIFIER', value: 'b' },
-            { type: 'OR', value: '||' },
-            { type: 'IDENTIFIER', value: 'c' },
-            { type: 'DELIMITER_CLOSE_PAREN', value: ')' },
-            { type: 'DELIMITER_OPEN_BRACE', value: '{' },
-            { type: 'RETURN', value: 'return' },
-            { type: 'DELIMITER_SEMICOLON', value: ';' },
-            { type: 'DELIMITER_CLOSE_BRACE', value: '}' }
+        assert.deepEqual(projectTokens(tokens), [
+            { type: 'IF', value: 'if', row: "1", col: "1" },
+            { type: 'DELIMITER_OPEN_PAREN', value: '(', row: "1", col: "4" },
+            { type: 'IDENTIFIER', value: 'a', row: "1", col: "5" },
+            { type: 'AND', value: '&&', row: "1", col: "7" },
+            { type: 'IDENTIFIER', value: 'b', row: "1", col: "10" },
+            { type: 'OR', value: '||', row: "1", col: "12" },
+            { type: 'IDENTIFIER', value: 'c', row: "1", col: "15" },
+            { type: 'DELIMITER_CLOSE_PAREN', value: ')', row: "1", col: "16" },
+            { type: 'DELIMITER_OPEN_BRACE', value: '{', row: "1", col: "18" },
+            { type: 'RETURN', value: 'return', row: "1", col: "20" },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row: "1", col: "26" },
+            { type: 'DELIMITER_CLOSE_BRACE', value: '}', row: "1", col: "28" }
 
         ]);
       });
@@ -108,12 +112,12 @@ describe('Tokenizer', () => {
         const code = 'log("hello");';
         const tokens = tokenizer.tokenize(code);
 
-        assert.deepEqual(tokens, [
-            { type: 'IDENTIFIER', value: 'log' },
-            { type: 'DELIMITER_OPEN_PAREN', value: '(' },
-            { type: 'LITERAL_STRING', value: '"hello"' },
-            { type: 'DELIMITER_CLOSE_PAREN', value: ')' },
-            { type: 'DELIMITER_SEMICOLON', value: ';' }
+        assert.deepEqual(projectTokens(tokens), [
+            { type: 'IDENTIFIER', value: 'log', row: "1", col: "1" },
+            { type: 'DELIMITER_OPEN_PAREN', value: '(', row: "1", col: "4" },
+            { type: 'LITERAL_STRING', value: '"hello"', row: "1", col: "5" },
+            { type: 'DELIMITER_CLOSE_PAREN', value: ')', row: "1", col: "12" },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row: "1", col: "13" }
 
         ]);
       });
@@ -123,16 +127,16 @@ describe('Tokenizer', () => {
         const code = 'calculate(x, 5, "test");';
         const tokens = tokenizer.tokenize(code);
 
-        assert.deepEqual(tokens, [
-          { type: 'IDENTIFIER', value: 'calculate' },
-          { type: 'DELIMITER_OPEN_PAREN', value: '(' },
-          { type: 'IDENTIFIER', value: 'x' },
-          { type: 'DELIMITER_COMMA', value: ',' },
-          { type: 'LITERAL_NUMBER', value: '5' },
-          { type: 'DELIMITER_COMMA', value: ',' },
-          { type: 'LITERAL_STRING', value: '"test"' },
-          { type: 'DELIMITER_CLOSE_PAREN', value: ')' },
-          { type: 'DELIMITER_SEMICOLON', value: ';' }
+        assert.deepEqual(projectTokens(tokens), [
+          { type: 'IDENTIFIER', value: 'calculate', row: "1", col: "1" },
+          { type: 'DELIMITER_OPEN_PAREN', value: '(', row: "1", col: "10" },
+          { type: 'IDENTIFIER', value: 'x', row: "1", col: "11" },
+          { type: 'DELIMITER_COMMA', value: ',', row: "1", col: "12" },
+          { type: 'LITERAL_NUMBER', value: '5', row: "1", col: "14" },
+          { type: 'DELIMITER_COMMA', value: ',', row: "1", col: "15" },
+          { type: 'LITERAL_STRING', value: '"test"', row: "1", col: "17" },
+          { type: 'DELIMITER_CLOSE_PAREN', value: ')', row: "1", col: "23" },
+          { type: 'DELIMITER_SEMICOLON', value: ';', row: "1", col: "24" }
         ]);
       });
 

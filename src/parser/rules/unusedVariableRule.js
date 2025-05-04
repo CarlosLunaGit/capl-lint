@@ -4,7 +4,7 @@ export default class UnusedVariableRule {
       let issues = [];
 
       // This example assumes that parsedCode contains all declared variables and usage information
-      parsedCode.forEach(statement => {
+      parsedCode.ast.forEach(statement => {
         if (statement.type === 'VariableDeclaration' && !statement.isUsed) {
           issues.push({
             type: 'Warning',

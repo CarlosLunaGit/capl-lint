@@ -12,398 +12,285 @@ export default class Parser {
     this.tokens = this.tokenizer.tokenize(code);
     this.currentIndex = 0;
     this.errors = [];
-    const program = [];
+
+    const ast = [];
 
     while (this.currentIndex < this.tokens.length) {
-
-            const statement = this.parseStatement();
-
-            if (this.errors.length > 0) {
-                statement.errors = this.errors;
-            }
-
-            if (statement) {
-                program.push(statement);
-            }
-
+      try {
+        const statement = this.parseStatement();
+        if (statement) {
+            ast.push(statement);
+        }
+      } catch (err) {
+        this.errors.push(err.message);
+        this.skipToNextStatement();
+      }
     }
 
-    return program;
+    return { ast, errors: this.errors };
   }
 
-
-
   parseStatement() {
-    if (this.currentIndex >= this.tokens.length) {
-      return null;
-    }
+    const token = this.peek();
 
-    const token = this.tokens[this.currentIndex];
-
-    const DeclarationDataType = this.tokenizer.datatypeslib.filter((item) =>  item.type === token.type) ;
-
-    if (token.type === 'IF') {
-        return this.parseIfStatement();
-    }else if (token.type === 'ELSE') {
-        return this.parseElseStatement();
-    }else if (token.type === 'RETURN') {
-        return this.parseReturnStatement();
-    }else if (token.type === 'INCLUDESBLOCK') {
-        return this.parseIncludeBlockStatement();
-    }else if (token.type === 'VARIABLESBLOCK') {
-        return this.parseVariablesBlockStatement();
-    }else if (token.type === 'TESTCASE') {
-        return this.parseTestCaseBlockStatement();
-    }else if (token.type === 'TESTFUNCTION') {
-        return this.parseTestFunctionBlockStatement();
-    }else if (token.type === 'IDENTIFIER_STRUCT') {
-        return this.parseStructStatement();
-    }else if (token.type === 'IDENTIFIER' && this.peek(1).type === 'DELIMITER_OPEN_PAREN') {
-        return this.parseFunctionCall();
-    }else if (DeclarationDataType.length > 0) {
-        return this.parseVariableDeclaration(token.type);
-    }else if (token.type === 'IDENTIFIER') {
+    // Dispatch by token type
+    switch (token.type) {
+      case 'IF': return this.parseIfStatement();
+      case 'ELSE': return this.parseElseStatement();
+      case 'RETURN': return this.parseReturnStatement();
+      case 'INCLUDESBLOCK': return this.parseIncludeBlockStatement();
+      case 'VARIABLESBLOCK': return this.parseVariablesBlockStatement();
+      case 'TESTCASE': return this.parseTestCaseBlockStatement();
+      case 'TESTFUNCTION': return this.parseTestFunctionBlockStatement?.();
+      case 'IDENTIFIER_STRUCT': return this.parseStructStatement();
+      case 'IDENTIFIER':
+        if (this.peek(1).type === 'DELIMITER_OPEN_BRACE') {
+            throw new Error(`Unexpected block after identifier '${token.value}'`);
+          }
+        if (this.peek(1).type === 'DELIMITER_OPEN_PAREN') {
+          return this.parseFunctionCall();
+        }
         return this.parseVariableInitialization();
+      default:
+        if (this.tokenizer.isDataType(token.type)) {
+          return this.parseVariableDeclaration();
+        }
+        throw new Error(`Unexpected statement type: ${token.type} value: ${token.value}`);
     }
+  }
 
-    throw new Error(`Unexpected statement type: ${token.type} value: ${token.value}`);
+  parseBlock(bodyParser) {
+    this.consume('DELIMITER_OPEN_BRACE');
+    const body = [];
+    while (this.peek().type !== 'DELIMITER_CLOSE_BRACE') {
+      body.push(bodyParser());
+    }
+    this.consume('DELIMITER_CLOSE_BRACE');
+    return body;
   }
 
   parseIfStatement() {
-    this.consume('IF'); // Consume 'if'
-    this.consume('DELIMITER_OPEN_PAREN'); // Consume '('
+    const ifToken = this.consume('IF');
+    this.consume('DELIMITER_OPEN_PAREN');
+    const condition = this.parseExpression();
+    this.consume('DELIMITER_CLOSE_PAREN');
 
-    const condition = this.parseExpression(); // Parse the condition
+    const body = this.parseBlock(() => this.parseStatement());
 
-    this.consume('DELIMITER_CLOSE_PAREN'); // Consume ')'
-    this.consume('DELIMITER_OPEN_BRACE'); // Consume '{'
+    const next = this.peek();
+    const elseBody = next.type === 'ELSE' ? this.parseElseStatement() : null;
 
-    const body = [];
-    while (this.peek().type !== 'DELIMITER_CLOSE_BRACE') {
-      body.push(this.parseStatement());
-    }
-
-    this.consume('DELIMITER_CLOSE_BRACE'); // Consume '}'
-
-    if (this.peek().type === 'ELSE') {
-        let elseBody = this.parseElseStatement();
-        return { type: 'IfStatement', condition, body, elseBody };
-    }else{
-        return { type: 'IfStatement', condition, body };
-    }
-
-
+    return { type: 'IfStatement', row: ifToken.row, col: ifToken.col, condition, body, elseBody };
   }
 
   parseElseStatement() {
-    this.consume('ELSE'); // Consume 'if'
-
-    this.consume('DELIMITER_OPEN_BRACE'); // Consume '{'
-
-    const body = [];
-    while (this.peek().type !== 'DELIMITER_CLOSE_BRACE') {
-      body.push(this.parseStatement());
-    }
-
-    this.consume('DELIMITER_CLOSE_BRACE'); // Consume '}'
-
+    this.consume('ELSE');
+    const body = this.parseBlock(() => this.parseStatement());
     return { type: 'ElseStatement', body };
   }
 
   parseReturnStatement() {
-    this.consume('RETURN'); // Consume 'return'
-
+    const returnToken = this.consume('RETURN');
     let returnValue = null;
     if (this.peek().type !== 'DELIMITER_SEMICOLON') {
       returnValue = this.parseExpression();
     }
-
-    this.consume('DELIMITER_SEMICOLON'); // Consume ';'
-
-    return { type: 'ReturnStatement', value: returnValue };
-  }
-
-  parseIncludeStatement() {
-
-    let hasHash = false;
-    let statementType = 'IncludeStatement';
-
-    if (this.peek().type === 'HASH') {
-        this.consume('HASH'); // Consume '#'
-        hasHash = true;
-    }
-
-    if (this.peek().type === 'INCLUDE') {
-        this.consume('INCLUDE'); // Consume 'include'
-    }
-    else {
-        this.errors.push(`Not allowed statement within 'IncludeBlockStatement'`);
-        // this.skipToNextStatement();
-        this.parseStatement();
-        statementType = 'NotAllowedStatement';
-    }
-
-    let includeValue = "Not Specified";
-
-    if (this.peek().type === 'LITERAL_STRING') {
-        includeValue = this.consume('LITERAL_STRING').value;
-    }
-
-    return { type: statementType, value: includeValue, hasHash };
+    this.consume('DELIMITER_SEMICOLON');
+    return { type: 'ReturnStatement', row: returnToken.row, col: returnToken.col, value: returnValue };
   }
 
   parseIncludeBlockStatement() {
-    this.consume('INCLUDESBLOCK'); // Consume 'includesblock'
+    this.consume('INCLUDESBLOCK');
+    const value = this.parseBlock(() => this.parseIncludeStatement());
+    return { type: 'IncludeBlockStatement', value };
+  }
 
-    this.consume('DELIMITER_OPEN_BRACE'); // Consume '{'
+  parseIncludeStatement() {
+    let hasHash = false;
 
-    let includesBlockValue = [];
-
-    while (this.peek().type !== 'DELIMITER_CLOSE_BRACE') {
-      includesBlockValue.push(this.parseIncludeStatement());
+    if (this.peek().type === 'HASH') {
+      this.consume('HASH');
+      hasHash = true;
     }
 
-    this.consume('DELIMITER_CLOSE_BRACE'); // Consume '}'
+    if (this.peek().type === 'INCLUDE') {
+      this.consume('INCLUDE');
+    } else {
+      this.errors.push(`Invalid token ${this.peek().type} in IncludeBlock`);
+      this.skipToNextStatement();
+      return { type: 'InvalidInclude' };
+    }
 
-    return { type: 'IncludeBlockStatement', value: includesBlockValue };
+    const includeValue = this.peek().type === 'LITERAL_STRING'
+      ? this.consume('LITERAL_STRING').value
+      : 'Not Specified';
+
+    return { type: 'IncludeStatement', value: includeValue, hasHash };
   }
 
   parseVariablesBlockStatement() {
-    this.consume('VARIABLESBLOCK'); // Consume 'variablesblock'
-
-    this.consume('DELIMITER_OPEN_BRACE'); // Consume '{'
-
-    const variablesBlockValue = [];
-
-    while (this.peek().type !== 'DELIMITER_CLOSE_BRACE') {
-      variablesBlockValue.push(this.parseVariableDeclaration(this.peek().type));
-    }
-
-    this.consume('DELIMITER_CLOSE_BRACE'); // Consume '}'
-
-    return { type: 'VariablesBlockStatement', value: variablesBlockValue };
+    this.consume('VARIABLESBLOCK');
+    const value = this.parseBlock(() => this.parseVariableDeclaration());
+    return { type: 'VariablesBlockStatement', value };
   }
 
   parseTestCaseBlockStatement() {
-    this.consume('TESTCASE'); // Consume 'testcase'
-
+    this.consume('TESTCASE');
     const testCaseName = this.consume('IDENTIFIER').value;
 
-    this.consume('DELIMITER_OPEN_PAREN'); // Consume '('
+    this.consume('DELIMITER_OPEN_PAREN');
+    const testCaseParameters = this.parseDelimitedList(() =>
+      this.parseParameterDeclaration(), 'DELIMITER_CLOSE_PAREN', 'DELIMITER_COMMA'
+    );
 
-    const testCaseParameters = [];
-
-    while (this.peek().type !== 'DELIMITER_CLOSE_PAREN') {
-      testCaseParameters.push(this.parseParameterDeclaration(this.peek().type));
-    }
-
-    this.consume('DELIMITER_CLOSE_PAREN'); // Consume ')'
-
-    this.consume('DELIMITER_OPEN_BRACE'); // Consume '{'
-
-    const testCaseBlockValue = [];
-
-    while (this.peek().type !== 'DELIMITER_CLOSE_BRACE') {
-      testCaseBlockValue.push(this.parseStatement());
-    }
-
-    this.consume('DELIMITER_CLOSE_BRACE'); // Consume '}'
-
-    return { type: 'TestCaseBlockStatement', testCaseName, testCaseParameters, value: testCaseBlockValue };
+    const value = this.parseBlock(() => this.parseStatement());
+    return { type: 'TestCaseBlockStatement', testCaseName, testCaseParameters, value };
   }
 
-//   parseTestFunctionBlockStatement(){//TODO: Define function}
-
-  parseStructStatement(nestedExpression = false){
-
-    let memberName = null;
-    let memberValue = null;
-    let hasSemicolon = false;
-
-    const variableName = this.consume('IDENTIFIER_STRUCT').value; // Consume 'Identifier STRUCT type (Initialization)'
-    this.consume('DELIMITER_DOT'); // Consume '.'
-
-    memberName = this.consume('IDENTIFIER').value;
-
-
-
-    if (this.peek().type === 'ASSIGNMENT') {
-      this.consume('ASSIGNMENT'); // Consume '='
-      memberValue = this.parseExpression(true);
-    }
-
-    if (nestedExpression == false)
-    {
-
-        if (this.peek().type !== 'DELIMITER_SEMICOLON') {
-            this.errors.push(`Missing semicolon after variable declaration '${variableName.value}'`);
-        }
-        else {
-            this.consume('DELIMITER_SEMICOLON');
-            hasSemicolon = true;
-        }
-    }
-
-
-    return { type: 'StructMemberVariableDeclaration', variableName, memberName, memberValue, hasSemicolon };
-
-  }
-
-  parseParameterDeclaration(type) {
-    this.consume(type); //
-
+  parseParameterDeclaration() {
+    const typeToken = this.consume(this.peek().type); // e.g., INT, ENUM
     let userDefinedTypeName = null;
-    if (type === 'ENUM' || type === 'STRUCT') {
 
-        userDefinedTypeName = this.consume('IDENTIFIER').value;
-
+    if (['ENUM', 'STRUCT'].includes(typeToken.type)) {
+      userDefinedTypeName = this.consume('IDENTIFIER').value;
     }
 
     const parameterName = this.consume('IDENTIFIER').value;
-
-    if (this.peek().type === 'DELIMITER_COMMA') {
-        this.consume('DELIMITER_COMMA'); // Consume ','
-      }
-
     return { type: 'ParameterDeclaration', parameterName, userDefinedTypeName };
-
   }
 
-    parseVariableDeclaration(type) {
-        this.consume(type); // Consume Datatype
+  parseVariableDeclaration() {
+    const type = this.consume(this.peek().type).type;
+    const variableName = this.consume('IDENTIFIER').value;
 
-        const variableName = this.consume('IDENTIFIER').value;
-
-        // Handle variables that are defined as arrays
-        if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
-        this.consume('DELIMITER_OPEN_BRACKET'); // Consume '['
-        this.consume('LITERAL_NUMBER'); // Consume array size
-        this.consume('DELIMITER_CLOSE_BRACKET'); // Consume ']'
-        }
-
-        let variableValue = null;
-
-        if (this.peek().type === 'ASSIGNMENT') {
-        this.consume('ASSIGNMENT'); // Consume '='
-        variableValue = this.parseExpression();
-        }
-
-        let hasSemicolon = false;
-        if (this.peek().type !== 'DELIMITER_SEMICOLON') {
-            this.errors.push(`Missing semicolon after variable declaration '${variableName.value}'`);
-        }
-        else {
-            this.consume('DELIMITER_SEMICOLON');
-            hasSemicolon = true;
-        }
-
-        return { type: 'VariableDeclaration', variableName, variableValue, hasSemicolon };
+    if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
+      this.consume('DELIMITER_OPEN_BRACKET');
+      this.consume('LITERAL_NUMBER');
+      this.consume('DELIMITER_CLOSE_BRACKET');
     }
 
-    parseVariableInitialization(){
-
-        const variableName = this.consume('IDENTIFIER').value;
-
-        // Handle variables that are defined as arrays
-        if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
-        this.consume('DELIMITER_OPEN_BRACKET'); // Consume '['
-        this.consume('LITERAL_NUMBER'); // Consume array size
-        this.consume('DELIMITER_CLOSE_BRACKET'); // Consume ']'
-        }
-
-        let variableValue = null;
-
-        if (this.peek().type === 'ASSIGNMENT') {
-            this.consume('ASSIGNMENT'); // Consume '='
-            variableValue = this.parseExpression();
-        }
-
-        let hasSemicolon = false;
-        if (this.peek().type !== 'DELIMITER_SEMICOLON') {
-            this.errors.push(`Missing semicolon after variable initialization '${variableName.value}'`);
-        }
-        else {
-            this.consume('DELIMITER_SEMICOLON');
-            hasSemicolon = true;
-        }
-
-        return { type: 'VariableInitialization', variableName, variableValue, hasSemicolon };
+    let variableValue = null;
+    if (this.peek().type === 'ASSIGNMENT') {
+      this.consume('ASSIGNMENT');
+      variableValue = this.parseExpression();
     }
 
-  parseExpression(nestedExpression = false) {
-    const token = this.peek();
-    const tokenOffset = this.peek(1);
-
-    if (tokenOffset.type === 'AND' || tokenOffset.type === 'OR')
-        {
-            return this.parseConditional(token, tokenOffset.type);
-        }
-    else
-        {
-            if (token.type === 'IDENTIFIER' || token.type === 'LITERAL_NUMBER' || token.type === 'LITERAL_STRING') {
-                return this.consume(token.type);
-            }
-
-            if (token.type === 'IDENTIFIER_STRUCT' ) {
-                return this.parseStructStatement(nestedExpression);
-            }
-        }
-
-    throw new Error(`Unexpected token in expression: ${token.value}`);
+    const hasSemicolon = this.consume('DELIMITER_SEMICOLON');
+    return { type: 'VariableDeclaration', typeName: type, variableName, variableValue, hasSemicolon: !!hasSemicolon };
   }
 
-  parseConditional( token, logicalOperator ){
+  parseVariableInitialization() {
+    const variableName = this.consume('IDENTIFIER').value;
 
-    const variableNameLeft = this.consume(token.type).value;
-
-    if (this.peek().type === logicalOperator) {
-      this.consume(logicalOperator);
+    if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
+      this.consume('DELIMITER_OPEN_BRACKET');
+      this.consume('LITERAL_NUMBER');
+      this.consume('DELIMITER_CLOSE_BRACKET');
     }
 
-    const variableNameRight = this.consume(token.type).value;
+    let variableValue = null;
+    if (this.peek().type === 'ASSIGNMENT') {
+      this.consume('ASSIGNMENT');
+      variableValue = this.parseExpression();
+    }
 
-
-    return { type: 'ConditionalStatement', variableNameLeft, logicalOperator, variableNameRight };
-
+    const hasSemicolon = this.consume('DELIMITER_SEMICOLON');
+    return { type: 'VariableInitialization', variableName, variableValue, hasSemicolon: !!hasSemicolon };
   }
 
-  parseFunctionCall() {
-    const functionNameToken = this.consume('IDENTIFIER');
-    const functionName = functionNameToken.value;
+  parseStructStatement() {
+    const variableName = this.consume('IDENTIFIER_STRUCT').value;
+    this.consume('DELIMITER_DOT');
+    const memberName = this.consume('IDENTIFIER').value;
 
-    this.consume('DELIMITER_OPEN_PAREN');
-
-    const args = [];
-
-    while (this.peek().type !== 'DELIMITER_CLOSE_PAREN') {
-      if (this.peek().type === 'LITERAL_STRING') {
-        args.push(this.consume('LITERAL_STRING'));
-      } else if (this.peek().type === 'LITERAL_NUMBER') {
-        args.push(this.consume('LITERAL_NUMBER'));
-      } else if (this.peek().type === 'IDENTIFIER') {
-        // You can expand this to peek for nested function calls later
-        args.push(this.consume('IDENTIFIER'));
-      } else {
-        throw new Error(`Unexpected token in function call arguments: ${this.peek().value}`);
-      }
-
-      if (this.peek().type === 'DELIMITER_COMMA') {
-        this.consume('DELIMITER_COMMA'); // consume comma
-      } else {
-        break;
-      }
+    let memberValue = null;
+    if (this.peek().type === 'ASSIGNMENT') {
+      this.consume('ASSIGNMENT');
+      const expr = this.parseExpression();
+      memberValue = expr;
     }
 
-    this.consume('DELIMITER_CLOSE_PAREN');
-    this.consume('DELIMITER_SEMICOLON');
-
+    const hasSemicolon = this.consume('DELIMITER_SEMICOLON');
     return {
-      type: 'FunctionCall',
-      functionName,
-      arguments: args
+      type: 'StructMemberVariableDeclaration',
+      variableName,
+      memberName,
+      memberValue,
+      hasSemicolon: !!hasSemicolon
     };
   }
 
+
+  parseFunctionCall() {
+    const functionName = this.consume('IDENTIFIER').value;
+    this.consume('DELIMITER_OPEN_PAREN');
+
+    const args = this.parseDelimitedList(() => {
+      const token = this.peek();
+      return ['LITERAL_STRING', 'LITERAL_NUMBER', 'IDENTIFIER'].includes(token.type)
+        ? this.consume(token.type)
+        : (() => { throw new Error(`Unexpected function argument: ${token.value}`); })();
+    }, 'DELIMITER_CLOSE_PAREN', 'DELIMITER_COMMA');
+
+    this.consume('DELIMITER_SEMICOLON');
+    return { type: 'FunctionCall', functionName, arguments: args };
+  }
+
+  parseExpression() {
+    let token = this.consume(this.peek().type);
+    const logicalOperator = this.peek().type;
+    // Handle struct member access expression (e.g., UserStruct2.member2)
+    if ((token.type === 'IDENTIFIER' || token.type === 'IDENTIFIER_STRUCT') && !['AND', 'OR'].includes(this.peek().type)) {
+      const parts = [token.value];
+      while (this.peek().type === 'DELIMITER_DOT') {
+        this.consume('DELIMITER_DOT');
+        const memberToken = this.consume('IDENTIFIER');
+        parts.push(memberToken.value);
+      }
+
+      // If it was a member access, return a structured object
+      if (parts.length > 1) {
+        return {
+          type: 'StructMemberAccessExpression',
+          variableName: parts[0],
+          memberName: parts[1],
+          // optionally support deeper chains in the future
+        };
+      }
+
+      return token;
+    }
+
+    // Support conditional expressions like a && b
+
+    if (['AND', 'OR'].includes(logicalOperator)) {
+      this.consume(logicalOperator);
+      const right = this.consume(this.peek().type);
+      return {
+        type: 'ConditionalStatement',
+        variableNameLeft: token.value,
+        logicalOperator,
+        variableNameRight: right.value
+      };
+    }
+
+    return token;
+  }
+
+
+  parseDelimitedList(itemFn, endToken, separatorToken) {
+    const items = [];
+    while (this.peek().type !== endToken) {
+      items.push(itemFn());
+      if (this.peek().type === separatorToken) this.consume(separatorToken);
+    }
+    this.consume(endToken);
+    return items;
+  }
+
+  peek(offset = 0) {
+    return this.tokens[this.currentIndex + offset] || { type: 'EOF', value: '' };
+  }
 
   consume(expectedType) {
     const token = this.tokens[this.currentIndex];
@@ -415,13 +302,23 @@ export default class Parser {
   }
 
   skipToNextStatement() {
-        // while (this.currentIndex < this.tokens.length && this.tokens[this.currentIndex].type !== 'DELIMITER_SEMICOLON') {
-            this.currentIndex++;
-        // }
-        // if (this.peek().type === 'DELIMITER_SEMICOLON') this.currentIndex++; // Skip past semicolon
-    }
+    let braceDepth = 0;
 
-  peek( offset = 0) {
-    return this.tokens[this.currentIndex + offset] || { type: 'EOF', value: '' };
+    while (this.currentIndex < this.tokens.length) {
+      const token = this.peek();
+
+      if (token.type === 'DELIMITER_OPEN_BRACE') {
+        braceDepth++;
+      } else if (token.type === 'DELIMITER_CLOSE_BRACE') {
+        if (braceDepth === 0) break;
+        braceDepth--;
+      } else if (token.type === 'DELIMITER_SEMICOLON' && braceDepth === 0) {
+        this.currentIndex++; // consume semicolon
+        break;
+      }
+
+      this.currentIndex++;
+    }
   }
+
 }

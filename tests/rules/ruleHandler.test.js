@@ -11,9 +11,9 @@ describe('RuleHandler', () => {
     const unusedVariableRule = new UnusedVariableRule();
     ruleHandler.addRule(unusedVariableRule);
 
-    const parsedCode = [
-      { type: 'VariableDeclaration', variableName: 'x', isUsed: false }
-    ];
+    const parsedCode = {
+        ast:[ { type: 'VariableDeclaration', variableName: 'x', isUsed: false }]
+    };
 
     const issues = ruleHandler.runRules(parsedCode);
 
@@ -27,9 +27,9 @@ describe('RuleHandler', () => {
     const unusedVariableRule = new UnusedVariableRule();
     ruleHandler.addRule(unusedVariableRule);
 
-    const parsedCode = [
-      { type: 'VariableDeclaration', variableName: 'x', isUsed: true }
-    ];
+    const parsedCode = {
+        ast:[ { type: 'VariableDeclaration', variableName: 'x', isUsed: true }]
+    };
 
     const issues = ruleHandler.runRules(parsedCode);
 
@@ -41,9 +41,9 @@ describe('RuleHandler', () => {
     const checkMissingSemicolon = new CheckMissingSemicolon();
     ruleHandler.addRule(checkMissingSemicolon);
 
-    const parsedCode = [
-      { type: 'VariableDeclaration', variableName: 'x', isUsed: true }
-    ];
+    const parsedCode = {
+        ast:[ { type: 'VariableDeclaration', variableName: 'x', isUsed: true }]
+    };
 
     const issues = ruleHandler.runRules(parsedCode);
 
