@@ -6,9 +6,9 @@ describe('Parser', () => {
   it('Should parse an if statement', () => {
     const parser = new Parser();
     const code = 'if (x) { return; }';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
-    assert.deepEqual(parsedCode, [
+    assert.deepEqual(ast, [
       {
         "type": "IfStatement",
         "condition": { "type": "IDENTIFIER", "value": "x" },
@@ -22,9 +22,9 @@ describe('Parser', () => {
   it('Should parse nested if statements', () => {
     const parser = new Parser();
     const code = 'if (x) { if (y) { return; } }';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
-    assert.deepEqual(parsedCode, [
+    assert.deepEqual(ast, [
       {
         type: 'IfStatement',
         condition: { type: 'IDENTIFIER', value: 'x' },
@@ -44,9 +44,9 @@ describe('Parser', () => {
   it('Should parse a variable initialization with the Member access operator on it for User Defined structs', () => {
     const parser = new Parser();
     const code = 'UserStruct.member = 10;';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
-    assert.deepEqual(parsedCode, [
+    assert.deepEqual(ast, [
         {
           "type": "StructMemberVariableDeclaration",
           "variableName": "UserStruct",
@@ -60,9 +60,9 @@ describe('Parser', () => {
   it('Should parse a variable initialization with the Member access operator on it for User Defined structs (Assigment to another Struct Member variable)', () => {
     const parser = new Parser();
     const code = 'UserStruct.member = UserStruct2.member2;';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
-    assert.deepEqual(parsedCode, [
+    assert.deepEqual(ast, [
         {
           "type": "StructMemberVariableDeclaration",
           "variableName": "UserStruct",
@@ -82,9 +82,9 @@ describe('Parser', () => {
   it('Should parse a return statement with a literal number', () => {
     const parser = new Parser();
     const code = 'return 42;';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
-    assert.deepEqual(parsedCode, [
+    assert.deepEqual(ast, [
       {
         type: 'ReturnStatement',
         value: { type: 'LITERAL_NUMBER', value: '42' }
@@ -96,9 +96,9 @@ describe('Parser', () => {
   it('Should parse multiple statements in a block', () => {
     const parser = new Parser();
     const code = 'if (x) { UserStruct.member = 10; return; }';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
-    assert.deepEqual(parsedCode, [
+    assert.deepEqual(ast, [
       {
         type: 'IfStatement',
         condition: { type: 'IDENTIFIER', value: 'x' },
@@ -131,9 +131,9 @@ describe('Parser', () => {
   it('Should parse an if-else statement', () => {
     const parser = new Parser();
     const code = 'if (x) { return; } else { return 1; }';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
-    assert.deepEqual(parsedCode, [{
+    assert.deepEqual(ast, [{
       type: 'IfStatement',
       condition: { type: 'IDENTIFIER', value: 'x' },
       body: [{ type: 'ReturnStatement', value: null }],
@@ -146,9 +146,9 @@ describe('Parser', () => {
   it('Should parse an empty if block', () => {
     const parser = new Parser();
     const code = 'if (x) { }';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
-    assert.deepEqual(parsedCode, [{
+    assert.deepEqual(ast, [{
       type: 'IfStatement',
       condition: { type: 'IDENTIFIER', value: 'x' },
       body: []
@@ -158,22 +158,47 @@ describe('Parser', () => {
   it('Should parse compound conditions in if statement', () => {
     const parser = new Parser();
     const code = 'if (x && y) { return; }';
-    const parsedCode = parser.parse(code);
+    const ast = parser.parse(code);
 
 
-    assert.deepEqual(parsedCode, [{
+    assert.deepEqual(ast, [{
         type: 'IfStatement',
-        condition: { type: 'IDENTIFIER', value: 'x' },
-        body: []
+        condition: {logicalOperator: "AND", type: "ConditionalStatement", variableNameLeft: "x", variableNameRight: "y"},
+        body: [{"type": "ReturnStatement", "value": null}]
       }]);
   });
 
   it('Should parse array access and assignment', () => {
     const parser = new Parser();
     const code = 'array[0] = 5;';
-    const parsedCode = parser.parse(code);
-    // Match against your AST format for indexed assignments
+    const ast = parser.parse(code);
+
+    assert.deepEqual(ast, [
+        {
+          "type": "VariableInitialization",
+          "variableName": "array",
+          "variableValue": { "type": "LITERAL_NUMBER", "value": "5" },
+          "hasSemicolon": true
+      }
+      ]);
   });
+
+  it('Should parse a simple function call', () => {
+    const parser = new Parser();
+    const code = 'log("hello");';
+    const ast = parser.parse(code);
+
+    assert.deepEqual(ast, [
+      {
+        type: 'FunctionCall',
+        functionName: 'log',
+        arguments: [
+          { type: 'LITERAL_STRING', value: '"hello"' }
+        ]
+      }
+    ]);
+  });
+
 
 
 

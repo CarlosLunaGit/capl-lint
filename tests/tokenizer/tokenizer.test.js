@@ -103,5 +103,39 @@ describe('Tokenizer', () => {
         ]);
       });
 
+      it('Should tokenize a function call', () => {
+        const tokenizer = new Tokenizer();
+        const code = 'log("hello");';
+        const tokens = tokenizer.tokenize(code);
+
+        assert.deepEqual(tokens, [
+            { type: 'IDENTIFIER', value: 'log' },
+            { type: 'DELIMITER_OPEN_PAREN', value: '(' },
+            { type: 'LITERAL_STRING', value: '"hello"' },
+            { type: 'DELIMITER_CLOSE_PAREN', value: ')' },
+            { type: 'DELIMITER_SEMICOLON', value: ';' }
+
+        ]);
+      });
+
+      it('Should tokenize a function call with multiple arguments', () => {
+        const tokenizer = new Tokenizer();
+        const code = 'calculate(x, 5, "test");';
+        const tokens = tokenizer.tokenize(code);
+
+        assert.deepEqual(tokens, [
+          { type: 'IDENTIFIER', value: 'calculate' },
+          { type: 'DELIMITER_OPEN_PAREN', value: '(' },
+          { type: 'IDENTIFIER', value: 'x' },
+          { type: 'DELIMITER_COMMA', value: ',' },
+          { type: 'LITERAL_NUMBER', value: '5' },
+          { type: 'DELIMITER_COMMA', value: ',' },
+          { type: 'LITERAL_STRING', value: '"test"' },
+          { type: 'DELIMITER_CLOSE_PAREN', value: ')' },
+          { type: 'DELIMITER_SEMICOLON', value: ';' }
+        ]);
+      });
+
+
 
 });

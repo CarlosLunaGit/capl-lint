@@ -63,8 +63,12 @@ export default class Parser {
         return this.parseTestFunctionBlockStatement();
     }else if (token.type === 'IDENTIFIER_STRUCT') {
         return this.parseStructStatement();
+    }else if (token.type === 'IDENTIFIER' && this.peek(1).type === 'DELIMITER_OPEN_PAREN') {
+        return this.parseFunctionCall();
     }else if (variableDataType !== undefined) {
         return this.parseVariableDeclaration(token.type);
+    }else if (token.type === 'IDENTIFIER') {
+        return this.parseVariableInitialization();
     }
 
     throw new Error(`Unexpected statement type: ${token.type} value: ${token.value}`);
@@ -270,49 +274,141 @@ export default class Parser {
 
   }
 
-  parseVariableDeclaration(type) {
-    this.consume(type); // Consume Datatype
+    parseVariableDeclaration(type) {
+        this.consume(type); // Consume Datatype
 
-    const variableName = this.consume('IDENTIFIER').value;
+        const variableName = this.consume('IDENTIFIER').value;
 
-    // Handle variables that are defined as arrays
-    if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
-      this.consume('DELIMITER_OPEN_BRACKET'); // Consume '['
-      this.consume('LITERAL_NUMBER'); // Consume array size
-      this.consume('DELIMITER_CLOSE_BRACKET'); // Consume ']'
+        // Handle variables that are defined as arrays
+        if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
+        this.consume('DELIMITER_OPEN_BRACKET'); // Consume '['
+        this.consume('LITERAL_NUMBER'); // Consume array size
+        this.consume('DELIMITER_CLOSE_BRACKET'); // Consume ']'
+        }
+
+        let variableValue = null;
+
+        if (this.peek().type === 'ASSIGNMENT') {
+        this.consume('ASSIGNMENT'); // Consume '='
+        variableValue = this.parseExpression();
+        }
+
+        let hasSemicolon = false;
+        if (this.peek().type !== 'DELIMITER_SEMICOLON') {
+            this.errors.push(`Missing semicolon after variable declaration '${variableName.value}'`);
+        }
+        else {
+            this.consume('DELIMITER_SEMICOLON');
+            hasSemicolon = true;
+        }
+
+        return { type: 'VariableDeclaration', variableName, variableValue, hasSemicolon };
     }
 
-    let variableValue = null;
+    parseVariableInitialization(){
 
-    if (this.peek().type === 'OPERATOR_EQUAL') {
-      this.consume('OPERATOR_EQUAL'); // Consume '='
-      variableValue = this.parseExpression();
-    }
+        const variableName = this.consume('IDENTIFIER').value;
 
-    let hasSemicolon = false;
-    if (this.peek().type !== 'DELIMITER_SEMICOLON') {
-        this.errors.push(`Missing semicolon after variable declaration '${variableName.value}'`);
-    }
-    else {
-        this.consume('DELIMITER_SEMICOLON');
-        hasSemicolon = true;
-    }
+        // Handle variables that are defined as arrays
+        if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
+        this.consume('DELIMITER_OPEN_BRACKET'); // Consume '['
+        this.consume('LITERAL_NUMBER'); // Consume array size
+        this.consume('DELIMITER_CLOSE_BRACKET'); // Consume ']'
+        }
 
-    return { type: 'VariableDeclaration', variableName, variableValue, hasSemicolon };
+        let variableValue = null;
+
+        if (this.peek().type === 'ASSIGNMENT') {
+            this.consume('ASSIGNMENT'); // Consume '='
+            variableValue = this.parseExpression();
+        }
+
+        let hasSemicolon = false;
+        if (this.peek().type !== 'DELIMITER_SEMICOLON') {
+            this.errors.push(`Missing semicolon after variable initialization '${variableName.value}'`);
+        }
+        else {
+            this.consume('DELIMITER_SEMICOLON');
+            hasSemicolon = true;
+        }
+
+        return { type: 'VariableInitialization', variableName, variableValue, hasSemicolon };
     }
 
   parseExpression(nestedExpression = false) {
     const token = this.peek();
-    if (token.type === 'IDENTIFIER' || token.type === 'LITERAL_NUMBER' || token.type === 'LITERAL_STRING') {
-      return this.consume(token.type);
-    }
+    const tokenOffset = this.peek(1);
 
-    if (token.type === 'IDENTIFIER_STRUCT' ) {
-        return this.parseStructStatement(nestedExpression);
-      }
+    if (tokenOffset.type === 'AND' || tokenOffset.type === 'OR')
+        {
+            return this.parseConditional(token, tokenOffset.type);
+        }
+    else
+        {
+            if (token.type === 'IDENTIFIER' || token.type === 'LITERAL_NUMBER' || token.type === 'LITERAL_STRING') {
+                return this.consume(token.type);
+            }
+
+            if (token.type === 'IDENTIFIER_STRUCT' ) {
+                return this.parseStructStatement(nestedExpression);
+            }
+        }
 
     throw new Error(`Unexpected token in expression: ${token.value}`);
   }
+
+  parseConditional( token, logicalOperator ){
+
+    const variableNameLeft = this.consume(token.type).value;
+
+    if (this.peek().type === logicalOperator) {
+      this.consume(logicalOperator);
+    }
+
+    const variableNameRight = this.consume(token.type).value;
+
+
+    return { type: 'ConditionalStatement', variableNameLeft, logicalOperator, variableNameRight };
+
+  }
+
+  parseFunctionCall() {
+    const functionNameToken = this.consume('IDENTIFIER');
+    const functionName = functionNameToken.value;
+
+    this.consume('DELIMITER_OPEN_PAREN');
+
+    const args = [];
+
+    while (this.peek().type !== 'DELIMITER_CLOSE_PAREN') {
+      if (this.peek().type === 'LITERAL_STRING') {
+        args.push(this.consume('LITERAL_STRING'));
+      } else if (this.peek().type === 'LITERAL_NUMBER') {
+        args.push(this.consume('LITERAL_NUMBER'));
+      } else if (this.peek().type === 'IDENTIFIER') {
+        // You can expand this to peek for nested function calls later
+        args.push(this.consume('IDENTIFIER'));
+      } else {
+        throw new Error(`Unexpected token in function call arguments: ${this.peek().value}`);
+      }
+
+      if (this.peek().type === 'DELIMITER_COMMA') {
+        this.consume('DELIMITER_COMMA'); // consume comma
+      } else {
+        break;
+      }
+    }
+
+    this.consume('DELIMITER_CLOSE_PAREN');
+    this.consume('DELIMITER_SEMICOLON');
+
+    return {
+      type: 'FunctionCall',
+      functionName,
+      arguments: args
+    };
+  }
+
 
   consume(expectedType) {
     const token = this.tokens[this.currentIndex];
@@ -330,7 +426,7 @@ export default class Parser {
         // if (this.peek().type === 'DELIMITER_SEMICOLON') this.currentIndex++; // Skip past semicolon
     }
 
-  peek() {
-    return this.tokens[this.currentIndex] || { type: 'EOF', value: '' };
+  peek( offset = 0) {
+    return this.tokens[this.currentIndex + offset] || { type: 'EOF', value: '' };
   }
 }
