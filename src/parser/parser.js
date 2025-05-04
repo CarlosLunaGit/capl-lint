@@ -31,12 +31,7 @@ export default class Parser {
     return program;
   }
 
-    getType(token) {
-        if (token.type === this) {
-            return true;
-        }
-        return false;
-    }
+
 
   parseStatement() {
     if (this.currentIndex >= this.tokens.length) {
@@ -45,7 +40,7 @@ export default class Parser {
 
     const token = this.tokens[this.currentIndex];
 
-    const variableDataType = this.tokenizer.datatypeslib.find(this.getType, token.type);
+    const DeclarationDataType = this.tokenizer.datatypeslib.filter((item) =>  item.type === token.type) ;
 
     if (token.type === 'IF') {
         return this.parseIfStatement();
@@ -65,7 +60,7 @@ export default class Parser {
         return this.parseStructStatement();
     }else if (token.type === 'IDENTIFIER' && this.peek(1).type === 'DELIMITER_OPEN_PAREN') {
         return this.parseFunctionCall();
-    }else if (variableDataType !== undefined) {
+    }else if (DeclarationDataType.length > 0) {
         return this.parseVariableDeclaration(token.type);
     }else if (token.type === 'IDENTIFIER') {
         return this.parseVariableInitialization();
