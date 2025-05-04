@@ -8,12 +8,12 @@ export default class RuleHandler {
       this.rules.push(rule);
     }
 
-    runRules(parsedCode) {
+    runRules(parsedCode, parser) {
       let issues = [];
 
       // Apply each rule to the parsed code
       this.rules.forEach(rule => {
-        issues = issues.concat(rule.check(parsedCode));
+        issues = issues.concat(rule.check(parsedCode, parser));
       });
 
       return issues;

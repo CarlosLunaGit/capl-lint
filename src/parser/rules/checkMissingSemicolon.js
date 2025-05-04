@@ -1,15 +1,16 @@
 // rules/checkMissingSemicolon.js
 export default class CheckMissingSemicolon {
-    check(parsedCode) {
+    check(parsedCode, parser) {
 
         let issues = [];
 
         parsedCode.ast.forEach(statement => {
-            if (['StructMemberVariableDeclaration', 'VariableDeclaration', 'ReturnStatement'].includes(statement.type) && !statement.hasSemicolon) {
+            if (['StructMemberVariableInitialization', 'VariableDeclaration', 'ReturnStatement'].includes(statement.type) && !statement.hasSemicolon) {
                 issues.push({
                   type: 'Error',
                   message: `Missing semicolon at the end of '${statement.type}'`,
-                  line: statement.line || 'unknown'
+                  row: statement.row || 'unknown',
+                  col: statement.col || 'unknown'
                 });
               }
 

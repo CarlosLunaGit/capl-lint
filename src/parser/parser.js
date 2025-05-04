@@ -6,7 +6,37 @@ export default class Parser {
     this.tokens = [];
     this.currentIndex = 0;
     this.errors = [];
+    this.declaredVariables = new Map(); // key: variableName, value: token object
+    this.undeclaredVariables = new Map();
   }
+
+  markVariableAsUsed(name, token) {
+    let declaration = this.declaredVariables.get(name);
+    if (declaration) {
+        declaration.wasUsed = true;
+    }else{
+
+        this.undeclaredVariables.set(name, {
+            ...token,
+            wasDeclared: false,
+            wasUsed: true
+        });
+    }
+
+  }
+
+    getDeclaredUndeclaredState(token){
+
+        let declaration = this.declaredVariables.get(token.value);
+
+        if (declaration === undefined)
+        {
+            return this.undeclaredVariables.get(token.value);
+        }else{
+            return declaration;
+        }
+
+    }
 
   parse(code) {
     this.tokens = this.tokenizer.tokenize(code);
@@ -84,19 +114,30 @@ export default class Parser {
   }
 
   parseElseStatement() {
-    this.consume('ELSE');
+    const elseToken = this.consume('ELSE');
     const body = this.parseBlock(() => this.parseStatement());
-    return { type: 'ElseStatement', body };
+    return {
+        type: 'ElseStatement',
+        body,
+        row: elseToken.row,
+        col: elseToken.col
+    };
   }
 
   parseReturnStatement() {
     const returnToken = this.consume('RETURN');
     let returnValue = null;
+
     if (this.peek().type !== 'DELIMITER_SEMICOLON') {
       returnValue = this.parseExpression();
     }
+
     this.consume('DELIMITER_SEMICOLON');
-    return { type: 'ReturnStatement', row: returnToken.row, col: returnToken.col, value: returnValue };
+    return {
+        type: 'ReturnStatement',
+        row: returnToken.row,
+        col: returnToken.col,
+        value: returnValue };
   }
 
   parseIncludeBlockStatement() {
@@ -147,21 +188,43 @@ export default class Parser {
     return { type: 'TestCaseBlockStatement', testCaseName, testCaseParameters, value };
   }
 
-  parseParameterDeclaration() {
-    const typeToken = this.consume(this.peek().type); // e.g., INT, ENUM
-    let userDefinedTypeName = null;
+    parseParameterDeclaration() {
+        const typeToken = this.consume(this.peek().type); // e.g., INT, ENUM
+        let userDefinedTypeName = null;
 
-    if (['ENUM', 'STRUCT'].includes(typeToken.type)) {
-      userDefinedTypeName = this.consume('IDENTIFIER').value;
+        if (['ENUM', 'STRUCT'].includes(typeToken.type)) {
+        userDefinedTypeName = this.consume('IDENTIFIER').value;
+        }
+
+        const parameterToken = this.consume('IDENTIFIER');
+        const parameterName = parameterToken.value;
+
+        this.declaredVariables.set(parameterName, {
+            ...parameterToken,
+            wasDeclared: true,
+            wasUsed: false
+        });
+
+        return {
+        type: 'ParameterDeclaration',
+        parameterName,
+        userDefinedTypeName
+        };
     }
-
-    const parameterName = this.consume('IDENTIFIER').value;
-    return { type: 'ParameterDeclaration', parameterName, userDefinedTypeName };
-  }
 
   parseVariableDeclaration() {
     const type = this.consume(this.peek().type).type;
-    const variableName = this.consume('IDENTIFIER').value;
+    const variableToken = this.consume('IDENTIFIER');
+    const variableName = variableToken.value;
+
+    // Store declaration metadata before any possible usage
+    this.declaredVariables.set(variableName, {
+      ...variableToken,
+      wasDeclared: true,
+      wasUsed: false
+    });
+
+    const declaration = this.getDeclaredUndeclaredState(variableToken);
 
     if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
       this.consume('DELIMITER_OPEN_BRACKET');
@@ -175,12 +238,29 @@ export default class Parser {
       variableValue = this.parseExpression();
     }
 
-    const hasSemicolon = this.consume('DELIMITER_SEMICOLON');
-    return { type: 'VariableDeclaration', typeName: type, variableName, variableValue, hasSemicolon: !!hasSemicolon };
+
+    let hasSemicolon = false;
+
+    if (this.peek().type == 'DELIMITER_SEMICOLON') {
+        hasSemicolon = this.consume('DELIMITER_SEMICOLON');
+    }
+
+    return {
+      type: 'VariableDeclaration',
+      typeName: type,
+      variableName,
+      variableValue,
+      hasSemicolon: !!hasSemicolon,
+      row: variableToken.row,
+      col: variableToken.col,
+      wasUsed: declaration.wasUsed,
+      wasDeclared: declaration.wasDeclared
+    };
   }
 
+
   parseVariableInitialization() {
-    const variableName = this.consume('IDENTIFIER').value;
+    const variableInitToken = this.consume('IDENTIFIER');
 
     if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
       this.consume('DELIMITER_OPEN_BRACKET');
@@ -194,12 +274,23 @@ export default class Parser {
       variableValue = this.parseExpression();
     }
 
-    const hasSemicolon = this.consume('DELIMITER_SEMICOLON');
-    return { type: 'VariableInitialization', variableName, variableValue, hasSemicolon: !!hasSemicolon };
+    let hasSemicolon = this.consume('DELIMITER_SEMICOLON');
+
+    this.markVariableAsUsed(variableInitToken.value, variableInitToken);
+    const declaration = this.getDeclaredUndeclaredState(variableInitToken);
+    return {
+        type: 'VariableInitialization',
+        variableName: variableInitToken.value,
+        variableValue,
+        hasSemicolon: !!hasSemicolon,
+        row: variableInitToken.row,
+        col: variableInitToken.col,
+        wasUsed: declaration?.wasUsed ?? false,
+        wasDeclared: declaration?.wasDeclared ?? false, };
   }
 
   parseStructStatement() {
-    const variableName = this.consume('IDENTIFIER_STRUCT').value;
+    const structToken = this.consume('IDENTIFIER_STRUCT');
     this.consume('DELIMITER_DOT');
     const memberName = this.consume('IDENTIFIER').value;
 
@@ -210,69 +301,140 @@ export default class Parser {
       memberValue = expr;
     }
 
-    const hasSemicolon = this.consume('DELIMITER_SEMICOLON');
+    let hasSemicolon = false;
+
+    if (this.peek().type == 'DELIMITER_SEMICOLON') {
+        hasSemicolon = this.consume('DELIMITER_SEMICOLON');
+    }
+
+    this.markVariableAsUsed(structToken.value, structToken);
+    const declaration = this.getDeclaredUndeclaredState(structToken);
+
     return {
-      type: 'StructMemberVariableDeclaration',
-      variableName,
-      memberName,
-      memberValue,
-      hasSemicolon: !!hasSemicolon
+        type: 'StructMemberVariableInitialization',
+        row: structToken.row,
+        col: structToken.col,
+        variableName: structToken.value,
+        memberName,
+        memberValue,
+        hasSemicolon: !!hasSemicolon,
+        wasUsed: declaration?.wasUsed ?? false,
+        wasDeclared: declaration?.wasDeclared ?? false,
     };
   }
 
 
   parseFunctionCall() {
-    const functionName = this.consume('IDENTIFIER').value;
+    const functionToken = this.consume('IDENTIFIER');
     this.consume('DELIMITER_OPEN_PAREN');
 
     const args = this.parseDelimitedList(() => {
-      const token = this.peek();
-      return ['LITERAL_STRING', 'LITERAL_NUMBER', 'IDENTIFIER'].includes(token.type)
-        ? this.consume(token.type)
-        : (() => { throw new Error(`Unexpected function argument: ${token.value}`); })();
-    }, 'DELIMITER_CLOSE_PAREN', 'DELIMITER_COMMA');
+        const token = this.peek();
+        if (token.type === 'IDENTIFIER') {
+            this.markVariableAsUsed(token.value, token);
+        }
+        return ['LITERAL_STRING', 'LITERAL_NUMBER', 'IDENTIFIER'].includes(token.type)
+          ? this.consume(token.type)
+          : (() => { throw new Error(`Unexpected function argument: ${token.value}`); })();
+      }, 'DELIMITER_CLOSE_PAREN', 'DELIMITER_COMMA');
+
 
     this.consume('DELIMITER_SEMICOLON');
-    return { type: 'FunctionCall', functionName, arguments: args };
+
+    this.markVariableAsUsed(functionToken.value, functionToken);
+    const declaration = this.getDeclaredUndeclaredState(functionToken);
+    return {
+        type: 'FunctionCall',
+        functionName: functionToken.value,
+        arguments: args,
+        row: functionToken.row,
+        col: functionToken.col,
+        wasUsed: declaration?.wasUsed ?? false,
+        wasDeclared: declaration?.wasDeclared ?? false, };
   }
 
   parseExpression() {
     let token = this.consume(this.peek().type);
+
+    if (token.type === 'IDENTIFIER') {
+        this.markVariableAsUsed(token.value, token);
+      }
+
     const logicalOperator = this.peek().type;
+
     // Handle struct member access expression (e.g., UserStruct2.member2)
     if ((token.type === 'IDENTIFIER' || token.type === 'IDENTIFIER_STRUCT') && !['AND', 'OR'].includes(this.peek().type)) {
-      const parts = [token.value];
-      while (this.peek().type === 'DELIMITER_DOT') {
-        this.consume('DELIMITER_DOT');
-        const memberToken = this.consume('IDENTIFIER');
-        parts.push(memberToken.value);
-      }
+        const parts = [token.value];
+        while (this.peek().type === 'DELIMITER_DOT') {
+            this.consume('DELIMITER_DOT');
+            const memberToken = this.consume('IDENTIFIER');
+            parts.push(memberToken.value);
+        }
 
       // If it was a member access, return a structured object
-      if (parts.length > 1) {
-        return {
-          type: 'StructMemberAccessExpression',
-          variableName: parts[0],
-          memberName: parts[1],
-          // optionally support deeper chains in the future
-        };
-      }
+        if (parts.length > 1) {
 
-      return token;
+            this.markVariableAsUsed(parts[0], token);
+            const declaration = this.getDeclaredUndeclaredState(token);
+
+            return {
+                type: 'StructMemberAccessExpression',
+                variableName: parts[0],
+                memberName: parts[1],
+                col: token.col,
+                row: token.row,
+                wasUsed: declaration?.wasUsed ?? false,
+                wasDeclared: declaration?.wasDeclared ?? false,
+            // TODO: optionally support deeper chains in the future
+            };
+        }
+        this.markVariableAsUsed(parts[0], token);
+        const declaration = this.getDeclaredUndeclaredState(token);
+        return {
+            type: token.type,
+            value: token.value,
+            col: token.col,
+            row: token.row,
+            wasUsed: declaration?.wasUsed ?? false,
+            wasDeclared: declaration?.wasDeclared ?? false,
+
+        };
     }
 
     // Support conditional expressions like a && b
 
     if (['AND', 'OR'].includes(logicalOperator)) {
-      this.consume(logicalOperator);
-      const right = this.consume(this.peek().type);
-      return {
-        type: 'ConditionalStatement',
-        variableNameLeft: token.value,
-        logicalOperator,
-        variableNameRight: right.value
-      };
-    }
+        const logicalOpToken = this.consume(logicalOperator);
+        const right = this.peek();
+
+        if (token.type === 'IDENTIFIER') {
+            this.markVariableAsUsed(token.value, token);
+        }
+
+        if (right.type === 'IDENTIFIER') {
+            this.markVariableAsUsed(right.value, right);
+        }
+
+        const rightConsumed = this.consume(right.type);
+
+        const declarationLeft = this.getDeclaredUndeclaredState(token);
+
+        const declarationRight = this.getDeclaredUndeclaredState(right);
+
+        return {
+            type: 'ConditionalStatement',
+            variableNameLeft: token.value,
+            logicalOperator,
+            variableNameRight: rightConsumed.value,
+            col: logicalOpToken.col,
+            row: logicalOpToken.row,
+            wasUsedLeft: declarationLeft?.wasUsed ?? false,
+            wasDeclaredLeft: declarationLeft?.wasDeclared ?? false,
+            wasUsedRight: declarationRight?.wasUsed ?? false,
+            wasDeclaredRight: declarationRight?.wasDeclared ?? false,
+        };
+      }
+
 
     return token;
   }
@@ -294,9 +456,11 @@ export default class Parser {
 
   consume(expectedType) {
     const token = this.tokens[this.currentIndex];
+
     if (!token || token.type !== expectedType) {
       throw new Error(`Expected ${expectedType}, but got ${token ? token.type : 'EOF'}`);
     }
+
     this.currentIndex++;
     return token;
   }
@@ -320,5 +484,7 @@ export default class Parser {
       this.currentIndex++;
     }
   }
+
+
 
 }

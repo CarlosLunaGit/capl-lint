@@ -1,6 +1,6 @@
 // rules/checkMissingHashIncludeStatements.js
 export default class CheckMissingHashIncludeStatements {
-    check(parsedCode) {
+    check(parsedCode, parser) {
         let issues = [];
 
         parsedCode.ast.forEach(statements => {

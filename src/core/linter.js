@@ -18,7 +18,7 @@ export default class Linter {
 
   lint(code) {
     const parsedCode = this.parser.parse(code);
-    const issues = this.ruleHandler.runRules(parsedCode);
+    const issues = this.ruleHandler.runRules(parsedCode, this.parser);
     this.issueCollector.collect(issues);
 
     console.log(this.issueCollector.report());

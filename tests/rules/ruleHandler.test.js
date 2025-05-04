@@ -11,11 +11,21 @@ describe('RuleHandler', () => {
     const unusedVariableRule = new UnusedVariableRule();
     ruleHandler.addRule(unusedVariableRule);
 
+    let parserMock = {
+        declaredVariables : new Map()
+    }
+
+    parserMock.declaredVariables.set('x', {
+        type: 'VariableDeclaration',
+        wasDeclared: true,
+        wasUsed: false
+    });
+
     const parsedCode = {
-        ast:[ { type: 'VariableDeclaration', variableName: 'x', isUsed: false }]
+        ast:[ { type: 'VariableDeclaration', variableName: 'x', wasUsed: false }]
     };
 
-    const issues = ruleHandler.runRules(parsedCode);
+    const issues = ruleHandler.runRules(parsedCode, parserMock);
 
     assert.deepEqual(issues, [
       { type: 'Warning', message: 'Unused variable: x' }
@@ -27,11 +37,21 @@ describe('RuleHandler', () => {
     const unusedVariableRule = new UnusedVariableRule();
     ruleHandler.addRule(unusedVariableRule);
 
+    let parserMock = {
+        declaredVariables : new Map()
+    }
+
+    parserMock.declaredVariables.set('x', {
+        type: 'VariableDeclaration',
+        wasDeclared: true,
+        wasUsed: true
+    });
+
     const parsedCode = {
-        ast:[ { type: 'VariableDeclaration', variableName: 'x', isUsed: true }]
+        ast:[ { type: 'VariableDeclaration', variableName: 'x', wasUsed: true }]
     };
 
-    const issues = ruleHandler.runRules(parsedCode);
+    const issues = ruleHandler.runRules(parsedCode, parserMock);
 
     assert.deepEqual(issues, []);
   });
@@ -41,14 +61,24 @@ describe('RuleHandler', () => {
     const checkMissingSemicolon = new CheckMissingSemicolon();
     ruleHandler.addRule(checkMissingSemicolon);
 
+    let parserMock = {
+        declaredVariables : new Map()
+    }
+
+    parserMock.declaredVariables.set('x', {
+        type: 'VariableDeclaration',
+        wasDeclared: true,
+        wasUsed: true
+    });
+
     const parsedCode = {
-        ast:[ { type: 'VariableDeclaration', variableName: 'x', isUsed: true }]
+        ast:[ { type: 'VariableDeclaration', variableName: 'x', wasUsed: true, row: 2, col: 12 }]
     };
 
-    const issues = ruleHandler.runRules(parsedCode);
+    const issues = ruleHandler.runRules(parsedCode, parserMock);
 
     assert.deepEqual(issues, [
-      { type: 'Error', message: "Missing semicolon at the end of 'VariableDeclaration'", line: 'unknown' }
+      { type: 'Error', message: "Missing semicolon at the end of 'VariableDeclaration'", row: 2, col: 12 }
     ]);
   });
 });

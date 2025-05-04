@@ -32,9 +32,9 @@ describe('Linter', () => {
         assert.deepEqual(result, { errors: [{ message: `Not allowed statement within 'IncludeBlockStatement'`, type: 'Error' }]});
     });
 
-    it('Should report a WARNING on an Unsused Variable', () => {
+    it('Should report a WARNING on an Unused Variable', () => {
         const linter = new Linter();
-        const code = 'int x; if (x) { return; }';
+        const code = 'int x; if (y) { return; }';
 
         const result = linter.lint(code);
 
@@ -43,14 +43,13 @@ describe('Linter', () => {
 
     it('Should report an ERROR on a missing Colon', () => {
         const linter = new Linter();
-        const code = 'int x';
+        const code = `int x`;
 
         const result = linter.lint(code);
 
-        expect(result).toStrictEqual({"errors":
-            [
-                {"message": "Unused variable: x", "type": "Warning"},
-                {"message": "Missing semicolon at the end of 'VariableDeclaration'", "line": "unknown", "type": "Error"}
+        assert.deepEqual(result, {errors: [
+                {message: "Unused variable: x", type: "Warning"},
+                {message: "Missing semicolon at the end of 'VariableDeclaration'", row: 1, col: 5, type: "Error"}
             ]
         });
     });
@@ -61,9 +60,8 @@ describe('Linter', () => {
 
         const result = linter.lint(code);
 
-        expect(result).toStrictEqual({"errors":
-            [
-                {"message": "Missing semicolon at the end of 'StructMemberVariableDeclaration'", "line": "unknown", "type": "Error"}
+        assert.deepEqual(result, {errors: [
+                {message: "Missing semicolon at the end of 'StructMemberVariableInitialization'", row: 1, col: 1, type: "Error"}
             ]
         });
       });
