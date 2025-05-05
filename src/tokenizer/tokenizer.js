@@ -31,7 +31,7 @@ export default class Tokenizer {
                 const match = code.slice(index).match(spec.regex);
 
                 if (match) {
-                    const value = match[0];
+                    let value = match[0];
 
                     // Compute the token's position
                     const tokenRow = line;
