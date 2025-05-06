@@ -1,13 +1,16 @@
 // rules/checkMissingHashIncludeStatements.js
+import { traverseAST } from '../../utils/traverseAST.js';
+
 export default class CheckMissingHashIncludeStatements {
     check(parsedCode, parser) {
         let issues = [];
 
-        parsedCode.ast.forEach(statements => {
+        traverseAST(parsedCode.ast, (node) => {
 
-            if (statements.type !== 'IncludeBlockStatement') return issues;
 
-            statements.value.forEach(statement => {
+            if (node.type !== 'IncludeBlockStatement') return issues;
+
+            node.value.forEach(statement => {
                 if (statement.type === 'IncludeStatement' && !statement.hasHash) {
                     issues.push({
                         type: 'Error',

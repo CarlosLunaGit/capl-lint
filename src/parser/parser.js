@@ -152,12 +152,18 @@ export default class Parser {
             returnValue = this.parseExpression();
         }
 
-        this.consume('DELIMITER_SEMICOLON', 'Expected DELIMITER_SEMICOLON');
+        let hasSemicolon = false;
+
+        if (this.peek().type == 'DELIMITER_SEMICOLON') {
+            hasSemicolon = this.consume('DELIMITER_SEMICOLON', 'Expected DELIMITER_SEMICOLON');
+        }
+
         return {
             type: 'ReturnStatement',
             row: returnToken.row,
             col: returnToken.col,
-            name: returnValue
+            name: returnValue,
+            hasSemicolon: !!hasSemicolon,
         };
     }
 
@@ -259,15 +265,15 @@ export default class Parser {
         });
 
         const declaration = this.getDeclaredUndeclaredState(variableToken);
-
-        if (this.peek().type === 'DELIMITER_OPEN_BRACKET') {
+        // const elseBody = next && next.type === 'ELSE' ? this.parseElseStatement() : null;
+        if ((this.peek() !== undefined) && this.peek().type === 'DELIMITER_OPEN_BRACKET') {
             this.consume('DELIMITER_OPEN_BRACKET', 'Expected DELIMITER_OPEN_BRACKET');
             this.consume('LITERAL_NUMBER', 'Expected LITERAL_NUMBER');
             this.consume('DELIMITER_CLOSE_BRACKET', 'Expected DELIMITER_CLOSE_BRACKET');
         }
 
         let variableValue = null;
-        if (this.peek().type === 'ASSIGNMENT') {
+        if ((this.peek() !== undefined) && this.peek().type === 'ASSIGNMENT') {
             this.consume('ASSIGNMENT', 'Expected ASSIGNMENT');
             variableValue = this.parseExpression();
         }
@@ -275,7 +281,7 @@ export default class Parser {
 
         let hasSemicolon = false;
 
-        if (this.peek().type == 'DELIMITER_SEMICOLON') {
+        if ((this.peek() !== undefined) && this.peek().type == 'DELIMITER_SEMICOLON') {
             hasSemicolon = this.consume('DELIMITER_SEMICOLON', 'Expected DELIMITER_SEMICOLON');
         }
 
@@ -330,7 +336,7 @@ export default class Parser {
         const memberName = this.consume('IDENTIFIER', 'Expected IDENTIFIER').value;
 
         let memberValue = null;
-        if (this.peek().type === 'ASSIGNMENT') {
+        if ((this.peek() !== undefined) && this.peek().type === 'ASSIGNMENT') {
             this.consume('ASSIGNMENT', 'Expected ASSIGNMENT');
             const expr = this.parseExpression();
             memberValue = expr;
@@ -338,7 +344,7 @@ export default class Parser {
 
         let hasSemicolon = false;
 
-        if (this.peek().type == 'DELIMITER_SEMICOLON') {
+        if ((this.peek() !== undefined) && this.peek().type == 'DELIMITER_SEMICOLON') {
             hasSemicolon = this.consume('DELIMITER_SEMICOLON', 'Expected DELIMITER_SEMICOLON');
         }
 

@@ -49,7 +49,8 @@ describe('Parser', () => {
                             col: 10,
                             row: 1,
                             type: "ReturnStatement",
-                            name: null
+                            name: null,
+                            hasSemicolon: true,
                         }
                     ],
                     elseBody: null,
@@ -94,7 +95,8 @@ describe('Parser', () => {
                                     type: 'ReturnStatement',
                                     name: null,
                                     col: 19,
-                                    row: 1
+                                    row: 1,
+                                    hasSemicolon: true,
                                 }
                             ],
                             elseBody: null,
@@ -186,7 +188,8 @@ describe('Parser', () => {
                         name: '42',
                         col: 8,
                         row: 1
-                    }
+                    },
+                    hasSemicolon: true,
                 }
             ]
         });
@@ -231,7 +234,8 @@ describe('Parser', () => {
                             type: 'ReturnStatement',
                             name: null,
                             col: 34,
-                            row: 1
+                            row: 1,
+                            hasSemicolon: true,
                         }
                     ],
                     elseBody: null,
@@ -275,7 +279,8 @@ describe('Parser', () => {
                         type: 'ReturnStatement',
                         name: null,
                         col: 10,
-                        row: 1
+                        row: 1,
+                        hasSemicolon: true,
                     }],
                     elseBody: {
                         type: 'ElseStatement',
@@ -289,7 +294,8 @@ describe('Parser', () => {
                                     row: 1
                                 },
                                 col: 27,
-                                row: 1
+                                row: 1,
+                                hasSemicolon: true,
                             }
                         ],
                         col: 20,
@@ -364,7 +370,8 @@ describe('Parser', () => {
                         type: "ReturnStatement",
                         name: null,
                         col: 15,
-                        row: 1
+                        row: 1,
+                        hasSemicolon: true,
                     }],
                     elseBody: null,
                     col: 1,
@@ -666,6 +673,7 @@ describe('Parser', () => {
                             row: 3,
                             type: "ReturnStatement",
                             name: null,
+                            hasSemicolon: true,
                           },
                         ],
                         col: 13,
@@ -801,6 +809,7 @@ describe('Parser', () => {
                             row: 1,
                             type: "ReturnStatement",
                             name: null,
+                            hasSemicolon: true,
                         },
                     ],
                     elseBody: null,

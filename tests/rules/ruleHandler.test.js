@@ -22,13 +22,13 @@ describe('RuleHandler', () => {
     });
 
     const parsedCode = {
-        ast:[ { type: 'VariableDeclaration', variableName: 'x', wasUsed: false }]
+        ast:[ { type: 'VariableDeclaration', variableName: 'x', wasUsed: false, row: 1, col: 12 }]
     };
 
     const issues = ruleHandler.runRules(parsedCode, parserMock);
 
     assert.deepEqual(issues, [
-      { type: 'Warning', message: 'Unused variable: x' }
+      { type: 'Warning', message: 'Unused variable: x', row: 1, col: 12 }
     ]);
   });
 

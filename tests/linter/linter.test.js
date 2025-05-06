@@ -38,7 +38,14 @@ describe('Linter', () => {
 
         const result = linter.lint(code);
 
-        assert.deepEqual(result, {errors: [{message: 'Unused variable: x', type: 'Warning'}]});
+        assert.deepEqual(result, {errors: [
+            {
+                message: 'Unused variable: x',
+                type: 'Warning',
+                col: 5,
+                row: 1
+            }
+        ]});
     });
 
     it('Should report an ERROR on a missing Colon', () => {
@@ -48,7 +55,7 @@ describe('Linter', () => {
         const result = linter.lint(code);
 
         assert.deepEqual(result, {errors: [
-                {message: "Unused variable: x", type: "Warning"},
+                {message: "Unused variable: x", type: "Warning", row: 1, col: 5,},
                 {message: "Missing semicolon at the end of 'VariableDeclaration'", row: 1, col: 5, type: "Error"}
             ]
         });

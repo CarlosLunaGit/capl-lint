@@ -1,26 +1,24 @@
 // rules/UnusedVariableRule.js
+import { traverseAST } from '../../utils/traverseAST.js';
+
 export default class UnusedVariableRule {
     check(parsedCode, parser) {
-      let issues = [];
+        const issues = [];
 
-      // This example assumes that parsedCode contains all declared variables and usage information
-      parsedCode.ast.forEach(statement => {
-        if (statement.type === 'VariableDeclaration' ) {
-
-            for (let index = 0; index < parser.declaredVariables.size; index++) {
-                if (parser.declaredVariables.get(statement.variableName).wasUsed !== true) {
+        traverseAST(parsedCode.ast, (node) => {
+            if (node.type === 'VariableDeclaration') {
+                const varMeta = parser.declaredVariables.get(node.variableName);
+                if (varMeta && !varMeta.wasUsed) {
                     issues.push({
                         type: 'Warning',
-                        message: `Unused variable: ${statement.variableName}`
+                        message: `Unused variable: ${node.variableName}`,
+                        row: node.row || 'unknown',
+                        col: node.col || 'unknown',
                     });
-                    break;
                 }
-
             }
+        });
 
-        }
-      });
-
-      return issues;
+        return issues;
     }
-  }
+}
