@@ -110,7 +110,13 @@ export default class Parser {
         const next = this.peek();
         const elseBody = next.type === 'ELSE' ? this.parseElseStatement() : null;
 
-        return { type: 'IfStatement', row: ifToken.row, col: ifToken.col, condition, body, elseBody };
+        return {
+            type: 'IfStatement',
+            row: ifToken.row,
+            col: ifToken.col,
+            condition,
+            body,
+            elseBody };
     }
 
     parseElseStatement() {
@@ -378,11 +384,10 @@ export default class Parser {
             return this.parseFunctionCall(); // nested call
         }
 
-
         const logicalOperator = this.peek().type;
 
         // Handle struct member access expression (e.g., UserStruct2.member2)
-        if ((token.type === 'IDENTIFIER' || token.type === 'IDENTIFIER_STRUCT') && !['AND', 'OR'].includes(this.peek().type)) {
+        if ((token.type === 'IDENTIFIER' || token.type === 'IDENTIFIER_STRUCT') && !['AND', 'OR', 'OPERATOR_EQUAL'].includes(logicalOperator)) {
             const parts = [token.value];
             while (this.peek().type === 'DELIMITER_DOT') {
                 this.consume('DELIMITER_DOT');
@@ -422,7 +427,7 @@ export default class Parser {
 
         // Support conditional expressions like a && b
 
-        if (['AND', 'OR'].includes(logicalOperator)) {
+        if (['AND', 'OR', 'OPERATOR_EQUAL'].includes(logicalOperator)) {
             const logicalOpToken = this.consume(logicalOperator);
             const right = this.peek();
 

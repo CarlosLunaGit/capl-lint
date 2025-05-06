@@ -605,89 +605,9 @@ describe('Real Code', () => {
 
     it('Should process a real Case Scenario', () => {
             const parser = new Parser();
-            const code = String.raw`/*@!Encoding:65001*/
-/**
- * @file testCase01BlockSizeValueHandlingCANGroup.cin
- * @brief Collection of related test cases forming a test group.
- *
- * This file organizes a set of related test cases into a logical group. The test group defines the
- * sequence and dependencies between individual test cases and is responsible for their collective
- * execution. It acts as a submodule within a test module, grouping test cases by functionality or
- * testing area.
- *
- * Test Groups (LVL2)
- */
-includes
+            const code = String.raw`testcase testCase01BlockSizeValueHandlingCANGroup(byte session_ind, enum ADDRESSING_MODE mode, enum BT_BusTypes busType, struct TEST_CASE_DATA data, int index)
 {
-// Standard libraries
-  #include "..\TestLibraries\constants.cin"
-  #include "..\TestLibraries\types.cin"
-
-}
-
-variables
-{
-    dword reqid;
-    dword respid;
-
-}
-
-testcase testCase01BlockSizeValueHandlingCANGroup(byte session_ind, enum ADDRESSING_MODE mode, enum BT_BusTypes busType, struct TEST_CASE_DATA data, int index)
-{
-    byte payload[8];
-    byte validation[8]; //TODO: Add a distingtion between VariableDeclaration and a new type called VariableArrayDeclaration
-    int dataLength;
-    char out[100]
-    char textDeviceUnderTest[50];
-    dword respid;
-
-    dutData.FC_WAIT_DELAY = data.FC_WAIT_DELAY;
-    dutData.FC_DELAY = data.FC_DELAY;
-    dutData.BS = data.BS;
-    dutData.STmin = data.STmin;
-    // int x;
-    strncpy(textDeviceUnderTest, "Device under test: ", 20);
-
-    strncat(textDeviceUnderTest, deviceUnderTest, elcount(textDeviceUnderTest));
-    write("-Device under test: %s", textDeviceUnderTest);
-
-    getFlowControlDID(deviceUnderTest, payload, busType, session_ind, dataLength);
-    getFlowControlValidation(deviceUnderTest, validation, busType, session_ind, dataLength);
-
-    setupTestCase(session_ind, mode, data.NAME, data.ID, header, textDeviceUnderTest, deviceUnderTest);
-
-    setAddressing(mode, index);
-    testWaitForTimeout(5000);
-
-    InitAndPopulateTestTable(data.TC_DESC);
-
-    byteArrayToString(payload, out);
-
-    // testStep("1.1","Precon.ECU configuration and session handling");
-    // if (sendDataAndValidate(SESSION_CONTROL_REQUEST, SESSION_CONTROL_RESPONSE, SUCCESS, "1.1") == FAILURE){return;}
-    // testWaitForTimeout(2500);
-
-    // testStep("1.2","Read active diagnostic session");
-    // if (sendDataAndValidate(ACTIVE_SESSION_REQUEST, ACTIVE_SESSION_RESPONSE, SUCCESS, "1.2") == FAILURE){return;}
-
-    // testStep("1.3","Sending DID with response size > than protocol treshold for Flow Control");
-    // blockSizeValueHandling(
-    //     connHandle,
-    //     data,
-    //     data.BS_1,
-    //     data.STmin_1,
-    //     payload,
-    //     dataLength,
-    //     validation,
-    //     SUCCESS,
-    //     "1.3");
-
-    // testStep("1.4","Read active diagnostic session");
-    // if (sendDataAndValidate(ACTIVE_SESSION_REQUEST, ACTIVE_SESSION_RESPONSE, SUCCESS, "1.4") == FAILURE){return;}
-
-    // closeTestCaseGroup("1.5", "PostCon.ECU configuration and session handling", "Request", FUNCTIONAL_RESET_REQUEST);
-
-    testWaitForTimeout(1000);
+    if (sendDataAndValidate(SESSION_CONTROL_REQUEST, SESSION_CONTROL_RESPONSE, SUCCESS, "1.1") == FAILURE){return;}
 
 }
 
@@ -702,4 +622,55 @@ testcase testCase01BlockSizeValueHandlingCANGroup(byte session_ind, enum ADDRESS
                     }
                 ]});
           });
+
+    it('Should process a real Case Scenario', () => {
+            const parser = new Parser();
+            const code = String.raw`if (sendDataAndValidate(SESSION_CONTROL_REQUEST, SESSION_CONTROL_RESPONSE, SUCCESS, "1.1") == FAILURE){return;}`;
+            const results = parser.parse(code);
+
+            assert.deepEqual(normalizeAST(results), {
+                errors: [],
+                ast: [
+                    {
+
+                    }
+                ]});
+          });
+
+          it('Should parse compound conditions in if statement', () => {
+                    const parser = new Parser();
+                    const code = `if (x && y) { return; }`;
+                    const results = parser.parse(code);
+
+
+                    assert.deepEqual(normalizeAST(results), {
+                        errors: [],
+                        ast: [
+                            {
+                                type: 'IfStatement',
+                                condition: {
+                                    logicalOperator: "AND",
+                                    type: "ConditionalStatement",
+                                    variableNameLeft: "x",
+                                    variableNameRight: "y",
+                                    col: 7,
+                                    row: 1,
+                                    wasDeclaredLeft: false,
+                                    wasUsedLeft: true,
+                                    wasDeclaredRight: false,
+                                    wasUsedRight: true
+                                },
+                                body: [{
+                                    type: "ReturnStatement",
+                                    value: null,
+                                    col: 15,
+                                    row: 1
+                                }],
+                                elseBody: null,
+                                col: 1,
+                                row: 1
+                            }
+                        ]
+                    });
+                });
   });
