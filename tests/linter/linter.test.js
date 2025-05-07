@@ -40,7 +40,7 @@ describe('Linter', () => {
 
         assert.deepEqual(result, {errors: [
             {
-                message: 'Unused variable: x',
+                message: "Variable 'x' is DECLARED but never USED.",
                 type: 'Warning',
                 col: 5,
                 row: 1
@@ -55,7 +55,7 @@ describe('Linter', () => {
         const result = linter.lint(code);
 
         assert.deepEqual(result, {errors: [
-                {message: "Unused variable: x", type: "Warning", row: 1, col: 5,},
+                {message: "Variable 'x' is DECLARED but never USED.", type: "Warning", row: 1, col: 5,},
                 {message: "Missing semicolon at the end of 'VariableDeclaration'", row: 1, col: 5, type: "Error"}
             ]
         });
@@ -72,4 +72,41 @@ describe('Linter', () => {
             ]
         });
       });
+
+    it('Should detect unused declared variables in scope', () => {
+        const linter = new Linter();
+
+        const code = `
+            variables
+            {
+                dword reqid;
+            }
+
+            testcase testCaseName1(byte argumentByte1)
+            {
+                byte localVariable1[8];
+                dword respid;
+                write("Print message", localVariable1);
+
+                if (argumentByte1) { return 10; }
+            }
+        `;
+
+        const result = linter.lint(code);
+
+        assert.deepEqual(result, {
+            errors: [
+                {
+                    message: "Variable 'respid' is DECLARED but never USED.",
+                    row: 10, col: 23, type: "Warning"
+                },
+                {
+                    message: "Variable 'reqid' is DECLARED but never USED.",
+                    row: 4, col: 23, type: "Warning"
+                }
+
+            ]
+        });
+    });
+
 });

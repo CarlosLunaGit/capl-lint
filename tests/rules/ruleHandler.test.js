@@ -1,6 +1,7 @@
 // tests/ruleHandler.test.js
+import { ScopeManager } from '../../src/utils/scopeManager.js';
 import RuleHandler from '../../src/parser/rules/ruleHandler';
-import UnusedVariableRule from '../../src/parser/rules/unusedVariableRule';
+import CheckUnusedVariables from '../../src/parser/rules/checkUnusedVariables.js';
 import CheckMissingSemicolon from '../../src/parser/rules/checkMissingSemicolon';
 
 const assert = require('assert');
@@ -8,47 +9,55 @@ const assert = require('assert');
 describe('RuleHandler', () => {
   it('should detect unused variable', () => {
     const ruleHandler = new RuleHandler();
-    const unusedVariableRule = new UnusedVariableRule();
-    ruleHandler.addRule(unusedVariableRule);
+    const checkUnusedVariables = new CheckUnusedVariables();
+    ruleHandler.addRule(checkUnusedVariables);
 
     let parserMock = {
-        declaredVariables : new Map()
+        declaredVariables : new Map(),
+        scopeManager : new ScopeManager()
     }
 
-    parserMock.declaredVariables.set('x', {
-        type: 'VariableDeclaration',
-        wasDeclared: true,
-        wasUsed: false
-    });
+    let mockToken = { type: 'VariableDeclaration', variableName: 'x', row: 1, col: 1 }
+
+    parserMock.scopeManager.enterScope();
+
+    parserMock.scopeManager.declare('x', mockToken);
+
+    parserMock.scopeManager.exitScope();
 
     const parsedCode = {
-        ast:[ { type: 'VariableDeclaration', variableName: 'x', wasUsed: false, row: 1, col: 12 }]
+        ast:[ mockToken ]
     };
 
     const issues = ruleHandler.runRules(parsedCode, parserMock);
 
     assert.deepEqual(issues, [
-      { type: 'Warning', message: 'Unused variable: x', row: 1, col: 12 }
+      { type: 'Warning', message: "Variable 'x' is DECLARED but never USED.", row: 1, col: 1 }
     ]);
   });
 
   it('should not detect an error when variable is used', () => {
     const ruleHandler = new RuleHandler();
-    const unusedVariableRule = new UnusedVariableRule();
-    ruleHandler.addRule(unusedVariableRule);
+    const checkUnusedVariables = new CheckUnusedVariables();
+    ruleHandler.addRule(checkUnusedVariables);
 
     let parserMock = {
-        declaredVariables : new Map()
+        declaredVariables : new Map(),
+        scopeManager : new ScopeManager()
     }
 
-    parserMock.declaredVariables.set('x', {
-        type: 'VariableDeclaration',
-        wasDeclared: true,
-        wasUsed: true
-    });
+    let mockToken = { type: 'VariableDeclaration', variableName: 'x', row: 1, col: 1 }
+
+    parserMock.scopeManager.enterScope();
+
+    parserMock.scopeManager.declare('x', mockToken);
+
+    parserMock.scopeManager.use('x');
+
+    parserMock.scopeManager.exitScope();
 
     const parsedCode = {
-        ast:[ { type: 'VariableDeclaration', variableName: 'x', wasUsed: true }]
+        ast:[ mockToken ]
     };
 
     const issues = ruleHandler.runRules(parsedCode, parserMock);
@@ -62,23 +71,26 @@ describe('RuleHandler', () => {
     ruleHandler.addRule(checkMissingSemicolon);
 
     let parserMock = {
-        declaredVariables : new Map()
+        declaredVariables : new Map(),
+        scopeManager : new ScopeManager()
     }
 
-    parserMock.declaredVariables.set('x', {
-        type: 'VariableDeclaration',
-        wasDeclared: true,
-        wasUsed: true
-    });
+    let mockToken = { type: 'VariableDeclaration', variableName: 'x', row: 1, col: 1 }
+
+    parserMock.scopeManager.enterScope();
+
+    parserMock.scopeManager.declare('x', mockToken);
+
+    parserMock.scopeManager.exitScope();
 
     const parsedCode = {
-        ast:[ { type: 'VariableDeclaration', variableName: 'x', wasUsed: true, row: 2, col: 12 }]
+        ast:[ mockToken ]
     };
 
     const issues = ruleHandler.runRules(parsedCode, parserMock);
 
     assert.deepEqual(issues, [
-      { type: 'Error', message: "Missing semicolon at the end of 'VariableDeclaration'", row: 2, col: 12 }
+      { type: 'Error', message: "Missing semicolon at the end of 'VariableDeclaration'", row: 1, col: 1 }
     ]);
   });
 });
