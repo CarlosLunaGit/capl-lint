@@ -267,9 +267,6 @@ export default class Parser {
         this.scopeManager.declare(variableName, variableToken);
         // this.scopeManager.use('j');
 
-        const declaration = this.scopeManager.getVariable(variableName);
-        // const declaration = this.getDeclaredUndeclaredState(variableToken);
-        // const elseBody = next && next.type === 'ELSE' ? this.parseElseStatement() : null;
         if ((this.peek() !== undefined) && this.peek().type === 'DELIMITER_OPEN_BRACKET') {
             this.consume('DELIMITER_OPEN_BRACKET', 'Expected DELIMITER_OPEN_BRACKET');
             this.consume('LITERAL_NUMBER', 'Expected LITERAL_NUMBER');
