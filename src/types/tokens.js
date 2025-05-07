@@ -36,11 +36,13 @@ function Token(row, col, type, value, matches) {
     this.isConstant = false
     this.isInclude = false
     this.isVariable = false
+    this.wasDeclared = false
 
     // after declaration:
     this.wasUsed = false
     this.wasAssigned = false
     this.wasExported = false
+    this.declaredIn = false
 
     // contoller for parent block indentation
     this.parentBlockIndentation = 0

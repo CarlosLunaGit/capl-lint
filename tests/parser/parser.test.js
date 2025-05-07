@@ -525,7 +525,7 @@ describe('Parser', () => {
                     col: 1,
                     row: 1,
                     type: "VariablesBlockStatement",
-                    value:
+                    body:
                         [
                             {
                                 col: 19,
@@ -568,8 +568,8 @@ describe('Parser', () => {
             errors: [],
             ast: [
                 {
-                    testCaseName: "testCaseName1",
-                    testCaseParameters: [
+                    name: "testCaseName1",
+                    parameters: [
                         {
                             parameterName: "argumentByte1",
                             type: "ParameterDeclaration",
@@ -584,7 +584,7 @@ describe('Parser', () => {
                         },
                     ],
                     type: "TestCaseBlockStatement",
-                    value: [
+                    body: [
                         {
                             type: "VariableDeclaration",
                             typeName: "BYTE",
@@ -607,13 +607,15 @@ describe('Parser', () => {
                                     row: 4,
                                 },
                             ],
-                            wasDeclared: false,
+                            wasDeclared: true,
                             wasUsed: true,
                             col: 13,
                             row: 4,
                             hasSemicolon: true,
                         },
                     ],
+                    col: 1,
+                    row: 1
                 }
             ]
         });
@@ -631,8 +633,8 @@ describe('Parser', () => {
             errors: [],
             ast: [
                 {
-                    testCaseName: "testCaseName1",
-                    testCaseParameters: [
+                    name: "testCaseName1",
+                    parameters: [
                      {
                         definedType: "BYTE",
                         parameterName: "argumentByte1",
@@ -665,7 +667,7 @@ describe('Parser', () => {
                       },
                     ],
                     type: "TestCaseBlockStatement",
-                    value:  [
+                    body:  [
                        {
                         body:  [
                            {
@@ -735,6 +737,8 @@ describe('Parser', () => {
                         type: "IfStatement",
                       },
                     ],
+                    col: 1,
+                    row: 1
                       }
             ]
         });

@@ -1,3 +1,5 @@
+import {inBuildKeywords} from '../tokenizer/specs/inbuildCAPLKeywords.js'
+
 class Scope {
     constructor(parent = null, blockType = 'global') {
       this.parent = parent;
@@ -11,26 +13,34 @@ class Scope {
     }
 
     declare(name, metadata = {}) {
-      if (this.variables.has(name)) {
-        throw new Error(`Variable '${name}' is already declared in this scope.`);
-      }
-      this.variables.set(name, { ...metadata, wasDeclared: true, wasUsed: false });
-      return this.variables.get(name);
+        let existing = this.lookupInCurrentScope(name);
+        if (existing) {
+            existing.wasDeclared = true;
+            return existing;
+        }
+
+        metadata.wasDeclared = true;
+        metadata.wasUsed = metadata.wasUsed || false;
+        metadata.declaredIn = this.currentScope;
+        this.variables.set(name, metadata);
+        return metadata;
     }
 
+
     use(name) {
-      // Look for the variable in the current scope or recursively in the parent
-      if (this.variables.has(name)) {
-        const variable = this.variables.get(name);
-        variable.wasUsed = true;
-        return variable;
-      } else if (this.parent) {
-        return this.parent.use(name);
-      } else {
-        // Optionally track undeclared usage at the root level
-        return null;
+        let scope = this;
+        while (scope) {
+          if (scope.variables.has(name)) {
+            const meta = scope.variables.get(name);
+            meta.wasUsed = true;
+            if (!meta.usedIn) meta.usedIn = [];
+            meta.usedIn.push(this); // track scope where it's used
+            return meta;
+          }
+          scope = scope.parent;
+        }
+        return null; // Not found
       }
-    }
 
     getDeclaredVariables() {
       return Array.from(this.variables.entries());
@@ -101,6 +111,42 @@ class Scope {
     getVariable(name) {
         return this.currentScope.lookup(name);
       }
+
+    trackVariableUsage(name, token) {
+
+        if ((inBuildKeywords.find((x) => x === name) !== undefined) && (this.currentScope.lookup(name) === null)) {
+            this.currentScope.declare(name, {
+                wasDeclared : true,
+                wasUsed : false,
+                declaredIn : this.globalScope
+
+            })
+        }
+
+        let meta = this.currentScope.lookup(name); // search all scopes
+
+        if (meta) {
+            meta.wasUsed = true;
+            if (!meta.usedIn) meta.usedIn = [];
+            meta.usedIn.push(this.currentScope);
+        } else {
+            // Variable not declared anywhere — add it to global scope for tracking
+            meta = {
+                wasDeclared: false,
+                wasUsed: true,
+                usedIn: [this.currentScope],
+                token
+            };
+            this.currentScope.variables.set(name, meta); // <-- single source of truth
+        }
+    }
+
+
+
+    getUndeclaredVariables() {
+        return this.getAllVariables().filter(v => !v.wasDeclared);
+    }
+
 
   }
 

@@ -44,6 +44,11 @@ describe('Linter', () => {
                 type: 'Warning',
                 col: 5,
                 row: 1
+            },{
+                message: "Variable 'y' is USED but never DECLARED.",
+                type: 'Error',
+                col: 1,
+                row: 1
             }
         ]});
     });
@@ -68,6 +73,7 @@ describe('Linter', () => {
         const result = linter.lint(code);
 
         assert.deepEqual(result, {errors: [
+            {message: "Variable 'UserStruct' is USED but never DECLARED.", type: "Error", row: 1, col: 1,},
                 {message: "Missing semicolon at the end of 'StructMemberVariableInitialization'", row: 1, col: 1, type: "Error"}
             ]
         });
@@ -96,15 +102,15 @@ describe('Linter', () => {
 
         assert.deepEqual(result, {
             errors: [
-                {
-                    message: "Variable 'respid' is DECLARED but never USED.",
-                    row: 10, col: 23, type: "Warning"
-                },
+
                 {
                     message: "Variable 'reqid' is DECLARED but never USED.",
                     row: 4, col: 23, type: "Warning"
+                },
+                {
+                    message: "Variable 'respid' is DECLARED but never USED.",
+                    row: 10, col: 23, type: "Warning"
                 }
-
             ]
         });
     });

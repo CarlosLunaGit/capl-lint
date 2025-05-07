@@ -8,39 +8,10 @@ export default class Parser {
         this.currentIndex = 0;
         this.errors = [];
         this.ast = [];
-        this.declaredVariables = new Map(); // key: variableName, name: token object
-        this.undeclaredVariables = new Map();
-        this.variablesMetadata = {};
         this.scopeManager = new ScopeManager();
 
     }
 
-    markVariableAsUsed(name, token) {
-        let declaration = this.declaredVariables.get(name);
-        if (declaration) {
-            declaration.wasUsed = true;
-        } else {
-
-            this.undeclaredVariables.set(name, {
-                ...token,
-                wasDeclared: false,
-                wasUsed: true
-            });
-        }
-
-    }
-
-    getDeclaredUndeclaredState(token) {
-
-        let declaration = this.declaredVariables.get(token.value);
-
-        if (declaration === undefined) {
-            return this.undeclaredVariables.get(token.value);
-        } else {
-            return declaration;
-        }
-
-    }
 
     parse(code) {
         this.tokens = this.tokenizer.tokenize(code);
@@ -200,38 +171,45 @@ export default class Parser {
 
     parseVariablesBlockStatement() {
 
-        this.scopeManager.enterScope();
+        this.scopeManager.enterScope('VariablesBlock');
 
         const variablesBlockToken = this.consume('VARIABLESBLOCK', 'Expected VARIABLESBLOCK');
-        const value = this.parseBlock(() => this.parseStatement());
+
+        const body = this.parseBlock(() => this.parseStatement());
 
         const exited = this.scopeManager.exitScope();
 
         return {
             type: 'VariablesBlockStatement',
-            value,
+            body,
             row: variablesBlockToken.row,
             col: variablesBlockToken.col,
          };
     }
 
     parseTestCaseBlockStatement() {
-        this.consume('TESTCASE', 'Expected TESTCASE');
-        const testCaseName = this.consume('IDENTIFIER', 'Expected IDENTIFIER').value;
+        const testCaseBlockToken = this.consume('TESTCASE', 'Expected TESTCASE');
+        const name = this.consume('IDENTIFIER', 'Expected IDENTIFIER').value;
 
         this.consume('DELIMITER_OPEN_PAREN', 'Expected DELIMITER_OPEN_PAREN');
-        const testCaseParameters = this.parseDelimitedList(() =>
+        const parameters = this.parseDelimitedList(() =>
             this.parseParameterDeclaration(), 'DELIMITER_CLOSE_PAREN', 'DELIMITER_COMMA'
         );
 
-        // this.scopeManager.enterScope(testCaseName);
+        this.scopeManager.enterScope(name + "_TestCaseBlock");
 
-        const value = this.parseBlock(() => this.parseStatement());
+        const body = this.parseBlock(() => this.parseStatement());
+
+        const exited = this.scopeManager.exitScope();
+
         return {
             type: 'TestCaseBlockStatement',
-            testCaseName,
-            testCaseParameters,
-            value };
+            name,
+            parameters,
+            body,
+            row: testCaseBlockToken.row,
+            col: testCaseBlockToken.col
+        };
     }
 
     parseParameterDeclaration() {
@@ -265,7 +243,9 @@ export default class Parser {
 
         // Store declaration metadata before any possible usage
         this.scopeManager.declare(variableName, variableToken);
-        // this.scopeManager.use('j');
+
+        // this.scopeManager.trackVariableUsage(variableName, variableToken);
+        const declaration = this.scopeManager.getVariable(variableName);
 
         if ((this.peek() !== undefined) && this.peek().type === 'DELIMITER_OPEN_BRACKET') {
             this.consume('DELIMITER_OPEN_BRACKET', 'Expected DELIMITER_OPEN_BRACKET');
@@ -317,8 +297,9 @@ export default class Parser {
 
         let hasSemicolon = this.consume('DELIMITER_SEMICOLON', 'Expected DELIMITER_SEMICOLON');
 
-        this.markVariableAsUsed(variableInitToken.value, variableInitToken);
-        const declaration = this.getDeclaredUndeclaredState(variableInitToken);
+        this.scopeManager.trackVariableUsage(variableInitToken.value, variableInitToken);
+        const declaration = this.scopeManager.getVariable(variableInitToken.value);
+
         return {
             type: 'VariableInitialization',
             variableName: variableInitToken.value,
@@ -349,8 +330,8 @@ export default class Parser {
             hasSemicolon = this.consume('DELIMITER_SEMICOLON', 'Expected DELIMITER_SEMICOLON');
         }
 
-        this.markVariableAsUsed(structToken.value, structToken);
-        const declaration = this.getDeclaredUndeclaredState(structToken);
+        this.scopeManager.trackVariableUsage(structToken.value, structToken);
+        const declaration = this.scopeManager.getVariable(structToken.value);
 
         return {
             type: 'StructMemberVariableInitialization',
@@ -427,8 +408,8 @@ export default class Parser {
                     col: baseToken.col
                 };
 
-                this.markVariableAsUsed(baseToken.value, baseToken);
-                const declaration = this.getDeclaredUndeclaredState(baseToken);
+                this.scopeManager.trackVariableUsage(baseToken.value, baseToken);
+                const declaration = this.scopeManager.getVariable(baseToken.value);
 
                 structAccessNode.wasUsed = declaration?.wasUsed ?? false;
                 structAccessNode.wasDeclared = declaration?.wasDeclared ?? false;
@@ -436,10 +417,8 @@ export default class Parser {
                 return structAccessNode;
             }
 
-            // Otherwise it's a plain identifier
-            this.scopeManager.use(token.value);
-            this.markVariableAsUsed(token.value, token);
-            const declaration = this.getDeclaredUndeclaredState(token);
+            this.scopeManager.trackVariableUsage(token.value, token);
+            const declaration = this.scopeManager.getVariable(token.value);
 
             return {
                 type: 'IDENTIFIER',
@@ -484,8 +463,8 @@ export default class Parser {
 
         const identifierToken = this.consume('IDENTIFIER', 'Expected IDENTIFIER');
 
-        this.markVariableAsUsed(identifierToken.value, identifierToken);
-        const declaration = this.getDeclaredUndeclaredState(identifierToken);
+        this.scopeManager.trackVariableUsage(identifierToken.value, identifierToken);
+        const declaration = this.scopeManager.getVariable(identifierToken.value);
 
         this.consume('DELIMITER_OPEN_PAREN', 'Expected DELIMITER_OPEN_PAREN');
 

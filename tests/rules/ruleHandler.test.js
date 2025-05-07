@@ -71,7 +71,6 @@ describe('RuleHandler', () => {
     ruleHandler.addRule(checkMissingSemicolon);
 
     let parserMock = {
-        declaredVariables : new Map(),
         scopeManager : new ScopeManager()
     }
 
