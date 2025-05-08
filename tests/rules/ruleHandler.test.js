@@ -17,7 +17,7 @@ describe('RuleHandler', () => {
         scopeManager : new ScopeManager()
     }
 
-    let mockToken = { type: 'VariableDeclaration', variableName: 'x', row: 1, col: 1 }
+    let mockToken = { type: 'VariableDeclaration', name: 'x', row: 1, col: 1 }
 
     parserMock.scopeManager.enterScope();
 
@@ -46,7 +46,7 @@ describe('RuleHandler', () => {
         scopeManager : new ScopeManager()
     }
 
-    let mockToken = { type: 'VariableDeclaration', variableName: 'x', row: 1, col: 1 }
+    let mockToken = { type: 'VariableDeclaration', name: 'x', row: 1, col: 1 }
 
     parserMock.scopeManager.enterScope();
 
@@ -74,7 +74,7 @@ describe('RuleHandler', () => {
         scopeManager : new ScopeManager()
     }
 
-    let mockToken = { type: 'VariableDeclaration', variableName: 'x', row: 1, col: 1 }
+    let mockToken = { type: 'VariableDeclaration', name: 'x', row: 1, col: 1 }
 
     parserMock.scopeManager.enterScope();
 
@@ -89,7 +89,7 @@ describe('RuleHandler', () => {
     const issues = ruleHandler.runRules(parsedCode, parserMock);
 
     assert.deepEqual(issues, [
-      { type: 'Error', message: "Missing semicolon at the end of 'VariableDeclaration'", row: 1, col: 1 }
+      { type: 'Error', message: "Missing semicolon at the end of 'VariableDeclaration': x", row: 1, col: 1 }
     ]);
   });
 });

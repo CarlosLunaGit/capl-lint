@@ -47,7 +47,7 @@ describe('Linter', () => {
             },{
                 message: "Variable 'y' is USED but never DECLARED.",
                 type: 'Error',
-                col: 1,
+                col: 12,
                 row: 1
             }
         ]});
@@ -61,7 +61,7 @@ describe('Linter', () => {
 
         assert.deepEqual(result, {errors: [
                 {message: "Variable 'x' is DECLARED but never USED.", type: "Warning", row: 1, col: 5,},
-                {message: "Missing semicolon at the end of 'VariableDeclaration'", row: 1, col: 5, type: "Error"}
+                {message: "Missing semicolon at the end of 'VariableDeclaration': x", row: 1, col: 5, type: "Error"}
             ]
         });
     });
@@ -73,8 +73,8 @@ describe('Linter', () => {
         const result = linter.lint(code);
 
         assert.deepEqual(result, {errors: [
-            {message: "Variable 'UserStruct' is USED but never DECLARED.", type: "Error", row: 1, col: 1,},
-                {message: "Missing semicolon at the end of 'StructMemberVariableInitialization'", row: 1, col: 1, type: "Error"}
+            {message: "Variable 'UserStruct.member' is USED but never DECLARED.", type: "Error", row: 1, col: 1,},
+                {message: "Missing semicolon at the end of 'StructMemberVariableInitialization': UserStruct", row: 1, col: 1, type: "Error"}
             ]
         });
       });
@@ -95,6 +95,7 @@ describe('Linter', () => {
                 write("Print message", localVariable1);
 
                 if (argumentByte1) { return 10; }
+
             }
         `;
 

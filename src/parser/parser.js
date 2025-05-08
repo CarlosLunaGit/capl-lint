@@ -268,8 +268,8 @@ export default class Parser {
 
         return {
             type: 'VariableDeclaration',
-            typeName: type,
-            variableName,
+            typeCategory: type,
+            name: variableName,
             variableValue,
             hasSemicolon: !!hasSemicolon,
             row: variableToken.row,
@@ -302,7 +302,7 @@ export default class Parser {
 
         return {
             type: 'VariableInitialization',
-            variableName: variableInitToken.value,
+            name: variableInitToken.value,
             variableValue,
             hasSemicolon: !!hasSemicolon,
             row: variableInitToken.row,
@@ -330,14 +330,14 @@ export default class Parser {
             hasSemicolon = this.consume('DELIMITER_SEMICOLON', 'Expected DELIMITER_SEMICOLON');
         }
 
-        this.scopeManager.trackVariableUsage(structToken.value, structToken);
-        const declaration = this.scopeManager.getVariable(structToken.value);
+        this.scopeManager.trackVariableUsage(structToken.value + '.' + memberName, structToken);
+        const declaration = this.scopeManager.getVariable(structToken.value + '.' + memberName);
 
         return {
             type: 'StructMemberVariableInitialization',
             row: structToken.row,
             col: structToken.col,
-            variableName: structToken.value,
+            name: structToken.value,
             memberName,
             memberValue,
             hasSemicolon: !!hasSemicolon,
@@ -408,8 +408,8 @@ export default class Parser {
                     col: baseToken.col
                 };
 
-                this.scopeManager.trackVariableUsage(baseToken.value, baseToken);
-                const declaration = this.scopeManager.getVariable(baseToken.value);
+                this.scopeManager.trackVariableUsage(baseToken.value + '.' + memberToken.value, baseToken);
+                const declaration = this.scopeManager.getVariable(baseToken.value + '.' + memberToken.value);
 
                 structAccessNode.wasUsed = declaration?.wasUsed ?? false;
                 structAccessNode.wasDeclared = declaration?.wasDeclared ?? false;

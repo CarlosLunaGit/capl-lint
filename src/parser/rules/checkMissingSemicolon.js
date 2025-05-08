@@ -10,7 +10,7 @@ export default class CheckMissingSemicolon {
                 if (!node.hasSemicolon) {
                     issues.push({
                         type: 'Error',
-                        message: `Missing semicolon at the end of '${node.type}'`,
+                        message: `Missing semicolon at the end of '${node.type}': ${node.name}`,
                         row: node.row || 'unknown',
                         col: node.col || 'unknown',
                     });

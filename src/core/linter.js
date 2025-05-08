@@ -20,6 +20,14 @@ export default class Linter {
 
   lint(code) {
     const parsedCode = this.parser.parse(code);
+    console.log( "[Server][Parser]: Process end");
+    if (parsedCode.errors.length > 0){
+        for (let index = 0; index < parsedCode.errors.length; index++) {
+            console.log( "[Server][Parser][Errors]: " + parsedCode.errors[index]);
+
+        }
+    }
+
     const issues = this.ruleHandler.runRules(parsedCode, this.parser);
     this.issueCollector.collect(issues);
 

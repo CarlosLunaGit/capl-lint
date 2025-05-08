@@ -26,23 +26,27 @@ export function tokenToString(token) {
 // constructor ////////////////////////////////////////////////////////////////
 
 function Token(row, col, type, value, matches) {
-    this.row = row
-    this.col = col
-    this.type  = type
-    this.value = value
+    this.row = row // Used
+    this.col = col // Used
+    this.type  = type // Used
+    this.value = value // Used
 
     // during declaration:
     this.isImport = false
     this.isConstant = false
     this.isInclude = false
     this.isVariable = false
-    this.wasDeclared = false
+    this.wasDeclared = false // Used
+    this.declaredIn = false // Used
+    this.partialDeclaration = false
 
     // after declaration:
-    this.wasUsed = false
+    this.wasUsed = false // Used
     this.wasAssigned = false
     this.wasExported = false
-    this.declaredIn = false
+    this.usedIn = [] // Used
+    this.calledIn = [] // Used
+
 
     // contoller for parent block indentation
     this.parentBlockIndentation = 0
