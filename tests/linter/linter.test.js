@@ -116,4 +116,45 @@ describe('Linter', () => {
         });
     });
 
+    it('Should detect declared variables not placed at the beginning of a block', () => {
+        const linter = new Linter();
+
+        const code = `
+            variables
+            {
+                dword reqid;
+            }
+
+            testcase testCaseName1(byte argumentByte1)
+            {
+                byte localVariable1[8];
+                write("Print message", localVariable1);
+
+                if (argumentByte1) { return 10; }
+
+                dword respid;
+            }
+        `;
+
+        const result = linter.lint(code);
+
+        assert.deepEqual(result, {
+            errors: [
+
+                {
+                    message: "Variable 'reqid' is DECLARED but never USED.",
+                    row: 4, col: 23, type: "Warning"
+                },
+                {
+                    message: "Variable 'respid' is DECLARED but never USED.",
+                    row: 14, col: 23, type: "Warning"
+                },
+                {
+                    message: "Variable declarations should happen at the start of a block. Misplaced variable: respid",
+                    row: 14, col: 23, type: "Error",
+                }
+            ]
+        });
+    });
+
 });

@@ -2,7 +2,7 @@
 import Parser from '../parser/parser.js';
 import RuleHandler from '../parser/rules/ruleHandler.js' ;
 import IssueCollector from '../parser/issueCollector/issueCollector.js';
-// import UnusedVariableRule from '../parser/rules/unusedVariableRule.js';
+import CheckVariableDeclarationLocation from '../parser/rules/checkVariableDeclarationLocation.js';
 import CheckUnusedVariables from '../parser/rules/checkUnusedVariables.js';
 
 import CheckMissingSemicolon from '../parser/rules/checkMissingSemicolon.js';
@@ -16,6 +16,7 @@ export default class Linter {
     this.ruleHandler.addRule(new CheckUnusedVariables());
     this.ruleHandler.addRule(new CheckMissingSemicolon());
     this.ruleHandler.addRule(new CheckMissingHashIncludeStatements());
+    this.ruleHandler.addRule(new CheckVariableDeclarationLocation());
   }
 
   lint(code) {

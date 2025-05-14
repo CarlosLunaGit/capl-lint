@@ -10,13 +10,13 @@ export default class CheckMissingHashIncludeStatements {
 
             if (node.type !== 'IncludeBlockStatement') return issues;
 
-            node.value.forEach(statement => {
+            node.body.forEach(statement => {
                 if (statement.type === 'IncludeStatement' && !statement.hasHash) {
                     issues.push({
                         type: 'Error',
                         message: `Missing '#' at the beginning of 'IncludeStatement'`,
                     });
-                }
+                }// TODO: Move the invalid include statements to its own class
                 if (statement.type !== 'IncludeStatement') {
                     issues.push({
                         type: 'Error',

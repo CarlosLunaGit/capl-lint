@@ -490,17 +490,23 @@ describe('Parser', () => {
             ast: [
                 {
                     type: "IncludeBlockStatement",
-                    value:
+                    body:
                         [
                             {
                                 hasHash: true,
                                 type: "IncludeStatement",
-                                name: "\"..\\TestLibraries\\constants.cin\"",
+                                name: "include",
+                                value: "\"..\\TestLibraries\\constants.cin\"",
+                                row: 4,
+                                col: 12
                             },
                             {
                                 hasHash: true,
                                 type: "IncludeStatement",
-                                name: "\"..\\TestLibraries\\types.cin\"",
+                                name: "include",
+                                value: "\"..\\TestLibraries\\types.cin\"",
+                                row: 5,
+                                col: 12
                             }
                         ],
                 }
@@ -744,86 +750,117 @@ describe('Parser', () => {
         });
     });
 
-    // it('Should parse an IF statement with a complex Binary expression', () => {
-    //     const parser = new Parser();
-    //     const code = String.raw`if (sendDataAndValidate(arg1, arg2, arg3, "StringAsArgument") == FAILURE){return;}`;
-    //     const results = parser.parse(code);
+    it('Should parse an IF statement with a complex Binary expression', () => {
+        const parser = new Parser();
+        const code = String.raw`if (sendDataAndValidate(arg1, arg2, arg3, "StringAsArgument") == FAILURE){return;}`;
+        const results = parser.parse(code);
 
-    //     assert.deepEqual(normalizeAST(results), {
-    //         errors: [],
-    //         ast: [
-    //             {
-    //                 type: "IfStatement",
-    //                 condition: {
-    //                     left: {
-    //                         type: "FunctionCallExpression",
-    //                         name: "sendDataAndValidate",
-    //                         arguments: [
-    //                             {
-    //                                 name: "arg1",
-    //                                 type: "IDENTIFIER",
-    //                                 row: 1,
-    //                                 col: 25,
-    //                                 wasDeclared: false,
-    //                                 wasUsed: true
-    //                             },
-    //                             {
-    //                                 name: "arg2",
-    //                                 type: "IDENTIFIER",
-    //                                 row: 1,
-    //                                 col: 31,
-    //                                 wasDeclared: false,
-    //                                 wasUsed: true
-    //                             },
-    //                             {
-    //                                 name: "arg3",
-    //                                 type: "IDENTIFIER",
-    //                                 row: 1,
-    //                                 col: 37,
-    //                                 wasDeclared: false,
-    //                                 wasUsed: true
-    //                             },
-    //                             {
-    //                                 type: "LITERAL_STRING",
-    //                                 name: "\"StringAsArgument\"",
-    //                                 row: 1,
-    //                                 col: 43,
-    //                             },
-    //                         ],
-    //                         row: 1,
-    //                         col: 5,
-    //                         wasDeclared: false,
-    //                         wasUsed: true,
-    //                         hasSemicolon: false,
-    //                     },
-    //                     operator: "OPERATOR_EQUAL",
-    //                     right: {
-    //                         type: "IDENTIFIER",
-    //                         name: "FAILURE",
-    //                         row: 1,
-    //                         col: 66,
-    //                         wasDeclared: false,
-    //                         wasUsed: true
-    //                     },
-    //                     type: "BINARY_EXPRESSION",
-    //                 },
-    //                 body: [
-    //                     {
-    //                         col: 75,
-    //                         row: 1,
-    //                         type: "ReturnStatement",
-    //                         name: null,
-    //                         hasSemicolon: true,
-    //                     },
-    //                 ],
-    //                 elseBody: null,
-    //                 col: 1,
-    //                 row: 1
+        assert.deepEqual(normalizeAST(results), {
+            errors: [],
+            ast: [
+                {
+                    type: "IfStatement",
+                    condition: {
+                        left: {
+                            type: "FunctionCallExpression",
+                            name: "sendDataAndValidate",
+                            arguments: [
+                                {
+                                    name: "arg1",
+                                    type: "IDENTIFIER",
+                                    row: 1,
+                                    col: 25,
+                                    wasDeclared: false,
+                                    wasUsed: true
+                                },
+                                {
+                                    name: "arg2",
+                                    type: "IDENTIFIER",
+                                    row: 1,
+                                    col: 31,
+                                    wasDeclared: false,
+                                    wasUsed: true
+                                },
+                                {
+                                    name: "arg3",
+                                    type: "IDENTIFIER",
+                                    row: 1,
+                                    col: 37,
+                                    wasDeclared: false,
+                                    wasUsed: true
+                                },
+                                {
+                                    type: "LITERAL_STRING",
+                                    name: "\"StringAsArgument\"",
+                                    row: 1,
+                                    col: 43,
+                                },
+                            ],
+                            row: 1,
+                            col: 5,
+                            wasDeclared: false,
+                            wasUsed: true,
+                            hasSemicolon: false,
+                        },
+                        operator: "OPERATOR_EQUAL",
+                        right: {
+                            type: "IDENTIFIER",
+                            name: "FAILURE",
+                            row: 1,
+                            col: 66,
+                            wasDeclared: false,
+                            wasUsed: true
+                        },
+                        type: "BINARY_EXPRESSION",
+                    },
+                    body: [
+                        {
+                            col: 75,
+                            row: 1,
+                            type: "ReturnStatement",
+                            name: null,
+                            hasSemicolon: true,
+                        },
+                    ],
+                    elseBody: null,
+                    col: 1,
+                    row: 1
 
-    //             }
-    //         ]
-    //     });
-    // });
+                }
+            ]
+        });
+    });
+
+    it('Should report errors for invalid statements in VariablesBlock', () => {
+    const parser = new Parser();
+    const code = `
+        variables
+        {
+            byte variable1[3] = {0x01, 0x02, 0x03};
+            #include "..\\myLibraries\\utils.cin"; // Invalid statement
+            int x = 10;
+        }
+    `;
+
+    const result = parser.parse(code);
+
+    assert.deepEqual(result.errors, [
+        {
+            message: "Invalid semicolon DELIMITER_SEMICOLON in IncludeStatement",
+            row: 5,
+            col: 48,
+            type: 'Error',
+        },
+        {
+            message: "Invalid statement InvalidInclude in VariablesBlock",
+            row: 5,
+            col: 48,
+            type: 'Error',
+        }
+    ]);
+
+    assert.deepEqual(result.ast[0].body.length, 2); // Only valid statements are included
+});
 });
 
 // describe('Real Code', () => {
@@ -846,3 +883,5 @@ describe('Parser', () => {
 //         });
 //     });
 // });
+
+

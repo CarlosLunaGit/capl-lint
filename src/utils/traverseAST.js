@@ -1,18 +1,18 @@
 // utils/traverseAST.js
-export function traverseAST(astNodes, visitorFn) {
-    const visit = (node) => {
+export function traverseAST(astNodes, callbackFunction) {
+    const processNode = (node) => {
         if (!node || typeof node !== 'object') return;
 
-        visitorFn(node);
+        callbackFunction(node);
 
         // Recursively traverse child arrays if they exist
         const childKeys = ['value', 'body', 'statements', 'cases']; // add other potential keys as needed
         childKeys.forEach(key => {
             if (Array.isArray(node[key])) {
-                node[key].forEach(child => visit(child));
+                node[key].forEach(child => processNode(child));
             }
         });
     };
 
-    astNodes.forEach(visit);
+    astNodes.forEach(processNode);
 }

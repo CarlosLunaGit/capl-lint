@@ -164,14 +164,12 @@ describe('Tokenizer', () => {
         ]);
       });
 
-      it('Should tokenize an Variables Block and body', () => {
+      it('Should tokenize a Variables Block and body', () => {
         const tokenizer = new Tokenizer();
         const code = String.raw`variables
 {
     int integerVariable1;
     dword dwordVariable1;
-
-
 }`;
         const tokens = tokenizer.tokenize(code);
 
@@ -184,7 +182,7 @@ describe('Tokenizer', () => {
           { type: 'DWORD', value: 'dword', row: 4, col: 5 },
           { type: 'IDENTIFIER', value: 'dwordVariable1', row: 4, col: 11 },
           { type: 'DELIMITER_SEMICOLON', value: ';', row: 4, col: 25 },
-          { type: 'DELIMITER_CLOSE_BRACE', value: '}', row: 7, col: 1 }
+          { type: 'DELIMITER_CLOSE_BRACE', value: '}', row: 5, col: 1 }
         ]);
       });
 
@@ -244,6 +242,29 @@ describe('Tokenizer', () => {
 
         ]);
       });
+
+        it('Should tokenize byte array initialization', () => {
+            const tokenizer = new Tokenizer();
+            const code = 'byte variable1[3] = {0x01, 0x02, 0x03};';
+            const tokens = tokenizer.tokenize(code);
+
+            assert.deepEqual(projectTokens(tokens), [
+            { type: 'BYTE', value: 'byte', row: 1, col: 1 },
+            { type: 'IDENTIFIER', value: 'variable1', row: 1, col: 6 },
+            { type: 'DELIMITER_OPEN_BRACKET', value: '[', row: 1, col: 15 },
+            { type: 'LITERAL_NUMBER', value: '3', row: 1, col: 16 },
+            { type: 'DELIMITER_CLOSE_BRACKET', value: ']', row: 1, col: 17 },
+            { type: 'ASSIGNMENT', value: '=', row: 1, col: 19 },
+            { type: 'DELIMITER_OPEN_BRACE', value: '{', row: 1, col: 21 },
+            { type: 'LITERAL_HEXADECIMAL', value: '0x01', row: 1, col: 22 },
+            { type: 'DELIMITER_COMMA', value: ',', row: 1, col: 26 },
+            { type: 'LITERAL_HEXADECIMAL', value: '0x02', row: 1, col: 28 },
+            { type: 'DELIMITER_COMMA', value: ',', row: 1, col: 32 },
+            { type: 'LITERAL_HEXADECIMAL', value: '0x03', row: 1, col: 34 },
+            { type: 'DELIMITER_CLOSE_BRACE', value: '}', row: 1, col: 38 },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row:1, col:39}
+            ]);
+        });
 
 });
 

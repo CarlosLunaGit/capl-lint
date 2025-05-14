@@ -47,6 +47,7 @@ export default class Parser {
 
         // Dispatch by token type
         switch (token.type) {
+            case 'HASH': return this.parseIncludeStatement();
             case 'IF': return this.parseIfStatement();
             case 'ELSE': return this.parseElseStatement();
             case 'RETURN': return this.parseReturnStatement();
@@ -74,6 +75,118 @@ export default class Parser {
                 }
                 throw new Error(`Unexpected statement type: ${token.type} name: ${token.value}`);
         }
+    }
+
+    // parseVariablesBlockStatement() {
+
+    //     this.scopeManager.enterScope('VariablesBlock');
+
+    //     const variablesBlockToken = this.consume('VARIABLESBLOCK', 'Expected VARIABLESBLOCK');
+
+    //     const body = this.parseBlock(() => this.parseStatement());
+
+    //     const exited = this.scopeManager.exitScope();
+
+    //     return {
+    //         type: 'VariablesBlockStatement',
+    //         body,
+    //         row: variablesBlockToken.row,
+    //         col: variablesBlockToken.col,
+    //      };
+    // }
+
+    parseVariablesBlockStatement() {
+    this.scopeManager.enterScope('VariablesBlock');
+
+    const variablesBlockToken = this.consume('VARIABLESBLOCK', 'Expected VARIABLESBLOCK');
+
+    const body = this.parseBlock(() => {
+        const statement = this.parseStatement();
+
+        // Validate statement type
+        if (!['VariableDeclaration', 'VariableInitialization'].includes(statement.type)) {
+            this.errors.push({
+                message: `Invalid statement ${statement.type} in VariablesBlock`,
+                row: statement.row,
+                col: statement.col,
+                type: 'Error',
+                }
+            );
+            return null; // Skip invalid statements
+        }
+
+        return statement;
+    });
+
+    this.scopeManager.exitScope();
+
+    return {
+        type: 'VariablesBlockStatement',
+        body: body.filter(Boolean), // Remove null entries for invalid statements
+        row: variablesBlockToken.row,
+        col: variablesBlockToken.col,
+    };
+}
+
+    parseIncludeBlockStatement() {
+        this.consume('INCLUDESBLOCK', 'Expected INCLUDESBLOCK');
+        const body = this.parseBlock(() => this.parseIncludeStatement());
+        return { type: 'IncludeBlockStatement', body };
+    }
+
+    parseIncludeStatement() {
+        let hasHash = false;
+        let includeToken;
+
+        if (this.peek().type === 'HASH') {
+            this.consume('HASH', 'Expected HASH');
+            hasHash = true;
+        }
+
+        if (this.peek().type === 'INCLUDE') {
+            includeToken = this.consume('INCLUDE', 'Expected INCLUDE');
+        } else {
+            let invalidToken = this.consume(this.peek().type, `Expected ${this.peek().type}`);
+            this.errors.push({
+                message: `Invalid token ${invalidToken.type} in IncludeStatement`,
+                row: invalidToken.row,
+                col: invalidToken.col,
+                type: 'Error',
+            });
+            this.skipToNextStatement();
+            return { type: 'InvalidInclude',
+            name: invalidToken.value,
+            value: invalidToken,
+            row: invalidToken.row,
+            col: invalidToken.col };
+        }
+
+        const includeValue = this.peek().type === 'LITERAL_STRING'
+            ? this.consume('LITERAL_STRING', 'Expected LITERAL_STRING').value
+            : 'Not Specified';
+
+        if (this.peek().type === 'DELIMITER_SEMICOLON') {
+            let invalidSemicolon = this.consume('DELIMITER_SEMICOLON', 'Expected DELIMITER_SEMICOLON');
+            this.errors.push({
+                message: `Invalid semicolon ${invalidSemicolon.type} in IncludeStatement`,
+                row: invalidSemicolon.row,
+                col: invalidSemicolon.col,
+                type: 'Error',
+            });
+            // this.skipToNextStatement();
+            return { type: 'InvalidInclude',
+            name: invalidSemicolon.value,
+            value: invalidSemicolon,
+            row: invalidSemicolon.row,
+            col: invalidSemicolon.col };
+        }
+
+        return { type: 'IncludeStatement',
+            name: includeToken.value,
+            value: includeValue,
+            hasHash,
+            row: includeToken.row,
+            col: includeToken.col };
     }
 
     parseBlock(bodyParser) {
@@ -138,53 +251,6 @@ export default class Parser {
             name: returnValue,
             hasSemicolon: !!hasSemicolon,
         };
-    }
-
-    parseIncludeBlockStatement() {
-        this.consume('INCLUDESBLOCK', 'Expected INCLUDESBLOCK');
-        const value = this.parseBlock(() => this.parseIncludeStatement());
-        return { type: 'IncludeBlockStatement', value };
-    }
-
-    parseIncludeStatement() {
-        let hasHash = false;
-
-        if (this.peek().type === 'HASH') {
-            this.consume('HASH', 'Expected HASH');
-            hasHash = true;
-        }
-
-        if (this.peek().type === 'INCLUDE') {
-            this.consume('INCLUDE', 'Expected INCLUDE');
-        } else {
-            this.errors.push(`Invalid token ${this.peek().type} in IncludeBlock`);
-            this.skipToNextStatement();
-            return { type: 'InvalidInclude' };
-        }
-
-        const includeValue = this.peek().type === 'LITERAL_STRING'
-            ? this.consume('LITERAL_STRING', 'Expected LITERAL_STRING').value
-            : 'Not Specified';
-
-        return { type: 'IncludeStatement', name: includeValue, hasHash };
-    }
-
-    parseVariablesBlockStatement() {
-
-        this.scopeManager.enterScope('VariablesBlock');
-
-        const variablesBlockToken = this.consume('VARIABLESBLOCK', 'Expected VARIABLESBLOCK');
-
-        const body = this.parseBlock(() => this.parseStatement());
-
-        const exited = this.scopeManager.exitScope();
-
-        return {
-            type: 'VariablesBlockStatement',
-            body,
-            row: variablesBlockToken.row,
-            col: variablesBlockToken.col,
-         };
     }
 
     parseTestCaseBlockStatement() {
@@ -256,7 +322,12 @@ export default class Parser {
         let variableValue = null;
         if ((this.peek() !== undefined) && this.peek().type === 'ASSIGNMENT') {
             this.consume('ASSIGNMENT', 'Expected ASSIGNMENT');
-            variableValue = this.parseExpression();
+            // Check if the initialization is a list of items
+            if (this.peek().type === 'DELIMITER_OPEN_BRACE') {
+                variableValue = this.parseVariableInitializationValue();
+            } else {
+                variableValue = this.parseExpression();
+            }
         }
 
 
@@ -384,6 +455,23 @@ export default class Parser {
         return left;
     }
 
+    parseVariableInitializationValue() {
+        this.consume('DELIMITER_OPEN_BRACE', 'Expected DELIMITER_OPEN_BRACE for variable initialization');
+
+        const items = this.parseDelimitedList(
+            () => this.parseExpression(), // Parse each item as an expression
+            'DELIMITER_CLOSE_BRACE', // End token
+            'DELIMITER_COMMA' // Separator token
+        );
+
+        return {
+            type: 'VariableInitializationValue',
+            items,
+            row: this.previous().row,
+            col: this.previous().col,
+        };
+    }
+
     parsePrimaryExpression() {
         const token = this.peek();
 
@@ -450,6 +538,17 @@ export default class Parser {
                 name: stringToken.value,
                 col: stringToken.col,
                 row: stringToken.row
+            };
+        }
+
+        if (token.type === 'LITERAL_HEXADECIMAL') {
+            const hexToken = this.consume('LITERAL_HEXADECIMAL', 'Expected LITERAL_HEXADECIMAL');
+
+            return {
+                type: 'LITERAL_HEXADECIMAL',
+                name: hexToken.value,
+                col: hexToken.col,
+                row: hexToken.row
             };
         }
 
