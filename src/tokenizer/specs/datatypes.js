@@ -43,6 +43,7 @@ export const datatypes = [
     { type: 'SERVICESIGNALDATA', regex: /^ServiceSignalData(?=\s)/ },
     { type: 'SERVICESIGNALDATANUMBER', regex: /^ServiceSignalDataNumber(?=\s)/ },
     { type: 'SERVICESIGNALDATASTRING', regex: /^ServiceSignalDataString(?=\s)/ },
+    { type: 'SYSVARALT1', regex: /^@[S-s]ys[V-v]ar(?=:)/ }, // Sysvar alternative sintax for types integer or float
     { type: 'SYSVAR', regex: /^SysVar(?=\s)/ },
     { type: 'SYSVARINT', regex: /^SysVarInt(?=\s)/ },
     { type: 'SYSVARLONGLONG', regex: /^SysVarLongLong(?=\s)/ },

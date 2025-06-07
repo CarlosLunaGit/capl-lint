@@ -10,6 +10,8 @@ export const commonitems = [
     { type: 'DELIMITER_OPEN_BRACKET', regex: /^\[/ },
     { type: 'DELIMITER_CLOSE_BRACKET', regex: /^\]/ },
     { type: 'DELIMITER_DOT', regex: /^\./ },
+    { type: 'DELIMITER_DOUBLE_COLON', regex: /^::/ },
+    { type: 'DELIMITER_COLON', regex: /^:/ },
 
     // Hexadecimal number representation
     { type: 'LITERAL_HEXADECIMAL', regex: /^0[xX][0-9a-fA-F]+/ }, // Matches hexadecimal numbers

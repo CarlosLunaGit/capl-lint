@@ -109,6 +109,12 @@ describe('Linter', () => {
                     row: 4, col: 23, type: "Warning"
                 },
                 {
+                    col: 13,
+                    message: "Test Case 'testCaseName1' is DECLARED but never USED.",
+                    row: 7,
+                    type: "Warning"
+                },
+                {
                     message: "Variable 'respid' is DECLARED but never USED.",
                     row: 10, col: 23, type: "Warning"
                 }
@@ -146,12 +152,48 @@ describe('Linter', () => {
                     row: 4, col: 23, type: "Warning"
                 },
                 {
+                    col: 13,
+                    message: "Test Case 'testCaseName1' is DECLARED but never USED.",
+                    row: 7,
+                    type: "Warning"
+                },
+                {
                     message: "Variable 'respid' is DECLARED but never USED.",
                     row: 14, col: 23, type: "Warning"
                 },
                 {
                     message: "Variable declarations should happen at the start of a block. Misplaced variable: respid",
                     row: 14, col: 23, type: "Error",
+                }
+            ]
+        });
+    });
+
+    it('Should detect declared variables at Global scope and if use on any local scope block it should not raise an error ', () => {
+        const linter = new Linter();
+
+        const code = `
+            variables
+            {
+                dword reqid;
+            }
+
+            testcase testCaseName1(byte argumentByte1)
+            {
+                reqid = 12;
+                write(argumentByte1);
+            }
+        `;
+
+        const result = linter.lint(code);
+
+        assert.deepEqual(result, {
+            errors: [
+                {
+                    col: 13,
+                    message: "Test Case 'testCaseName1' is DECLARED but never USED.",
+                    row: 7,
+                    type: "Warning"
                 }
             ]
         });

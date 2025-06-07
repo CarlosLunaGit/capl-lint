@@ -266,6 +266,51 @@ describe('Tokenizer', () => {
             ]);
         });
 
+        it('Should tokenize byte array initialization (2 Dimensions)', () => {
+            const tokenizer = new Tokenizer();
+            const code = 'byte variable1[3][1] = {{0x01, 0x02, 0x03}};'; // TODO: Check this sintax in CAPL
+            const tokens = tokenizer.tokenize(code);
+
+            assert.deepEqual(projectTokens(tokens), [
+            { type: 'BYTE', value: 'byte', row: 1, col: 1 },
+            { type: 'IDENTIFIER', value: 'variable1', row: 1, col: 6 },
+            { type: 'DELIMITER_OPEN_BRACKET', value: '[', row: 1, col: 15 },
+            { type: 'LITERAL_NUMBER', value: '3', row: 1, col: 16 },
+            { type: 'DELIMITER_CLOSE_BRACKET', value: ']', row: 1, col: 17 },
+            { type: 'DELIMITER_OPEN_BRACKET', value: '[', row: 1, col: 18 },
+            { type: 'LITERAL_NUMBER', value: '1', row: 1, col: 19 },
+            { type: 'DELIMITER_CLOSE_BRACKET', value: ']', row: 1, col: 20 },
+            { type: 'ASSIGNMENT', value: '=', row: 1, col: 22 },
+            { type: 'DELIMITER_OPEN_BRACE', value: '{', row: 1, col: 24 },
+            { type: 'DELIMITER_OPEN_BRACE', value: '{', row: 1, col: 25 },
+            { type: 'LITERAL_HEXADECIMAL', value: '0x01', row: 1, col: 26 },
+            { type: 'DELIMITER_COMMA', value: ',', row: 1, col: 30 },
+            { type: 'LITERAL_HEXADECIMAL', value: '0x02', row: 1, col: 32 },
+            { type: 'DELIMITER_COMMA', value: ',', row: 1, col: 36 },
+            { type: 'LITERAL_HEXADECIMAL', value: '0x03', row: 1, col: 38 },
+            { type: 'DELIMITER_CLOSE_BRACE', value: '}', row: 1, col: 42 },
+            { type: 'DELIMITER_CLOSE_BRACE', value: '}', row: 1, col: 43 },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row:1, col:44}
+            ]);
+        });
+
+        it('Should tokenize a SysVar with alternative sintax for float and int types', () => {
+            const tokenizer = new Tokenizer();
+            const code = '@sysvar::nameSpaceIdentifier::variableIdentifier = 1;'; // TODO: Check this sintax in CAPL
+            const tokens = tokenizer.tokenize(code);
+
+            assert.deepEqual(projectTokens(tokens), [
+            { type: 'SYSVARALT1', value: '@sysvar', row: 1, col: 1 },
+            { type: 'DELIMITER_DOUBLE_COLON', value: '::', row: 1, col: 8 },
+            { type: 'IDENTIFIER', value: 'nameSpaceIdentifier', row: 1, col: 10 },
+            { type: 'DELIMITER_DOUBLE_COLON', value: '::', row: 1, col: 29 },
+            { type: 'IDENTIFIER', value: 'variableIdentifier', row: 1, col: 31 },
+            { type: 'ASSIGNMENT', value: '=', row: 1, col: 50 },
+            { type: 'LITERAL_NUMBER', value: '1', row: 1, col: 52 },
+            { type: 'DELIMITER_SEMICOLON', value: ';', row:1, col:53}
+            ]);
+        });
+
 });
 
 

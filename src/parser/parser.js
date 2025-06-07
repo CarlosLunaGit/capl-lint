@@ -77,24 +77,6 @@ export default class Parser {
         }
     }
 
-    // parseVariablesBlockStatement() {
-
-    //     this.scopeManager.enterScope('VariablesBlock');
-
-    //     const variablesBlockToken = this.consume('VARIABLESBLOCK', 'Expected VARIABLESBLOCK');
-
-    //     const body = this.parseBlock(() => this.parseStatement());
-
-    //     const exited = this.scopeManager.exitScope();
-
-    //     return {
-    //         type: 'VariablesBlockStatement',
-    //         body,
-    //         row: variablesBlockToken.row,
-    //         col: variablesBlockToken.col,
-    //      };
-    // }
-
     parseVariablesBlockStatement() {
     this.scopeManager.enterScope('VariablesBlock');
 
@@ -257,12 +239,14 @@ export default class Parser {
         const testCaseBlockToken = this.consume('TESTCASE', 'Expected TESTCASE');
         const name = this.consume('IDENTIFIER', 'Expected IDENTIFIER').value;
 
+        this.scopeManager.declare(name, testCaseBlockToken);
+
+        this.scopeManager.enterScope(name + "_TestCaseBlock");
+
         this.consume('DELIMITER_OPEN_PAREN', 'Expected DELIMITER_OPEN_PAREN');
         const parameters = this.parseDelimitedList(() =>
             this.parseParameterDeclaration(), 'DELIMITER_CLOSE_PAREN', 'DELIMITER_COMMA'
         );
-
-        this.scopeManager.enterScope(name + "_TestCaseBlock");
 
         const body = this.parseBlock(() => this.parseStatement());
 
@@ -313,7 +297,8 @@ export default class Parser {
         // this.scopeManager.trackVariableUsage(variableName, variableToken);
         const declaration = this.scopeManager.getVariable(variableName);
 
-        if ((this.peek() !== undefined) && this.peek().type === 'DELIMITER_OPEN_BRACKET') {
+        while ((this.peek() !== undefined) && this.peek().type === 'DELIMITER_OPEN_BRACKET')
+        {
             this.consume('DELIMITER_OPEN_BRACKET', 'Expected DELIMITER_OPEN_BRACKET');
             this.consume('LITERAL_NUMBER', 'Expected LITERAL_NUMBER');
             this.consume('DELIMITER_CLOSE_BRACKET', 'Expected DELIMITER_CLOSE_BRACKET');
